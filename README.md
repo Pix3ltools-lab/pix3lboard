@@ -1,8 +1,8 @@
-# pix3lboard
+# Pix3lBoard
 
-**Privacy-first Kanban board for AI music video creators**
+**Privacy-first project management tool**
 
-A modern, lightweight Kanban board application built with Next.js 14, designed specifically for AI content creators working on music videos. All data is stored locally in your browser - no servers, no tracking, complete privacy.
+A modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. All data is stored locally in your browser - no servers, no tracking, complete privacy.
 
 ## Features
 
@@ -114,7 +114,10 @@ pix3lboard/
 
 1. Open a workspace
 2. Click "Create Board"
-3. Optionally check "Use AI Music Video Template" for a pre-configured board with example cards
+3. Choose a template option:
+   - **Empty Board**: Start from scratch
+   - **Project Management Template**: 5 lists (To Do, In Progress, In Review, Approve, Delivered) with example cards
+   - **AI Music Video Template**: 6 lists (Ideas, Music, Visuals, Video, Edit, Done) with AI-specific example cards
 4. Add name and description
 5. Click "Create Board"
 
@@ -208,4 +211,6 @@ Built with:
 
 ---
 
-**Made with ❤️ for AI content creators**
+**Part of [Pix3lTools](https://x.com/pix3ltools)** 🎨
+
+Made with ❤️ for project managers and AI content creators
