@@ -9,7 +9,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { BoardList } from '@/components/board/BoardList';
-import { BoardForm } from '@/components/board/BoardForm';
+import { BoardForm, TemplateType } from '@/components/board/BoardForm';
 import { Board } from '@/types';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -42,7 +42,7 @@ export default function WorkspacePage() {
     }
   }, [isInitialized, workspace, router, showToast]);
 
-  const handleCreateBoard = (data: Partial<Board>, useTemplate: boolean) => {
+  const handleCreateBoard = (data: Partial<Board>, templateType: TemplateType) => {
     if (!workspace) return;
 
     if (editingBoard) {
@@ -51,7 +51,7 @@ export default function WorkspacePage() {
       showToast('Board updated', 'success');
     } else {
       // Create new board
-      const board = createBoard(workspaceId, data, useTemplate);
+      const board = createBoard(workspaceId, data, templateType);
       showToast(`Created board: ${board.name}`, 'success');
     }
 

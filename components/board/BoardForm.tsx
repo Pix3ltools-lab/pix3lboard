@@ -7,29 +7,31 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 
+export type TemplateType = 'none' | 'ai-music' | 'project-management';
+
 interface BoardFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<Board>, useTemplate: boolean) => void;
+  onSubmit: (data: Partial<Board>, templateType: TemplateType) => void;
   board?: Board; // If editing
 }
 
 export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [useTemplate, setUseTemplate] = useState(false);
+  const [templateType, setTemplateType] = useState<TemplateType>('none');
 
   // Load board data if editing
   useEffect(() => {
     if (board) {
       setName(board.name);
       setDescription(board.description || '');
-      setUseTemplate(false); // Template only for create
+      setTemplateType('none'); // Template only for create
     } else {
       // Reset for create
       setName('');
       setDescription('');
-      setUseTemplate(false);
+      setTemplateType('none');
     }
   }, [board, isOpen]);
 
@@ -41,7 +43,7 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
         name: name.trim(),
         description: description.trim() || undefined,
       },
-      useTemplate
+      templateType
     );
 
     handleClose();
@@ -50,7 +52,7 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
   const handleClose = () => {
     setName('');
     setDescription('');
-    setUseTemplate(false);
+    setTemplateType('none');
     onClose();
   };
 
@@ -78,26 +80,74 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
           rows={3}
         />
 
-        {/* Template option (only for create) */}
+        {/* Template options (only for create) */}
         {!board && (
-          <div className="p-4 bg-bg-secondary rounded-lg border border-bg-tertiary">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={useTemplate}
-                onChange={(e) => setUseTemplate(e.target.checked)}
-                className="mt-1"
-              />
-              <div>
-                <div className="font-medium text-text-primary mb-1">
-                  Use &quot;AI Music Video&quot; Template
-                </div>
-                <div className="text-sm text-text-secondary">
-                  Creates a board with 6 pre-configured lists (Ideas, Music, Visuals, Video, Edit,
-                  Done) and 3 example cards to help you get started.
-                </div>
-              </div>
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-text-primary">
+              Board Template
             </label>
+
+            <div className="space-y-2">
+              {/* Empty board */}
+              <label className="flex items-start gap-3 p-3 bg-bg-secondary rounded-lg border border-bg-tertiary cursor-pointer hover:border-accent-primary/50 transition-colors">
+                <input
+                  type="radio"
+                  name="template"
+                  value="none"
+                  checked={templateType === 'none'}
+                  onChange={(e) => setTemplateType(e.target.value as TemplateType)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-text-primary mb-1">
+                    Empty Board
+                  </div>
+                  <div className="text-sm text-text-secondary">
+                    Start with a blank board and create your own lists
+                  </div>
+                </div>
+              </label>
+
+              {/* Project Management template */}
+              <label className="flex items-start gap-3 p-3 bg-bg-secondary rounded-lg border border-bg-tertiary cursor-pointer hover:border-accent-primary/50 transition-colors">
+                <input
+                  type="radio"
+                  name="template"
+                  value="project-management"
+                  checked={templateType === 'project-management'}
+                  onChange={(e) => setTemplateType(e.target.value as TemplateType)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-text-primary mb-1">
+                    📋 Project Management Template
+                  </div>
+                  <div className="text-sm text-text-secondary">
+                    5 lists: To Do, In Progress, In Review, Approve, Delivered + 3 example cards
+                  </div>
+                </div>
+              </label>
+
+              {/* AI Music Video template */}
+              <label className="flex items-start gap-3 p-3 bg-bg-secondary rounded-lg border border-bg-tertiary cursor-pointer hover:border-accent-primary/50 transition-colors">
+                <input
+                  type="radio"
+                  name="template"
+                  value="ai-music"
+                  checked={templateType === 'ai-music'}
+                  onChange={(e) => setTemplateType(e.target.value as TemplateType)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-text-primary mb-1">
+                    🎵 AI Music Video Template
+                  </div>
+                  <div className="text-sm text-text-secondary">
+                    6 lists: Ideas, Music, Visuals, Video, Edit, Done + 3 example cards
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
         )}
 

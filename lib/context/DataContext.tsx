@@ -13,7 +13,11 @@ import { Workspace, Board, List, Card, AppData, StorageInfo } from '@/types';
 import { storage } from '@/lib/storage/localStorage';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
-import { createTemplateBoard } from '@/lib/storage/template';
+import {
+  createAIMusicVideoBoard,
+  createProjectManagementBoard
+} from '@/lib/storage/template';
+import { TemplateType } from '@/components/board/BoardForm';
 import { generateId } from '@/lib/utils/id';
 import { throttle } from '@/lib/utils/debounce';
 import { calculateCardPosition, calculateListPosition } from '@/lib/utils/position';
@@ -32,7 +36,7 @@ interface DataContextType {
   getWorkspace: (id: string) => Workspace | undefined;
 
   // Board operations
-  createBoard: (workspaceId: string, data: Partial<Board>, useTemplate?: boolean) => Board;
+  createBoard: (workspaceId: string, data: Partial<Board>, templateType?: TemplateType) => Board;
   updateBoard: (id: string, data: Partial<Board>) => void;
   deleteBoard: (id: string) => void;
   duplicateBoard: (id: string) => Board | null;
@@ -144,14 +148,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // ===== BOARD OPERATIONS =====
 
   const createBoard = useCallback(
-    (workspaceId: string, data: Partial<Board>, useTemplate = false): Board => {
+    (workspaceId: string, data: Partial<Board>, templateType: TemplateType = 'none'): Board => {
       const now = new Date().toISOString();
 
       let newBoard: Board;
 
-      if (useTemplate) {
-        // Use template board
-        newBoard = createTemplateBoard(workspaceId);
+      if (templateType === 'ai-music') {
+        // Use AI Music Video template
+        newBoard = createAIMusicVideoBoard(workspaceId);
+        if (data.name) {
+          newBoard.name = data.name;
+        }
+        if (data.description) {
+          newBoard.description = data.description;
+        }
+      } else if (templateType === 'project-management') {
+        // Use Project Management template
+        newBoard = createProjectManagementBoard(workspaceId);
         if (data.name) {
           newBoard.name = data.name;
         }

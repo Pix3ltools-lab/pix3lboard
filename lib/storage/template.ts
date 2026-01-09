@@ -5,7 +5,7 @@ import { generateId } from '@/lib/utils/id';
  * Create the "AI Music Video Project" template board
  * with 6 lists and 3 example cards
  */
-export function createTemplateBoard(workspaceId: string): Board {
+export function createAIMusicVideoBoard(workspaceId: string): Board {
   const now = new Date().toISOString();
   const boardId = generateId();
 
@@ -128,4 +128,125 @@ export function createTemplateBoard(workspaceId: string): Board {
     updatedAt: now,
     lists: [ideaList, musicList, visualList, videoList, editList, doneList],
   };
+}
+
+/**
+ * Create the "Project Management" template board
+ * with 5 lists and 3 example cards
+ */
+export function createProjectManagementBoard(workspaceId: string): Board {
+  const now = new Date().toISOString();
+  const boardId = generateId();
+
+  // Create 5 lists
+  const todoList: List = {
+    id: generateId(),
+    boardId,
+    name: '📋 To Do',
+    position: 1000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const inProgressList: List = {
+    id: generateId(),
+    boardId,
+    name: '🔄 In Progress',
+    position: 2000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const inReviewList: List = {
+    id: generateId(),
+    boardId,
+    name: '👀 In Review',
+    position: 3000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const approveList: List = {
+    id: generateId(),
+    boardId,
+    name: '✅ Approve',
+    position: 4000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const deliveredList: List = {
+    id: generateId(),
+    boardId,
+    name: '🚀 Delivered',
+    position: 5000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  // Create 3 example cards
+  const card1: Card = {
+    id: generateId(),
+    listId: todoList.id,
+    title: 'Define project scope',
+    description: 'Document project goals, deliverables, and timeline',
+    position: 1000,
+    type: 'task',
+    tags: ['planning'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card2: Card = {
+    id: generateId(),
+    listId: inProgressList.id,
+    title: 'Design mockups',
+    description: 'Create initial design concepts and wireframes',
+    position: 1000,
+    type: 'task',
+    dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    tags: ['design'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card3: Card = {
+    id: generateId(),
+    listId: inReviewList.id,
+    title: 'Review documentation',
+    description: 'Technical documentation needs peer review before approval',
+    position: 1000,
+    type: 'task',
+    tags: ['documentation', 'review'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Assign cards to lists
+  todoList.cards.push(card1);
+  inProgressList.cards.push(card2);
+  inReviewList.cards.push(card3);
+
+  // Create board with all lists
+  return {
+    id: boardId,
+    workspaceId,
+    name: 'Project Management Board',
+    description: 'Template for managing projects with standard workflow',
+    createdAt: now,
+    updatedAt: now,
+    lists: [todoList, inProgressList, inReviewList, approveList, deliveredList],
+  };
+}
+
+/**
+ * Legacy function name for backward compatibility
+ */
+export function createTemplateBoard(workspaceId: string): Board {
+  return createAIMusicVideoBoard(workspaceId);
 }
