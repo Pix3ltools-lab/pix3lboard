@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/types';
+import { Card, BugSeverity, Priority, Effort } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -11,6 +11,9 @@ import { RatingStars } from '@/components/card/RatingStars';
 import { TagInput } from '@/components/card/TagInput';
 import { LinkInput } from '@/components/card/LinkInput';
 import { DatePicker } from '@/components/card/DatePicker';
+import { SeveritySelector } from '@/components/card/SeveritySelector';
+import { PrioritySelector } from '@/components/card/PrioritySelector';
+import { AttendeesList } from '@/components/card/AttendeesList';
 import { Copy, Trash2 } from 'lucide-react';
 
 interface CardModalProps {
@@ -43,6 +46,13 @@ export function CardModal({
   const [jobNumber, setJobNumber] = useState(card.jobNumber || '');
   const [jobNumberError, setJobNumberError] = useState('');
 
+  // Type-specific fields
+  const [severity, setSeverity] = useState<BugSeverity | undefined>(card.severity);
+  const [priority, setPriority] = useState<Priority | undefined>(card.priority);
+  const [effort, setEffort] = useState<Effort | undefined>(card.effort);
+  const [attendees, setAttendees] = useState<string[]>(card.attendees || []);
+  const [meetingDate, setMeetingDate] = useState(card.meetingDate);
+
   // Reset state when card changes
   useEffect(() => {
     setTitle(card.title);
@@ -57,6 +67,11 @@ export function CardModal({
     setResponsible(card.responsible || '');
     setJobNumber(card.jobNumber || '');
     setJobNumberError('');
+    setSeverity(card.severity);
+    setPriority(card.priority);
+    setEffort(card.effort);
+    setAttendees(card.attendees || []);
+    setMeetingDate(card.meetingDate);
   }, [card]);
 
   // Validate job number format: Letter-2digits-4digits (e.g., C-26-0001)
@@ -96,6 +111,11 @@ export function CardModal({
       links: links.length > 0 ? links : undefined,
       responsible: responsible.trim() || undefined,
       jobNumber: jobNumber.trim() || undefined,
+      severity,
+      priority,
+      effort,
+      attendees: attendees.length > 0 ? attendees : undefined,
+      meetingDate: type === 'meeting' ? meetingDate : undefined,
     });
 
     onClose();
@@ -150,6 +170,37 @@ export function CardModal({
           value={type}
           onChange={(newType) => setType(newType)}
         />
+
+        {/* Type-specific fields */}
+        {type === 'bug' && (
+          <SeveritySelector
+            value={severity}
+            onChange={setSeverity}
+          />
+        )}
+
+        {type === 'feature' && (
+          <PrioritySelector
+            priority={priority}
+            effort={effort}
+            onPriorityChange={setPriority}
+            onEffortChange={setEffort}
+          />
+        )}
+
+        {type === 'meeting' && (
+          <>
+            <AttendeesList
+              value={attendees}
+              onChange={setAttendees}
+            />
+            <DatePicker
+              value={meetingDate}
+              onChange={setMeetingDate}
+              label="Meeting Date"
+            />
+          </>
+        )}
 
         {/* AI Prompt */}
         <Textarea

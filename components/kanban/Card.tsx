@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
-import { Clock, Tag, Star, User } from 'lucide-react';
+import { Clock, Tag, Star, User, Users, AlertCircle } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
 
 interface CardProps {
@@ -36,6 +36,14 @@ export function Card({ card, onClick }: CardProps) {
 
   const cardType = CARD_TYPES.find((t) => t.value === card.type);
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date();
+
+  // Severity colors for bug type
+  const severityColors = {
+    low: '#10b981',
+    medium: '#f59e0b',
+    high: '#ef4444',
+    critical: '#dc2626',
+  };
 
   return (
     <div
@@ -86,6 +94,39 @@ export function Card({ card, onClick }: CardProps) {
 
       {/* Metadata row */}
       <div className="flex items-center gap-3 text-xs text-text-secondary flex-wrap">
+        {/* Bug severity */}
+        {card.type === 'bug' && card.severity && (
+          <div className="flex items-center gap-1">
+            <AlertCircle
+              className="h-3 w-3"
+              style={{ color: severityColors[card.severity] }}
+            />
+            <span className="capitalize">{card.severity}</span>
+          </div>
+        )}
+
+        {/* Feature priority */}
+        {card.type === 'feature' && card.priority && (
+          <div className="px-1.5 py-0.5 bg-accent-primary/20 text-accent-primary rounded text-xs font-medium">
+            P{card.priority === 'high' ? '1' : card.priority === 'medium' ? '2' : '3'}
+          </div>
+        )}
+
+        {/* Feature effort */}
+        {card.type === 'feature' && card.effort && (
+          <div className="px-1.5 py-0.5 bg-bg-tertiary rounded text-xs font-medium">
+            {card.effort === 'small' ? 'S' : card.effort === 'medium' ? 'M' : 'L'}
+          </div>
+        )}
+
+        {/* Meeting attendees */}
+        {card.type === 'meeting' && card.attendees && card.attendees.length > 0 && (
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>{card.attendees.length}</span>
+          </div>
+        )}
+
         {/* Rating */}
         {card.rating && (
           <div className="flex items-center gap-1">

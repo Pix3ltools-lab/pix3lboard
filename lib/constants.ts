@@ -33,6 +33,11 @@ export const CARD_TYPES = [
   { value: 'video', label: 'Video', icon: '🎬', color: '#3b82f6' },
   { value: 'image', label: 'Image', icon: '🖼️', color: '#ec4899' },
   { value: 'task', label: 'Task', icon: '✅', color: '#10b981' },
+  { value: 'text', label: 'Text', icon: '📝', color: '#f59e0b' },
+  { value: 'bug', label: 'Bug', icon: '🐛', color: '#ef4444' },
+  { value: 'feature', label: 'Feature', icon: '✨', color: '#a855f7' },
+  { value: 'audio', label: 'Audio', icon: '🎙️', color: '#06b6d4' },
+  { value: 'meeting', label: 'Meeting', icon: '📅', color: '#6b7280' },
 ] as const;
 
 // Toast duration
