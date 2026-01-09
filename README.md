@@ -129,7 +129,7 @@ pix3lboard/
    - **Type**: Music, Video, Image, or Task
    - **AI Prompt**: The prompt you used
    - **Rating**: 1-5 stars
-   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney"
+   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney", "Claude"
    - **Tags**: Up to 5 tags per card
    - **Due Date**: Optional deadline
    - **Links**: Up to 3 URLs

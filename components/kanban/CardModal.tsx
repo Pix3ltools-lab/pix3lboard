@@ -128,7 +128,7 @@ export function CardModal({
           label="AI Tool"
           value={aiTool}
           onChange={(e) => setAiTool(e.target.value)}
-          placeholder="e.g., Suno, Runway, Midjourney..."
+          placeholder="e.g., Suno, Runway, Midjourney, Claude..."
         />
 
         {/* Tags */}
