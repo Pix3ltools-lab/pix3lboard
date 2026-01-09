@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
 
+const APP_VERSION = '1.0.0';
+
 interface HeaderProps {
   showStorage?: boolean;
 }
@@ -15,9 +17,10 @@ export function Header({ showStorage = true }: HeaderProps) {
         {/* Logo/Brand */}
         <Link
           href="/"
-          className="text-xl font-bold text-text-primary hover:text-accent-primary transition-colors"
+          className="flex items-center gap-2 text-xl font-bold text-text-primary hover:text-accent-primary transition-colors"
         >
           <span>Pix<span style={{ color: '#ef4444' }}>3</span><span style={{ color: '#3b82f6' }}>l</span>Board</span>
+          <span className="text-xs font-normal text-text-secondary">v{APP_VERSION}</span>
         </Link>
 
         {/* Right side */}

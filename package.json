@@ -1,7 +1,7 @@
 {
   "name": "pix3lboard",
   "version": "1.0.0",
-  "description": "Privacy-first Kanban board for AI music video creators",
+  "description": "Privacy-first project management tool",
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
