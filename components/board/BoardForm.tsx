@@ -66,7 +66,7 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
           label="Board Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Neon Dreams Music Video"
+          placeholder="My Board"
           autoFocus
         />
 
