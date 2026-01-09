@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
-import { Clock, Tag, Star } from 'lucide-react';
+import { Clock, Tag, Star, User } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
 
 interface CardProps {
@@ -64,6 +64,14 @@ export function Card({ card, onClick }: CardProps) {
         <p className="text-xs text-text-secondary mb-2 line-clamp-2">
           {card.description}
         </p>
+      )}
+
+      {/* Responsible */}
+      {card.responsible && (
+        <div className="flex items-center gap-1 mb-2 text-xs">
+          <User className="h-3 w-3 text-accent-primary" />
+          <span className="text-text-primary font-medium">{card.responsible}</span>
+        </div>
       )}
 
       {/* Metadata row */}
