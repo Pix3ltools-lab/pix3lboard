@@ -1,0 +1,23 @@
+export type CardType = 'music' | 'video' | 'image' | 'task';
+
+export interface Card {
+  id: string;
+  listId: string;
+  title: string;
+  description?: string;
+  position: number;
+
+  // AI Creator specific fields (MVP minimal)
+  type?: CardType;
+  prompt?: string;
+  rating?: 1 | 2 | 3 | 4 | 5;
+  aiTool?: string; // Free text, not enum in MVP
+
+  // Simple fields
+  tags?: string[]; // Max 5 tags
+  dueDate?: string; // ISO date string
+  links?: string[]; // Simple URL array, max 3
+
+  createdAt: string;
+  updatedAt: string;
+}
