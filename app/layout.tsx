@@ -4,6 +4,7 @@ import './globals.css';
 import { AppProvider } from '@/components/providers/AppProvider';
 import { ToastContainer } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
           <ToastContainer />
           <ConfirmDialog />
         </AppProvider>
+        <Analytics />
       </body>
     </html>
   );
