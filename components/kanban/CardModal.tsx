@@ -102,7 +102,7 @@ export function CardModal({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Add a more detailed description..."
-          rows={3}
+          rows={5}
         />
 
         {/* Type Selector */}
