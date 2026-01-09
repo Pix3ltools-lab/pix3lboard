@@ -14,25 +14,18 @@ export function TypeSelector({ value, onChange }: TypeSelectorProps) {
       <label className="block text-sm font-medium text-text-primary mb-2">
         Card Type
       </label>
-      <div className="grid grid-cols-2 gap-2">
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value as CardType)}
+        className="w-full px-3 py-2 bg-bg-secondary border border-bg-tertiary rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-colors"
+      >
+        <option value="">Select a type...</option>
         {CARD_TYPES.map((type) => (
-          <button
-            key={type.value}
-            type="button"
-            onClick={() => onChange(type.value as CardType)}
-            className={`p-3 rounded-lg border-2 transition-all text-left ${
-              value === type.value
-                ? 'border-accent-primary bg-accent-primary/10'
-                : 'border-bg-tertiary hover:border-bg-tertiary hover:bg-bg-secondary'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">{type.icon}</span>
-              <span className="font-medium text-text-primary">{type.label}</span>
-            </div>
-          </button>
+          <option key={type.value} value={type.value}>
+            {type.icon} {type.label}
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }

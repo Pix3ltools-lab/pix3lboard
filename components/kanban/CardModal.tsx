@@ -39,6 +39,7 @@ export function CardModal({
   const [tags, setTags] = useState(card.tags || []);
   const [dueDate, setDueDate] = useState(card.dueDate);
   const [links, setLinks] = useState(card.links || []);
+  const [responsible, setResponsible] = useState(card.responsible || '');
 
   // Reset state when card changes
   useEffect(() => {
@@ -51,6 +52,7 @@ export function CardModal({
     setTags(card.tags || []);
     setDueDate(card.dueDate);
     setLinks(card.links || []);
+    setResponsible(card.responsible || '');
   }, [card]);
 
   const handleSave = () => {
@@ -66,6 +68,7 @@ export function CardModal({
       tags: tags.length > 0 ? tags : undefined,
       dueDate,
       links: links.length > 0 ? links : undefined,
+      responsible: responsible.trim() || undefined,
     });
 
     onClose();
@@ -129,6 +132,14 @@ export function CardModal({
           value={aiTool}
           onChange={(e) => setAiTool(e.target.value)}
           placeholder="e.g., Suno, Runway, Midjourney, Claude..."
+        />
+
+        {/* Responsible */}
+        <Input
+          label="Responsible"
+          value={responsible}
+          onChange={(e) => setResponsible(e.target.value)}
+          placeholder="Person responsible for this card..."
         />
 
         {/* Tags */}
