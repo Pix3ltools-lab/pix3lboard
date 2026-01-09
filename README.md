@@ -167,7 +167,7 @@ pix3lboard/
 - **Critical**: Red indicator at 4 MB (80%)
 - **Recommendation**: Export data regularly as backup
 
-## Known Limitations (MVP)
+## Known Limitations
 
 - No cloud sync between devices
 - No collaboration features
@@ -176,6 +176,17 @@ pix3lboard/
 - No undo/redo functionality
 - No checklist or subtasks
 - No file attachments
+
+## Planned Improvements
+
+### Card Management
+- **Responsible Field**: Add a "Responsible" text field to each card to track who's working on it (simple text input, no user management system)
+- **Card Type Dropdown**: Replace the current card type buttons (Music, Video, Image, Task) with a compact dropdown menu to save space in the card modal
+
+### UI/UX Enhancements
+- **Light Mode**: Implement a light theme option alongside the existing dark mode
+- **Undo/Redo**: Add ability to undo/redo actions
+- **Checklists**: Add subtask/checklist functionality within cards
 
 ## Development
 
