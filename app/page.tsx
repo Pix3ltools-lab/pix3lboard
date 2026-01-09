@@ -81,7 +81,9 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Welcome to pix3lboard</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+                Welcome to <span>Pix<span style={{ color: '#ef4444' }}>3</span><span style={{ color: '#3b82f6' }}>l</span>Board</span>
+              </h1>
               <p className="text-sm sm:text-base md:text-lg text-text-secondary">
                 Privacy-first Kanban board for AI music video creators
               </p>

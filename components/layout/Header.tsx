@@ -17,7 +17,7 @@ export function Header({ showStorage = true }: HeaderProps) {
           href="/"
           className="text-xl font-bold text-text-primary hover:text-accent-primary transition-colors"
         >
-          pix3lboard
+          <span>Pix<span style={{ color: '#ef4444' }}>3</span><span style={{ color: '#3b82f6' }}>l</span>Board</span>
         </Link>
 
         {/* Right side */}

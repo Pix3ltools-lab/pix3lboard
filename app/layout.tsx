@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'pix3lboard - Kanban for AI Creators',
+  title: 'Pix3lBoard - Kanban for AI Creators',
   description: 'Privacy-first Kanban board for AI music video creators',
 };
 
