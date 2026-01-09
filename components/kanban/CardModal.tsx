@@ -40,6 +40,8 @@ export function CardModal({
   const [dueDate, setDueDate] = useState(card.dueDate);
   const [links, setLinks] = useState(card.links || []);
   const [responsible, setResponsible] = useState(card.responsible || '');
+  const [jobNumber, setJobNumber] = useState(card.jobNumber || '');
+  const [jobNumberError, setJobNumberError] = useState('');
 
   // Reset state when card changes
   useEffect(() => {
@@ -53,10 +55,34 @@ export function CardModal({
     setDueDate(card.dueDate);
     setLinks(card.links || []);
     setResponsible(card.responsible || '');
+    setJobNumber(card.jobNumber || '');
+    setJobNumberError('');
   }, [card]);
+
+  // Validate job number format: Letter-2digits-4digits (e.g., C-26-0001)
+  const validateJobNumber = (value: string): boolean => {
+    if (!value.trim()) return true; // Optional field
+    const regex = /^[A-Z]-\d{2}-\d{4}$/;
+    return regex.test(value);
+  };
+
+  const handleJobNumberChange = (value: string) => {
+    setJobNumber(value);
+    if (value.trim() && !validateJobNumber(value)) {
+      setJobNumberError('Format: Letter-2digits-4digits (e.g., C-26-0001)');
+    } else {
+      setJobNumberError('');
+    }
+  };
 
   const handleSave = () => {
     if (!title.trim()) return;
+
+    // Validate job number before saving
+    if (jobNumber.trim() && !validateJobNumber(jobNumber)) {
+      setJobNumberError('Invalid format. Use: Letter-2digits-4digits (e.g., C-26-0001)');
+      return;
+    }
 
     onUpdate(card.id, {
       title: title.trim(),
@@ -69,6 +95,7 @@ export function CardModal({
       dueDate,
       links: links.length > 0 ? links : undefined,
       responsible: responsible.trim() || undefined,
+      jobNumber: jobNumber.trim() || undefined,
     });
 
     onClose();
@@ -95,6 +122,19 @@ export function CardModal({
           placeholder="Card title..."
           autoFocus
         />
+
+        {/* Job Number */}
+        <div>
+          <Input
+            label="Job Number (optional)"
+            value={jobNumber}
+            onChange={(e) => handleJobNumberChange(e.target.value)}
+            placeholder="e.g., C-26-0001"
+          />
+          {jobNumberError && (
+            <p className="mt-1 text-xs text-accent-danger">{jobNumberError}</p>
+          )}
+        </div>
 
         {/* Description */}
         <Textarea

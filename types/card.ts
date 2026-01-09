@@ -18,6 +18,7 @@ export interface Card {
   dueDate?: string; // ISO date string
   links?: string[]; // Simple URL array, max 3
   responsible?: string; // Person responsible for the card (free text)
+  jobNumber?: string; // Job number in format: Letter-2digits-4digits (e.g., C-26-0001)
 
   createdAt: string;
   updatedAt: string;

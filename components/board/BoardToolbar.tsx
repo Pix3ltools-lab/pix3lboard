@@ -13,7 +13,7 @@ interface BoardToolbarProps {
 }
 
 export function BoardToolbar({ availableTags, onExport, onImport }: BoardToolbarProps) {
-  const { query, setQuery, selectedTag, setSelectedTag, clearFilters, hasActiveFilters } = useSearch();
+  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
 
   const handleImportClick = () => {
@@ -38,6 +38,15 @@ export function BoardToolbar({ availableTags, onExport, onImport }: BoardToolbar
             value={query}
             onChange={setQuery}
             placeholder="Search cards..."
+          />
+        </div>
+
+        {/* Job Number Filter */}
+        <div className="sm:w-48">
+          <SearchBar
+            value={jobNumberFilter}
+            onChange={setJobNumberFilter}
+            placeholder="Job number..."
           />
         </div>
 

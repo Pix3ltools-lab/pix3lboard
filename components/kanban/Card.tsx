@@ -46,13 +46,23 @@ export function Card({ card, onClick }: CardProps) {
       onClick={onClick}
       className="group bg-bg-primary rounded-lg border-2 border-bg-tertiary p-3 cursor-pointer hover:border-accent-primary transition-all hover:shadow-md touch-none"
     >
-      {/* Card type indicator */}
-      {cardType && (
-        <div className="flex items-center gap-1 mb-2">
-          <span className="text-sm">{cardType.icon}</span>
-          <span className="text-xs text-text-secondary">{cardType.label}</span>
-        </div>
-      )}
+      {/* Header row with type and job number */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        {/* Card type indicator */}
+        {cardType && (
+          <div className="flex items-center gap-1">
+            <span className="text-sm">{cardType.icon}</span>
+            <span className="text-xs text-text-secondary">{cardType.label}</span>
+          </div>
+        )}
+
+        {/* Job Number badge */}
+        {card.jobNumber && (
+          <div className="px-2 py-0.5 bg-bg-secondary border border-bg-tertiary rounded text-xs font-mono text-text-primary">
+            {card.jobNumber}
+          </div>
+        )}
+      </div>
 
       {/* Title */}
       <h4 className="text-sm font-medium text-text-primary mb-2 line-clamp-3">

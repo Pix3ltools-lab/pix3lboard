@@ -8,6 +8,8 @@ interface SearchContextType {
   setQuery: (query: string) => void;
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
+  jobNumberFilter: string;
+  setJobNumberFilter: (jobNumber: string) => void;
   filterCards: (cards: Card[]) => Card[];
   clearFilters: () => void;
   hasActiveFilters: boolean;
@@ -18,9 +20,10 @@ const SearchContext = createContext<SearchContextType | undefined>(undefined);
 export function SearchProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [jobNumberFilter, setJobNumberFilter] = useState('');
 
   /**
-   * Filter cards based on search query and selected tag
+   * Filter cards based on search query, selected tag, and job number
    * MVP: Search only in title (not description/prompt)
    */
   const filterCards = useCallback(
@@ -36,26 +39,34 @@ export function SearchProvider({ children }: { children: ReactNode }) {
           ? card.tags?.includes(selectedTag) ?? false
           : true;
 
-        return matchesQuery && matchesTag;
+        // Filter by job number (partial match, case-insensitive)
+        const matchesJobNumber = jobNumberFilter
+          ? card.jobNumber?.toLowerCase().includes(jobNumberFilter.toLowerCase()) ?? false
+          : true;
+
+        return matchesQuery && matchesTag && matchesJobNumber;
       });
     },
-    [query, selectedTag]
+    [query, selectedTag, jobNumberFilter]
   );
 
   const clearFilters = useCallback(() => {
     setQuery('');
     setSelectedTag(null);
+    setJobNumberFilter('');
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return query.length > 0 || selectedTag !== null;
-  }, [query, selectedTag]);
+    return query.length > 0 || selectedTag !== null || jobNumberFilter.length > 0;
+  }, [query, selectedTag, jobNumberFilter]);
 
   const value: SearchContextType = {
     query,
     setQuery,
     selectedTag,
     setSelectedTag,
+    jobNumberFilter,
+    setJobNumberFilter,
     filterCards,
     clearFilters,
     hasActiveFilters,
