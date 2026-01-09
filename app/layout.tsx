@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Pix3lBoard - Privacy-First Project Management',
+  title: 'Pix3lBoard - Kanban for Project Management',
   description: 'Your privacy-first project management tool. All data stored locally in your browser.',
 };
 
