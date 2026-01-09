@@ -159,7 +159,7 @@ export default function Home() {
             label="Workspace Name"
             value={newWorkspaceName}
             onChange={(e) => setNewWorkspaceName(e.target.value)}
-            placeholder="e.g., AI Music Projects"
+            placeholder="My Project"
           />
 
           <IconPicker
