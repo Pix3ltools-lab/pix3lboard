@@ -126,10 +126,11 @@ pix3lboard/
 1. Click "Add a card" in any list
 2. Click on a card to open the detail modal
 3. Edit all fields:
-   - **Type**: Music, Video, Image, or Task
+   - **Type**: Music, Video, Image, or Task (dropdown selector)
    - **AI Prompt**: The prompt you used
    - **Rating**: 1-5 stars
    - **AI Tool**: e.g., "Suno", "Runway", "Midjourney", "Claude"
+   - **Responsible**: Person responsible for this card
    - **Tags**: Up to 5 tags per card
    - **Due Date**: Optional deadline
    - **Links**: Up to 3 URLs
@@ -179,14 +180,11 @@ pix3lboard/
 
 ## Planned Improvements
 
-### Card Management
-- **Responsible Field**: Add a "Responsible" text field to each card to track who's working on it (simple text input, no user management system)
-- **Card Type Dropdown**: Replace the current card type buttons (Music, Video, Image, Task) with a compact dropdown menu to save space in the card modal
-
 ### UI/UX Enhancements
 - **Light Mode**: Implement a light theme option alongside the existing dark mode
 - **Undo/Redo**: Add ability to undo/redo actions
 - **Checklists**: Add subtask/checklist functionality within cards
+- **File Attachments**: Support for attaching files to cards
 
 ## Development
 
