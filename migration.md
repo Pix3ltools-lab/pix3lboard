@@ -297,6 +297,603 @@ CREATE TRIGGER update_cards_updated_at BEFORE UPDATE ON cards
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
+---
+
+## Phase 2.5: User Management & Role-Based Access Control
+
+### Overview
+
+Pix3lBoard will implement a **multi-user collaboration system** with role-based access control:
+
+- **Purpose**: Enable multiple users to collaborate on workspaces and boards across devices
+- **Authentication**: Email/password via Supabase Auth
+- **User Creation**: Admin-only (no public registration)
+- **Roles**: 3 levels with different permissions
+
+---
+
+### User Roles & Permissions
+
+| Role | Create Users | Create Workspaces | Create Boards | Edit Content | Delete Content | View All Data |
+|------|--------------|-------------------|---------------|--------------|----------------|---------------|
+| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **User** | ❌ | ✅ | ✅ | ✅ (own) | ✅ (own) | ❌ (own only) |
+| **Viewer** | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ (shared) |
+
+#### Role Definitions:
+
+**Admin**
+- Full system access
+- Can create/delete users via Admin Dashboard
+- Can assign roles to users
+- Can view and manage all workspaces/boards
+- Can reset user passwords
+- First user in the system is automatically admin
+
+**User**
+- Can create and manage own workspaces/boards
+- Can be invited to collaborate on other users' workspaces
+- Can edit/delete own content
+- Cannot see other users' private content
+- Cannot manage other users
+
+**Viewer**
+- Read-only access to shared workspaces
+- Can view boards, lists, and cards
+- Cannot create, edit, or delete anything
+- Cannot create own workspaces
+- Useful for stakeholders, clients, or observers
+
+---
+
+### Database Schema for User Management
+
+```sql
+-- User profiles table (extends Supabase auth.users)
+CREATE TABLE user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE,
+  full_name TEXT,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'user', 'viewer')) DEFAULT 'user',
+  avatar_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users, -- Admin who created this user
+  last_login TIMESTAMPTZ
+);
+
+-- Workspace members (for collaboration)
+CREATE TABLE workspace_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')) DEFAULT 'viewer',
+  invited_by UUID REFERENCES auth.users,
+  invited_at TIMESTAMPTZ DEFAULT NOW(),
+  accepted_at TIMESTAMPTZ,
+  UNIQUE(workspace_id, user_id)
+);
+
+-- Board members (optional: board-specific permissions)
+CREATE TABLE board_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  board_id UUID REFERENCES boards(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')) DEFAULT 'viewer',
+  invited_by UUID REFERENCES auth.users,
+  invited_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(board_id, user_id)
+);
+
+-- User invitations (pending user creation)
+CREATE TABLE user_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'user', 'viewer')),
+  invited_by UUID REFERENCES auth.users NOT NULL,
+  invited_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL, -- 7 days from creation
+  accepted_at TIMESTAMPTZ,
+  is_used BOOLEAN DEFAULT false,
+  token TEXT NOT NULL UNIQUE -- Secure random token for invitation link
+);
+
+-- Password reset tokens (for admin-initiated resets)
+CREATE TABLE password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  created_by UUID REFERENCES auth.users NOT NULL, -- Admin who initiated reset
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL, -- 24 hours from creation
+  is_used BOOLEAN DEFAULT false
+);
+
+-- Indexes for performance
+CREATE INDEX idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX idx_workspace_members_workspace ON workspace_members(workspace_id);
+CREATE INDEX idx_workspace_members_user ON workspace_members(user_id);
+CREATE INDEX idx_board_members_board ON board_members(board_id);
+CREATE INDEX idx_board_members_user ON board_members(user_id);
+CREATE INDEX idx_user_invitations_email ON user_invitations(email);
+CREATE INDEX idx_user_invitations_token ON user_invitations(token);
+CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
+
+-- Trigger to update user_profiles.updated_at
+CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+```
+
+---
+
+### Updated Row Level Security (RLS) Policies
+
+#### User Profiles Policies
+
+```sql
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Admins can view all profiles
+CREATE POLICY "Admins can view all profiles" ON user_profiles
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Users can view their own profile
+CREATE POLICY "Users can view own profile" ON user_profiles
+  FOR SELECT USING (auth.uid() = id);
+
+-- Only admins can insert new profiles
+CREATE POLICY "Only admins can create profiles" ON user_profiles
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Admins can update any profile, users can update their own (except role)
+CREATE POLICY "Users can update own profile" ON user_profiles
+  FOR UPDATE USING (
+    auth.uid() = id
+    AND (
+      -- User can update own profile but not role
+      (auth.uid() = id AND OLD.role = NEW.role)
+      OR
+      -- Admin can update any profile including role
+      EXISTS (
+        SELECT 1 FROM user_profiles
+        WHERE id = auth.uid() AND role = 'admin'
+      )
+    )
+  );
+
+-- Only admins can delete profiles
+CREATE POLICY "Only admins can delete profiles" ON user_profiles
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+#### Workspace Collaboration Policies
+
+```sql
+-- Update workspace policies to support collaboration
+DROP POLICY IF EXISTS "Users can view own workspaces" ON workspaces;
+DROP POLICY IF EXISTS "Users can insert own workspaces" ON workspaces;
+DROP POLICY IF EXISTS "Users can update own workspaces" ON workspaces;
+DROP POLICY IF EXISTS "Users can delete own workspaces" ON workspaces;
+
+-- Users can view workspaces they own or are members of
+CREATE POLICY "Users can view accessible workspaces" ON workspaces
+  FOR SELECT USING (
+    auth.uid() = user_id -- Owner
+    OR EXISTS ( -- Or member
+      SELECT 1 FROM workspace_members
+      WHERE workspace_id = workspaces.id
+      AND user_id = auth.uid()
+    )
+    OR EXISTS ( -- Or admin
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Users (not viewers) can create workspaces
+CREATE POLICY "Users can create workspaces" ON workspaces
+  FOR INSERT WITH CHECK (
+    auth.uid() = user_id
+    AND EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'user')
+    )
+  );
+
+-- Owners and editors can update, viewers cannot
+CREATE POLICY "Members can update workspaces" ON workspaces
+  FOR UPDATE USING (
+    auth.uid() = user_id -- Owner
+    OR EXISTS ( -- Or editor member
+      SELECT 1 FROM workspace_members
+      WHERE workspace_id = workspaces.id
+      AND user_id = auth.uid()
+      AND role IN ('owner', 'editor')
+    )
+    OR EXISTS ( -- Or admin
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Only owners and admins can delete
+CREATE POLICY "Owners can delete workspaces" ON workspaces
+  FOR DELETE USING (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+#### Workspace Members Policies
+
+```sql
+ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
+
+-- Members can view other members of their workspaces
+CREATE POLICY "Members can view workspace members" ON workspace_members
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM workspace_members wm
+      WHERE wm.workspace_id = workspace_members.workspace_id
+      AND wm.user_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM workspaces
+      WHERE id = workspace_members.workspace_id
+      AND user_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Workspace owners can add members
+CREATE POLICY "Owners can add members" ON workspace_members
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM workspaces
+      WHERE id = workspace_id AND user_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Workspace owners can update member roles
+CREATE POLICY "Owners can update members" ON workspace_members
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM workspaces
+      WHERE id = workspace_id AND user_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Workspace owners can remove members
+CREATE POLICY "Owners can remove members" ON workspace_members
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM workspaces
+      WHERE id = workspace_id AND user_id = auth.uid()
+    )
+    OR auth.uid() = user_id -- Users can leave workspaces
+    OR EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+#### Board/List/Card Policies (Updated for Collaboration)
+
+```sql
+-- Similar pattern: users can access content in workspaces they're members of
+-- Implementation follows same logic as workspace policies
+-- Each table checks: owner, workspace member, or admin
+```
+
+---
+
+### Authentication Flow
+
+#### Admin-Only User Creation
+
+```
+1. Admin logs into Admin Dashboard
+2. Admin clicks "Create New User"
+3. Admin fills form:
+   - Email (required, unique)
+   - Full Name (optional)
+   - Role (admin/user/viewer)
+   - Generate temporary password OR send invitation email
+4. System creates user in Supabase Auth:
+   - If temporary password: User created immediately, email sent with credentials
+   - If invitation: User receives email with secure link to set password
+5. User profile created in user_profiles table
+6. User receives welcome email with login instructions
+```
+
+#### User Login Flow
+
+```
+1. User navigates to /login
+2. Enters email and password
+3. Supabase Auth validates credentials
+4. On success:
+   - Update last_login timestamp in user_profiles
+   - Redirect to dashboard
+   - Load user's workspaces and boards
+5. On failure:
+   - Show error message
+   - Allow password reset request (admin-initiated)
+```
+
+#### Password Reset Flow (Admin-Initiated)
+
+```
+1. Admin selects user in Admin Dashboard
+2. Admin clicks "Reset Password"
+3. System generates secure reset token
+4. System sends email to user with reset link
+5. User clicks link (valid for 24 hours)
+6. User enters new password (minimum 8 characters, 1 uppercase, 1 number)
+7. Password updated in Supabase Auth
+8. User can log in with new password
+```
+
+---
+
+### Admin Dashboard Requirements
+
+#### User Management Page (`/admin/users`)
+
+**Features:**
+
+1. **User List Table**
+   - Columns: Email, Full Name, Role, Status (Active/Inactive), Created Date, Last Login
+   - Search by email or name
+   - Filter by role (Admin/User/Viewer)
+   - Filter by status (Active/Inactive)
+   - Sort by any column
+   - Pagination (50 users per page)
+
+2. **Create User Button**
+   - Opens modal with form:
+     - Email (required, validated)
+     - Full Name (optional)
+     - Role dropdown (Admin/User/Viewer)
+     - Send invitation email checkbox (default: true)
+     - If unchecked: generate temporary password field
+
+3. **User Actions (Per Row)**
+   - **Edit**: Update full name, role, status
+   - **Reset Password**: Send password reset email
+   - **Deactivate/Activate**: Toggle user active status
+   - **Delete**: Remove user (requires confirmation)
+   - **View Activity**: Show user's recent actions (future feature)
+
+4. **Bulk Actions**
+   - Select multiple users (checkboxes)
+   - Bulk deactivate
+   - Bulk delete (requires confirmation)
+   - Export users to CSV
+
+5. **Statistics Dashboard**
+   - Total users count
+   - Active users count
+   - Users by role (pie chart)
+   - Recent registrations (last 7 days)
+   - Users without recent activity (>30 days)
+
+#### Workspace Sharing Page (`/workspace/[id]/settings/members`)
+
+**Features:**
+
+1. **Current Members List**
+   - Columns: Name, Email, Role (Owner/Editor/Viewer), Added Date
+   - Remove member button (except owner)
+   - Change role dropdown (owner only)
+
+2. **Invite New Member**
+   - Search existing users by email
+   - Select role (Editor/Viewer)
+   - Send invitation
+   - Shows pending invitations
+
+3. **Pending Invitations**
+   - List of invited but not yet accepted
+   - Resend invitation button
+   - Cancel invitation button
+
+---
+
+### Password Management System
+
+#### Password Requirements
+
+- Minimum 8 characters
+- At least 1 uppercase letter
+- At least 1 lowercase letter
+- At least 1 number
+- At least 1 special character (optional but recommended)
+
+#### Password Policies
+
+1. **Initial Password**
+   - Admin can set temporary password OR
+   - User receives invitation email to set own password
+
+2. **Password Change**
+   - User can change own password in settings
+   - Requires current password verification
+   - New password must meet requirements
+
+3. **Password Reset (Admin-Initiated)**
+   - Admin can trigger password reset for any user
+   - User receives email with secure reset link
+   - Link expires after 24 hours
+   - Reset token is single-use
+
+4. **Password Reset (User-Requested)**
+   - Not available in initial implementation (admin-only)
+   - Future feature: Allow users to request password reset
+   - Requires admin approval
+
+---
+
+### User Invitation System
+
+#### Invitation Email Template
+
+```
+Subject: You've been invited to Pix3lBoard
+
+Hi [Full Name],
+
+You've been invited to join Pix3lBoard by [Admin Name].
+
+Your role: [Admin/User/Viewer]
+
+Click the link below to set your password and get started:
+[Secure Invitation Link - valid for 7 days]
+
+Your login email: [user@example.com]
+
+Questions? Contact your administrator.
+
+---
+Pix3lBoard - Privacy-first project management
+```
+
+#### Invitation Flow
+
+```
+1. Admin creates user and checks "Send invitation email"
+2. System generates:
+   - Unique secure token (UUID)
+   - User record in auth.users (email verified = false)
+   - User profile in user_profiles (is_active = false)
+   - Invitation record in user_invitations
+3. Email sent with invitation link: /auth/accept-invitation?token=[token]
+4. User clicks link (valid for 7 days)
+5. User sets password (must meet requirements)
+6. System:
+   - Updates auth.users (email verified = true)
+   - Updates user_profiles (is_active = true)
+   - Marks invitation as used
+7. User redirected to /login
+8. User logs in with email and new password
+```
+
+#### Invitation Expiration
+
+- Invitations expire after 7 days
+- Expired invitations cannot be accepted
+- Admin can resend invitation (generates new token)
+- System sends reminder email after 3 days if not accepted
+
+---
+
+### Security Considerations
+
+1. **Principle of Least Privilege**
+   - Users can only see and modify their own content by default
+   - Collaboration requires explicit invitation
+   - Viewer role is strictly read-only
+
+2. **Admin Safeguards**
+   - Cannot delete own admin account if last admin
+   - Deleting user also deletes all their content (or transfers to admin)
+   - All admin actions are logged (audit trail - future feature)
+
+3. **Password Security**
+   - Passwords hashed by Supabase Auth (bcrypt)
+   - Temporary passwords expire after first use
+   - Reset tokens are single-use and time-limited
+
+4. **Data Isolation**
+   - RLS policies enforce user data boundaries
+   - Even admins access through proper policies
+   - No direct database access in production
+
+5. **Session Management**
+   - Sessions expire after 7 days of inactivity
+   - Refresh tokens rotated regularly
+   - Logout invalidates all sessions
+
+---
+
+### Implementation Checklist
+
+**Database Setup:**
+- [ ] Create user_profiles table
+- [ ] Create workspace_members table
+- [ ] Create board_members table (optional)
+- [ ] Create user_invitations table
+- [ ] Create password_reset_tokens table
+- [ ] Update RLS policies for all tables
+- [ ] Create helper functions for user management
+
+**Admin Dashboard:**
+- [ ] Create `/admin/users` page
+- [ ] Implement user list with search/filter
+- [ ] Create user creation modal
+- [ ] Implement edit user functionality
+- [ ] Implement password reset functionality
+- [ ] Implement user activation/deactivation
+- [ ] Add user deletion with confirmation
+- [ ] Create statistics dashboard
+
+**Authentication:**
+- [ ] Set up Supabase Auth
+- [ ] Create login page
+- [ ] Create password setup page (invitation flow)
+- [ ] Create password reset page
+- [ ] Implement email templates
+- [ ] Configure email sender (SMTP)
+
+**Workspace Collaboration:**
+- [ ] Create workspace settings page
+- [ ] Implement member invitation system
+- [ ] Create member management UI
+- [ ] Implement role-based permissions in UI
+- [ ] Add sharing controls to workspace
+
+**Security & Testing:**
+- [ ] Test all RLS policies
+- [ ] Verify admin-only user creation
+- [ ] Test password reset flow
+- [ ] Test invitation expiration
+- [ ] Test role-based access (admin/user/viewer)
+- [ ] Security audit
+
+---
+
 ### Phase 3: Code Architecture Changes
 
 #### 3.1 Create Supabase Client
