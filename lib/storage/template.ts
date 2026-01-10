@@ -3,7 +3,7 @@ import { generateId } from '@/lib/utils/id';
 
 /**
  * Create the "AI Music Video Project" template board
- * with 6 lists and 3 example cards
+ * with 6 lists and 5 example cards
  */
 export function createAIMusicVideoBoard(workspaceId: string): Board {
   const now = new Date().toISOString();
@@ -113,10 +113,41 @@ export function createAIMusicVideoBoard(workspaceId: string): Board {
     updatedAt: now,
   };
 
+  const card4: Card = {
+    id: generateId(),
+    listId: ideaList.id,
+    title: 'Video Script',
+    description: 'Write narrative structure and scene descriptions',
+    position: 1000,
+    type: 'text',
+    prompt: 'Write a music video script for a synthwave song about...',
+    aiTool: 'Claude',
+    tags: ['script', 'planning'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card5: Card = {
+    id: generateId(),
+    listId: visualList.id,
+    title: 'Voiceover Narration',
+    description: 'AI-generated voice for intro sequence',
+    position: 1000,
+    type: 'audio',
+    prompt: 'deep, dramatic voice with slight echo, narrating: "In a world where..."',
+    rating: 4,
+    aiTool: 'ElevenLabs',
+    tags: ['voiceover', 'intro'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
   // Assign cards to lists
   musicList.cards.push(card1);
   videoList.cards.push(card2);
   editList.cards.push(card3);
+  ideaList.cards.push(card4);
+  visualList.cards.push(card5);
 
   // Create board with all lists
   return {
@@ -132,7 +163,7 @@ export function createAIMusicVideoBoard(workspaceId: string): Board {
 
 /**
  * Create the "Project Management" template board
- * with 5 lists and 3 example cards
+ * with 5 lists and 5 example cards
  */
 export function createProjectManagementBoard(workspaceId: string): Board {
   const now = new Date().toISOString();
@@ -189,7 +220,7 @@ export function createProjectManagementBoard(workspaceId: string): Board {
     cards: [],
   };
 
-  // Create 3 example cards
+  // Create 5 example cards
   const card1: Card = {
     id: generateId(),
     listId: todoList.id,
@@ -227,10 +258,40 @@ export function createProjectManagementBoard(workspaceId: string): Board {
     updatedAt: now,
   };
 
+  const card4: Card = {
+    id: generateId(),
+    listId: todoList.id,
+    title: 'User authentication system',
+    description: 'Implement secure login and registration flow',
+    position: 2000,
+    type: 'feature',
+    priority: 'high',
+    effort: 'large',
+    tags: ['security', 'backend'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card5: Card = {
+    id: generateId(),
+    listId: approveList.id,
+    title: 'Sprint Planning Meeting',
+    description: 'Review backlog and plan next sprint',
+    position: 1000,
+    type: 'meeting',
+    attendees: ['Team Lead', 'Product Owner', 'Developers'],
+    meetingDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+    tags: ['sprint', 'planning'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
   // Assign cards to lists
   todoList.cards.push(card1);
+  todoList.cards.push(card4);
   inProgressList.cards.push(card2);
   inReviewList.cards.push(card3);
+  approveList.cards.push(card5);
 
   // Create board with all lists
   return {
