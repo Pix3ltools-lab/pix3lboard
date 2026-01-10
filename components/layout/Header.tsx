@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
 import { UserMenu } from '../auth/UserMenu';
@@ -27,6 +28,13 @@ export function Header({ showStorage = true }: HeaderProps) {
         {/* Right side */}
         <div className="flex items-center gap-4">
           {showStorage && <StorageIndicator />}
+          <Link
+            href="/settings"
+            className="p-2 hover:bg-secondary-bg rounded-md transition-colors"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5 text-secondary-text hover:text-primary-text" />
+          </Link>
           <UserMenu />
           <ThemeToggle />
         </div>
