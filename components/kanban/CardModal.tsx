@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, BugSeverity, Priority, Effort } from '@/types';
+import { Card, CardType, BugSeverity, Priority, Effort } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -20,6 +20,7 @@ interface CardModalProps {
   isOpen: boolean;
   onClose: () => void;
   card: Card;
+  allowedCardTypes?: CardType[]; // Filter available card types
   onUpdate: (cardId: string, data: Partial<Card>) => void;
   onDelete: (cardId: string) => void;
   onDuplicate: (cardId: string) => void;
@@ -29,6 +30,7 @@ export function CardModal({
   isOpen,
   onClose,
   card,
+  allowedCardTypes,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -169,6 +171,7 @@ export function CardModal({
         <TypeSelector
           value={type}
           onChange={(newType) => setType(newType)}
+          allowedCardTypes={allowedCardTypes}
         />
 
         {/* Type-specific fields */}

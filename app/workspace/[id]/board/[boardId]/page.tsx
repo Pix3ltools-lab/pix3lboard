@@ -226,6 +226,7 @@ export default function BoardPage() {
           isOpen={!!selectedCard}
           onClose={() => setSelectedCardId(null)}
           card={selectedCard}
+          allowedCardTypes={board.allowedCardTypes}
           onUpdate={handleUpdateCard}
           onDelete={handleDeleteCard}
           onDuplicate={handleDuplicateCard}
