@@ -789,8 +789,45 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async importData(data: { workspaces: Workspace[] }): Promise<void> {
-    // This will be implemented in the migration module
-    throw new Error('Import not yet implemented for Supabase adapter. Use migration tools.')
+    // Simple implementation: clear and recreate all data
+    // Note: This is not optimal (deletes everything on each save)
+    // TODO: Implement smart merge (update existing, create new, delete removed)
+
+    const userId = await this.ensureAuth();
+
+    // Clear existing data
+    await this.clearAllData();
+
+    // Recreate all data
+    const workspaceIdMap = new Map<string, string>();
+    const boardIdMap = new Map<string, string>();
+    const listIdMap = new Map<string, string>();
+
+    for (const workspace of data.workspaces || []) {
+      const oldWsId = workspace.id;
+      const { id, boards, ...wsData } = workspace;
+      const newWs = await this.createWorkspace(wsData);
+      workspaceIdMap.set(oldWsId, newWs.id);
+
+      for (const board of boards || []) {
+        const oldBoardId = board.id;
+        const { id, lists, ...boardData } = board;
+        const newBoard = await this.createBoard(newWs.id, boardData);
+        boardIdMap.set(oldBoardId, newBoard.id);
+
+        for (const list of lists || []) {
+          const oldListId = list.id;
+          const { id, cards, ...listData } = list;
+          const newList = await this.createList(newBoard.id, listData);
+          listIdMap.set(oldListId, newList.id);
+
+          for (const card of cards || []) {
+            const { id, ...cardData } = card;
+            await this.createCard(newList.id, cardData);
+          }
+        }
+      }
+    }
   }
 
   async clearAllData(): Promise<void> {

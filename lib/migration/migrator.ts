@@ -75,8 +75,13 @@ export async function migrateLocalToCloud(
     // 3. Upload workspaces
     onProgress({ phase: 'workspaces', percent: 40, message: 'Uploading workspaces...' });
     let uploadedWorkspaces = 0;
+    const workspaceIdMap = new Map<string, string>(); // old ID -> new ID
+
     for (const workspace of localData.workspaces) {
-      await cloudAdapter.createWorkspace(workspace);
+      const oldId = workspace.id;
+      const { id, boards, ...workspaceData } = workspace; // Remove id and boards
+      const newWorkspace = await cloudAdapter.createWorkspace(workspaceData);
+      workspaceIdMap.set(oldId, newWorkspace.id);
       uploadedWorkspaces++;
       onProgress({
         phase: 'workspaces',
@@ -88,9 +93,15 @@ export async function migrateLocalToCloud(
     // 4. Upload boards
     onProgress({ phase: 'boards', percent: 50, message: 'Uploading boards...' });
     let uploadedBoards = 0;
+    const boardIdMap = new Map<string, string>(); // old ID -> new ID
+
     for (const workspace of localData.workspaces) {
+      const newWorkspaceId = workspaceIdMap.get(workspace.id)!;
       for (const board of workspace.boards || []) {
-        await cloudAdapter.createBoard(workspace.id, board);
+        const oldBoardId = board.id;
+        const { id, lists, ...boardData } = board; // Remove id and lists
+        const newBoard = await cloudAdapter.createBoard(newWorkspaceId, boardData);
+        boardIdMap.set(oldBoardId, newBoard.id);
         uploadedBoards++;
         onProgress({
           phase: 'boards',
@@ -103,10 +114,16 @@ export async function migrateLocalToCloud(
     // 5. Upload lists
     onProgress({ phase: 'lists', percent: 65, message: 'Uploading lists...' });
     let uploadedLists = 0;
+    const listIdMap = new Map<string, string>(); // old ID -> new ID
+
     for (const workspace of localData.workspaces) {
       for (const board of workspace.boards || []) {
+        const newBoardId = boardIdMap.get(board.id)!;
         for (const list of board.lists || []) {
-          await cloudAdapter.createList(board.id, list);
+          const oldListId = list.id;
+          const { id, cards, ...listData } = list; // Remove id and cards
+          const newList = await cloudAdapter.createList(newBoardId, listData);
+          listIdMap.set(oldListId, newList.id);
           uploadedLists++;
           onProgress({
             phase: 'lists',
@@ -120,11 +137,14 @@ export async function migrateLocalToCloud(
     // 6. Upload cards
     onProgress({ phase: 'cards', percent: 80, message: 'Uploading cards...' });
     let uploadedCards = 0;
+
     for (const workspace of localData.workspaces) {
       for (const board of workspace.boards || []) {
         for (const list of board.lists || []) {
+          const newListId = listIdMap.get(list.id)!;
           for (const card of list.cards || []) {
-            await cloudAdapter.createCard(list.id, card);
+            const { id, ...cardData } = card; // Remove id
+            await cloudAdapter.createCard(newListId, cardData);
             uploadedCards++;
             onProgress({
               phase: 'cards',

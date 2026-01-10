@@ -100,9 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
+    let subscription: any = null;
 
     async function initAuth() {
       try {
+        // Only run in browser
+        if (typeof window === 'undefined') {
+          return;
+        }
+
         // Get initial session
         const {
           data: { session },
@@ -116,6 +122,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           setIsLoading(false);
         }
+
+        // Listen for auth changes
+        const {
+          data: { subscription: authSubscription },
+        } = getClient().auth.onAuthStateChange(async (event: any, session: any) => {
+          if (!mounted) return;
+
+          if (event === 'SIGNED_IN' && session?.user) {
+            setUser(session.user);
+            const userProfile = await fetchProfile(session.user.id);
+            setProfile(userProfile);
+
+            // Update last login
+            await getClient()
+              .from('user_profiles')
+              .update({ last_login: new Date().toISOString() })
+              .eq('id', session.user.id);
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setProfile(null);
+          } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+            setUser(session.user);
+          }
+        });
+
+        subscription = authSubscription;
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
@@ -126,33 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = getClient().auth.onAuthStateChange(async (event: any, session: any) => {
-      if (!mounted) return;
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user);
-        const userProfile = await fetchProfile(session.user.id);
-        setProfile(userProfile);
-
-        // Update last login
-        await getClient()
-          .from('user_profiles')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setProfile(null);
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        setUser(session.user);
-      }
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [fetchProfile]);
 
