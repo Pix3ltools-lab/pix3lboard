@@ -125,6 +125,7 @@ pix3lboard/
    - **Empty Board**: Start from scratch
    - **Project Management Template**: 5 lists (To Do, In Progress, In Review, Approve, Delivered) with 5 example cards including Task, Feature, and Meeting types
    - **AI Music Video Template**: 6 lists (Ideas, Music, Visuals, Video, Edit, Done) with 5 AI-specific example cards (Music, Video, Text, Audio, Task)
+   - **Software Development Template**: 5 lists (Backlog, Development, Testing, Code Review, Done) with 5 example cards including Bug, Feature, Task, Meeting, and Text types
 4. Add name and description
 5. Click "Create Board"
 
