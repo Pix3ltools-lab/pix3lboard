@@ -22,6 +22,8 @@ import { TemplateType } from '@/components/board/BoardForm';
 import { generateId } from '@/lib/utils/id';
 import { throttle } from '@/lib/utils/debounce';
 import { calculateCardPosition, calculateListPosition } from '@/lib/utils/position';
+import { useStorageAdapter } from '@/lib/hooks/useStorageAdapter';
+import type { StorageMode } from '@/lib/storage/adapters';
 
 interface DataContextType {
   // State
@@ -29,6 +31,7 @@ interface DataContextType {
   activeWorkspaceId: string | null;
   activeBoardId: string | null;
   isInitialized: boolean;
+  storageMode: StorageMode;
 
   // Workspace operations
   createWorkspace: (data: Partial<Workspace>) => Workspace;
@@ -63,6 +66,7 @@ interface DataContextType {
   importData: (file: File) => Promise<void>;
   clearAllData: () => void;
   getStorageSize: () => StorageInfo;
+  switchStorageMode: (mode: StorageMode) => Promise<void>;
 
   // Navigation
   setActiveWorkspace: (id: string | null) => void;
@@ -72,30 +76,47 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const { adapter, mode: storageMode, switchMode, isReady } = useStorageAdapter();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data from localStorage on mount
+  // Load data from storage adapter on mount
   useEffect(() => {
-    const data = storage.load();
-    if (data && data.workspaces) {
-      setWorkspaces(data.workspaces);
-    }
-    setIsInitialized(true);
-  }, []);
+    if (!adapter || !isReady) return;
 
-  // Throttled save to localStorage (max once per second)
+    async function loadData() {
+      try {
+        const data = await adapter!.getAllData();
+        if (data && data.workspaces) {
+          setWorkspaces(data.workspaces);
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        // Fallback to empty state
+        setWorkspaces([]);
+      } finally {
+        setIsInitialized(true);
+      }
+    }
+
+    loadData();
+  }, [adapter, isReady]);
+
+  // Throttled save to storage adapter (max once per second)
   const saveToStorage = useMemo(
     () =>
-      throttle((data: AppData) => {
-        const result = storage.save(data);
-        if (!result.success) {
-          console.error('Failed to save:', result.error);
+      throttle(async (data: AppData) => {
+        if (!adapter) return;
+
+        try {
+          await adapter.importData(data);
+        } catch (error) {
+          console.error('Failed to save:', error);
         }
       }, 1000),
-    []
+    [adapter]
   );
 
   // Auto-save on data changes
@@ -606,11 +627,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setActiveBoardId(id);
   }, []);
 
+  // Switch storage mode (will reload the page)
+  const switchStorageMode = useCallback(async (mode: StorageMode) => {
+    await switchMode(mode);
+  }, [switchMode]);
+
   const value: DataContextType = {
     workspaces,
     activeWorkspaceId,
     activeBoardId,
     isInitialized,
+    storageMode,
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,
@@ -635,6 +662,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     importData,
     clearAllData,
     getStorageSize,
+    switchStorageMode,
     setActiveWorkspace,
     setActiveBoard,
   };
