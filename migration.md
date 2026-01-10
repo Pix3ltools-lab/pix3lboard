@@ -894,6 +894,1037 @@ Pix3lBoard - Privacy-first project management
 
 ---
 
+## Phase 2.6: Data Migration Implementation
+
+### Overview
+
+This phase details the **technical implementation** of migrating user data between localStorage (local mode) and Supabase (cloud mode).
+
+**Migration Types:**
+1. **Local → Cloud**: Upload localStorage data to Supabase
+2. **Cloud → Local**: Download Supabase data to localStorage
+
+---
+
+### Data Transformation Strategy
+
+#### localStorage Structure (Nested)
+
+```typescript
+// Current localStorage structure
+interface AppData {
+  workspaces: Workspace[]  // Contains nested boards
+}
+
+interface Workspace {
+  id: string              // nanoid format
+  boards: Board[]         // Nested array
+  // ... other fields
+}
+
+interface Board {
+  id: string              // nanoid format
+  lists: List[]           // Nested array
+  // ... other fields
+}
+
+interface List {
+  id: string              // nanoid format
+  cards: Card[]           // Nested array
+  // ... other fields
+}
+
+interface Card {
+  id: string              // nanoid format
+  // ... other fields
+}
+```
+
+#### Database Structure (Relational)
+
+```sql
+-- Supabase structure (relational with foreign keys)
+workspaces (id UUID, user_id UUID)
+  ↓
+boards (id UUID, workspace_id UUID, user_id UUID)
+  ↓
+lists (id UUID, board_id UUID, user_id UUID)
+  ↓
+cards (id UUID, list_id UUID, user_id UUID)
+```
+
+#### Transformation Rules
+
+| Aspect | localStorage | Supabase | Transformation |
+|--------|-------------|----------|----------------|
+| **ID Format** | nanoid (21 chars) | UUID v4 | Generate new UUID, maintain mapping |
+| **Structure** | Nested arrays | Foreign keys | Flatten hierarchy |
+| **User ID** | Not present | Required | Add current user ID |
+| **Timestamps** | ISO strings | TIMESTAMPTZ | Parse and validate |
+| **Relationships** | Implicit (nested) | Explicit (FK) | Map parent IDs |
+
+---
+
+### Migration Algorithm: Local → Cloud
+
+#### Phase 1: Pre-Migration Validation
+
+```typescript
+async function validateLocalData(data: AppData): Promise<ValidationResult> {
+  const errors: string[] = [];
+
+  // 1. Check data structure
+  if (!data.workspaces || !Array.isArray(data.workspaces)) {
+    errors.push('Invalid workspaces structure');
+  }
+
+  // 2. Validate each workspace
+  for (const workspace of data.workspaces) {
+    if (!workspace.id || !workspace.name) {
+      errors.push(`Invalid workspace: ${workspace.id}`);
+    }
+
+    // 3. Validate boards
+    for (const board of workspace.boards || []) {
+      if (!board.id || !board.name) {
+        errors.push(`Invalid board: ${board.id}`);
+      }
+
+      // 4. Validate lists
+      for (const list of board.lists || []) {
+        if (!list.id || !list.name) {
+          errors.push(`Invalid list: ${list.id}`);
+        }
+
+        // 5. Validate cards
+        for (const card of list.cards || []) {
+          if (!card.id || !card.title) {
+            errors.push(`Invalid card: ${card.id}`);
+          }
+
+          // Validate card type
+          if (!VALID_CARD_TYPES.includes(card.type)) {
+            errors.push(`Invalid card type: ${card.type} in card ${card.id}`);
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    stats: {
+      workspaces: data.workspaces.length,
+      boards: data.workspaces.reduce((sum, w) => sum + (w.boards?.length || 0), 0),
+      lists: data.workspaces.reduce((sum, w) =>
+        sum + w.boards.reduce((s, b) => s + (b.lists?.length || 0), 0), 0),
+      cards: data.workspaces.reduce((sum, w) =>
+        sum + w.boards.reduce((s, b) =>
+          s + b.lists.reduce((ss, l) => ss + (l.cards?.length || 0), 0), 0), 0)
+    }
+  };
+}
+```
+
+#### Phase 2: ID Mapping Strategy
+
+```typescript
+interface IDMapping {
+  workspaces: Map<string, string>;  // nanoid → UUID
+  boards: Map<string, string>;
+  lists: Map<string, string>;
+  cards: Map<string, string>;
+}
+
+function createIDMapping(data: AppData): IDMapping {
+  const mapping: IDMapping = {
+    workspaces: new Map(),
+    boards: new Map(),
+    lists: new Map(),
+    cards: new Map(),
+  };
+
+  // Generate UUIDs for all entities
+  for (const workspace of data.workspaces) {
+    mapping.workspaces.set(workspace.id, crypto.randomUUID());
+
+    for (const board of workspace.boards || []) {
+      mapping.boards.set(board.id, crypto.randomUUID());
+
+      for (const list of board.lists || []) {
+        mapping.lists.set(list.id, crypto.randomUUID());
+
+        for (const card of list.cards || []) {
+          mapping.cards.set(card.id, crypto.randomUUID());
+        }
+      }
+    }
+  }
+
+  return mapping;
+}
+```
+
+#### Phase 3: Data Upload Order
+
+**Critical**: Must maintain referential integrity (parents before children)
+
+```typescript
+async function migrateToCloud(
+  data: AppData,
+  userId: string,
+  onProgress: (percent: number, message: string) => void
+): Promise<MigrationResult> {
+
+  const mapping = createIDMapping(data);
+  const totalItems = calculateTotalItems(data);
+  let processedItems = 0;
+
+  try {
+    // STEP 1: Upload Workspaces (no dependencies)
+    onProgress(0, 'Uploading workspaces...');
+    const workspaceResults = await Promise.all(
+      data.workspaces.map(workspace =>
+        uploadWorkspace(workspace, mapping, userId)
+      )
+    );
+    processedItems += data.workspaces.length;
+    onProgress((processedItems / totalItems) * 100, `Uploaded ${workspaceResults.length} workspaces`);
+
+    // STEP 2: Upload Boards (depends on workspaces)
+    onProgress((processedItems / totalItems) * 100, 'Uploading boards...');
+    for (const workspace of data.workspaces) {
+      const boardResults = await Promise.all(
+        (workspace.boards || []).map(board =>
+          uploadBoard(board, workspace.id, mapping, userId)
+        )
+      );
+      processedItems += workspace.boards?.length || 0;
+      onProgress((processedItems / totalItems) * 100, `Uploaded ${boardResults.length} boards`);
+    }
+
+    // STEP 3: Upload Lists (depends on boards)
+    onProgress((processedItems / totalItems) * 100, 'Uploading lists...');
+    for (const workspace of data.workspaces) {
+      for (const board of workspace.boards || []) {
+        const listResults = await Promise.all(
+          (board.lists || []).map(list =>
+            uploadList(list, board.id, mapping, userId)
+          )
+        );
+        processedItems += board.lists?.length || 0;
+        onProgress((processedItems / totalItems) * 100, `Uploaded ${listResults.length} lists`);
+      }
+    }
+
+    // STEP 4: Upload Cards (depends on lists)
+    onProgress((processedItems / totalItems) * 100, 'Uploading cards...');
+    for (const workspace of data.workspaces) {
+      for (const board of workspace.boards || []) {
+        for (const list of board.lists || []) {
+          const cardResults = await Promise.all(
+            (list.cards || []).map(card =>
+              uploadCard(card, list.id, mapping, userId)
+            )
+          );
+          processedItems += list.cards?.length || 0;
+          onProgress((processedItems / totalItems) * 100, `Uploaded ${cardResults.length} cards`);
+        }
+      }
+    }
+
+    onProgress(100, 'Migration complete!');
+
+    return {
+      success: true,
+      mapping,
+      stats: {
+        workspaces: data.workspaces.length,
+        boards: workspaceResults.reduce((sum, w) => sum + (w.boards?.length || 0), 0),
+        // ... other stats
+      }
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      processedItems,
+      totalItems
+    };
+  }
+}
+```
+
+#### Phase 4: Upload Helper Functions
+
+```typescript
+async function uploadWorkspace(
+  workspace: Workspace,
+  mapping: IDMapping,
+  userId: string
+): Promise<void> {
+  const newId = mapping.workspaces.get(workspace.id)!;
+
+  const { error } = await supabase
+    .from('workspaces')
+    .insert({
+      id: newId,
+      user_id: userId,
+      name: workspace.name,
+      description: workspace.description,
+      icon: workspace.icon,
+      color: workspace.color,
+      created_at: workspace.createdAt,
+      updated_at: workspace.updatedAt,
+    });
+
+  if (error) throw new Error(`Failed to upload workspace ${workspace.name}: ${error.message}`);
+}
+
+async function uploadBoard(
+  board: Board,
+  workspaceId: string,
+  mapping: IDMapping,
+  userId: string
+): Promise<void> {
+  const newId = mapping.boards.get(board.id)!;
+  const newWorkspaceId = mapping.workspaces.get(workspaceId)!;
+
+  const { error } = await supabase
+    .from('boards')
+    .insert({
+      id: newId,
+      workspace_id: newWorkspaceId,
+      user_id: userId,
+      name: board.name,
+      description: board.description,
+      background: board.background,
+      allowed_card_types: board.allowedCardTypes,
+      created_at: board.createdAt,
+      updated_at: board.updatedAt,
+    });
+
+  if (error) throw new Error(`Failed to upload board ${board.name}: ${error.message}`);
+}
+
+async function uploadList(
+  list: List,
+  boardId: string,
+  mapping: IDMapping,
+  userId: string
+): Promise<void> {
+  const newId = mapping.lists.get(list.id)!;
+  const newBoardId = mapping.boards.get(boardId)!;
+
+  const { error } = await supabase
+    .from('lists')
+    .insert({
+      id: newId,
+      board_id: newBoardId,
+      user_id: userId,
+      name: list.name,
+      position: list.position,
+      created_at: list.createdAt,
+      updated_at: list.updatedAt,
+    });
+
+  if (error) throw new Error(`Failed to upload list ${list.name}: ${error.message}`);
+}
+
+async function uploadCard(
+  card: Card,
+  listId: string,
+  mapping: IDMapping,
+  userId: string
+): Promise<void> {
+  const newId = mapping.cards.get(card.id)!;
+  const newListId = mapping.lists.get(listId)!;
+
+  const { error } = await supabase
+    .from('cards')
+    .insert({
+      id: newId,
+      list_id: newListId,
+      user_id: userId,
+      title: card.title,
+      description: card.description,
+      position: card.position,
+      type: card.type,
+      prompt: card.prompt,
+      rating: card.rating,
+      ai_tool: card.aiTool,
+      responsible: card.responsible,
+      job_number: card.jobNumber,
+      severity: card.severity,
+      priority: card.priority,
+      effort: card.effort,
+      attendees: card.attendees,
+      meeting_date: card.meetingDate,
+      tags: card.tags,
+      links: card.links,
+      due_date: card.dueDate,
+      created_at: card.createdAt,
+      updated_at: card.updatedAt,
+    });
+
+  if (error) throw new Error(`Failed to upload card ${card.title}: ${error.message}`);
+}
+```
+
+---
+
+### Migration Algorithm: Cloud → Local
+
+#### Phase 1: Data Download
+
+```typescript
+async function migrateToLocal(
+  userId: string,
+  onProgress: (percent: number, message: string) => void
+): Promise<MigrationResult> {
+
+  try {
+    // STEP 1: Download all workspaces
+    onProgress(10, 'Downloading workspaces...');
+    const { data: workspaces, error: wsError } = await supabase
+      .from('workspaces')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (wsError) throw new Error(`Failed to download workspaces: ${wsError.message}`);
+
+    // STEP 2: Download all boards
+    onProgress(30, 'Downloading boards...');
+    const { data: boards, error: boardsError } = await supabase
+      .from('boards')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (boardsError) throw new Error(`Failed to download boards: ${boardsError.message}`);
+
+    // STEP 3: Download all lists
+    onProgress(50, 'Downloading lists...');
+    const { data: lists, error: listsError } = await supabase
+      .from('lists')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (listsError) throw new Error(`Failed to download lists: ${listsError.message}`);
+
+    // STEP 4: Download all cards
+    onProgress(70, 'Downloading cards...');
+    const { data: cards, error: cardsError } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (cardsError) throw new Error(`Failed to download cards: ${cardsError.message}`);
+
+    // STEP 5: Reconstruct nested structure
+    onProgress(90, 'Reconstructing data structure...');
+    const appData = reconstructNested(workspaces, boards, lists, cards);
+
+    // STEP 6: Save to localStorage
+    onProgress(95, 'Saving to localStorage...');
+    localStorage.setItem('pix3lboard-data', JSON.stringify(appData));
+
+    onProgress(100, 'Migration complete!');
+
+    return {
+      success: true,
+      stats: {
+        workspaces: workspaces.length,
+        boards: boards.length,
+        lists: lists.length,
+        cards: cards.length,
+      }
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+```
+
+#### Phase 2: Reconstruct Nested Structure
+
+```typescript
+function reconstructNested(
+  workspaces: any[],
+  boards: any[],
+  lists: any[],
+  cards: any[]
+): AppData {
+
+  // Build lookup maps for O(1) access
+  const boardsByWorkspace = groupBy(boards, 'workspace_id');
+  const listsByBoard = groupBy(lists, 'board_id');
+  const cardsByList = groupBy(cards, 'list_id');
+
+  // Reconstruct hierarchy
+  return {
+    workspaces: workspaces.map(workspace => ({
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description,
+      icon: workspace.icon,
+      color: workspace.color,
+      createdAt: workspace.created_at,
+      updatedAt: workspace.updated_at,
+
+      boards: (boardsByWorkspace[workspace.id] || []).map(board => ({
+        id: board.id,
+        workspaceId: board.workspace_id,
+        name: board.name,
+        description: board.description,
+        background: board.background,
+        allowedCardTypes: board.allowed_card_types,
+        createdAt: board.created_at,
+        updatedAt: board.updated_at,
+
+        lists: (listsByBoard[board.id] || []).map(list => ({
+          id: list.id,
+          boardId: list.board_id,
+          name: list.name,
+          position: list.position,
+          createdAt: list.created_at,
+          updatedAt: list.updated_at,
+
+          cards: (cardsByList[list.id] || []).map(card => ({
+            id: card.id,
+            listId: card.list_id,
+            title: card.title,
+            description: card.description,
+            position: card.position,
+            type: card.type,
+            prompt: card.prompt,
+            rating: card.rating,
+            aiTool: card.ai_tool,
+            responsible: card.responsible,
+            jobNumber: card.job_number,
+            severity: card.severity,
+            priority: card.priority,
+            effort: card.effort,
+            attendees: card.attendees,
+            meetingDate: card.meeting_date,
+            tags: card.tags,
+            links: card.links,
+            dueDate: card.due_date,
+            createdAt: card.created_at,
+            updatedAt: card.updated_at,
+          }))
+        }))
+      }))
+    }))
+  };
+}
+
+function groupBy<T>(array: T[], key: string): Record<string, T[]> {
+  return array.reduce((acc, item) => {
+    const groupKey = item[key];
+    if (!acc[groupKey]) acc[groupKey] = [];
+    acc[groupKey].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
+```
+
+---
+
+### Conflict Resolution Strategies
+
+#### Scenario 1: User Already Has Cloud Data
+
+**Problem**: User switches to cloud mode, but already has data in Supabase from another device.
+
+**Solutions**:
+
+**Option A: Merge (Recommended for collaboration)**
+```typescript
+async function mergeLocalToCloud(localData: AppData, userId: string): Promise<void> {
+  // 1. Download existing cloud data
+  const cloudData = await downloadCloudData(userId);
+
+  // 2. Compare by name + created_at to find duplicates
+  const existingWorkspaces = new Set(
+    cloudData.workspaces.map(w => `${w.name}:${w.createdAt}`)
+  );
+
+  // 3. Upload only new workspaces
+  const newWorkspaces = localData.workspaces.filter(
+    w => !existingWorkspaces.has(`${w.name}:${w.createdAt}`)
+  );
+
+  // 4. Upload new data
+  await uploadWorkspaces(newWorkspaces, userId);
+
+  // 5. Show merge report to user
+  showMergeReport({
+    localWorkspaces: localData.workspaces.length,
+    cloudWorkspaces: cloudData.workspaces.length,
+    newWorkspaces: newWorkspaces.length,
+    duplicatesSkipped: localData.workspaces.length - newWorkspaces.length
+  });
+}
+```
+
+**Option B: Replace Cloud (Destructive)**
+```typescript
+async function replaceCloudData(localData: AppData, userId: string): Promise<void> {
+  // 1. Confirm with user (IMPORTANT!)
+  const confirmed = await confirmDialog({
+    title: 'Replace Cloud Data?',
+    message: 'This will DELETE all your cloud data and replace it with local data. This cannot be undone.',
+    confirmText: 'Replace',
+    variant: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  // 2. Delete all existing cloud data
+  await supabase.from('cards').delete().eq('user_id', userId);
+  await supabase.from('lists').delete().eq('user_id', userId);
+  await supabase.from('boards').delete().eq('user_id', userId);
+  await supabase.from('workspaces').delete().eq('user_id', userId);
+
+  // 3. Upload local data
+  await migrateToCloud(localData, userId, onProgress);
+}
+```
+
+**Option C: Keep Cloud, Discard Local**
+```typescript
+async function discardLocalData(): Promise<void> {
+  const confirmed = await confirmDialog({
+    title: 'Discard Local Data?',
+    message: 'Your local data will be replaced with cloud data. Local changes will be lost.',
+    confirmText: 'Discard Local',
+    variant: 'warning'
+  });
+
+  if (!confirmed) return;
+
+  // Download cloud data and save to localStorage
+  await migrateToLocal(userId, onProgress);
+}
+```
+
+#### Scenario 2: Duplicate Detection
+
+```typescript
+interface DuplicateCheck {
+  isDuplicate: boolean;
+  existingId?: string;
+  similarity: number; // 0-1
+}
+
+function checkDuplicate(
+  localItem: Workspace | Board,
+  cloudItems: Array<Workspace | Board>
+): DuplicateCheck {
+
+  for (const cloudItem of cloudItems) {
+    // Exact name match + similar timestamp (within 1 minute)
+    if (
+      localItem.name === cloudItem.name &&
+      Math.abs(
+        new Date(localItem.createdAt).getTime() -
+        new Date(cloudItem.createdAt).getTime()
+      ) < 60000 // 1 minute
+    ) {
+      return {
+        isDuplicate: true,
+        existingId: cloudItem.id,
+        similarity: 1.0
+      };
+    }
+
+    // Fuzzy name match (Levenshtein distance)
+    const similarity = calculateSimilarity(localItem.name, cloudItem.name);
+    if (similarity > 0.85) {
+      return {
+        isDuplicate: true,
+        existingId: cloudItem.id,
+        similarity
+      };
+    }
+  }
+
+  return { isDuplicate: false, similarity: 0 };
+}
+```
+
+---
+
+### Rollback Strategy
+
+#### Automatic Backup Before Migration
+
+```typescript
+async function createMigrationBackup(): Promise<string> {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupKey = `pix3lboard-backup-${timestamp}`;
+
+  // Save current data as backup
+  const currentData = localStorage.getItem('pix3lboard-data');
+  if (currentData) {
+    localStorage.setItem(backupKey, currentData);
+  }
+
+  return backupKey;
+}
+
+async function restoreFromBackup(backupKey: string): Promise<void> {
+  const backupData = localStorage.getItem(backupKey);
+  if (backupData) {
+    localStorage.setItem('pix3lboard-data', backupData);
+    console.log(`Restored from backup: ${backupKey}`);
+  } else {
+    throw new Error(`Backup not found: ${backupKey}`);
+  }
+}
+```
+
+#### Migration with Rollback
+
+```typescript
+async function migrateWithRollback(
+  data: AppData,
+  userId: string,
+  onProgress: (percent: number, message: string) => void
+): Promise<MigrationResult> {
+
+  // 1. Create backup
+  const backupKey = await createMigrationBackup();
+  console.log(`Created backup: ${backupKey}`);
+
+  try {
+    // 2. Attempt migration
+    const result = await migrateToCloud(data, userId, onProgress);
+
+    if (result.success) {
+      // 3. Verify uploaded data
+      const verified = await verifyCloudData(userId, data);
+
+      if (verified) {
+        // 4. Success - keep backup for 7 days
+        scheduleBackupCleanup(backupKey, 7);
+        return result;
+      } else {
+        throw new Error('Data verification failed');
+      }
+    } else {
+      throw new Error(result.error);
+    }
+
+  } catch (error) {
+    // 5. Rollback on failure
+    console.error('Migration failed, rolling back:', error);
+    await restoreFromBackup(backupKey);
+
+    return {
+      success: false,
+      error: error.message,
+      rolledBack: true,
+      backupKey
+    };
+  }
+}
+```
+
+#### Data Verification
+
+```typescript
+async function verifyCloudData(userId: string, originalData: AppData): Promise<boolean> {
+  // Download data from cloud
+  const cloudData = await downloadCloudData(userId);
+
+  // Compare counts
+  const localCounts = {
+    workspaces: originalData.workspaces.length,
+    boards: originalData.workspaces.reduce((sum, w) => sum + (w.boards?.length || 0), 0),
+    lists: originalData.workspaces.reduce((sum, w) =>
+      sum + w.boards.reduce((s, b) => s + (b.lists?.length || 0), 0), 0),
+    cards: originalData.workspaces.reduce((sum, w) =>
+      sum + w.boards.reduce((s, b) =>
+        s + b.lists.reduce((ss, l) => ss + (l.cards?.length || 0), 0), 0), 0)
+  };
+
+  const cloudCounts = {
+    workspaces: cloudData.workspaces.length,
+    boards: cloudData.workspaces.reduce((sum, w) => sum + (w.boards?.length || 0), 0),
+    lists: cloudData.workspaces.reduce((sum, w) =>
+      sum + w.boards.reduce((s, b) => s + (b.lists?.length || 0), 0), 0),
+    cards: cloudData.workspaces.reduce((sum, w) =>
+      sum + w.boards.reduce((s, b) =>
+        s + b.lists.reduce((ss, l) => ss + (l.cards?.length || 0), 0), 0), 0)
+  };
+
+  // All counts must match
+  return (
+    localCounts.workspaces === cloudCounts.workspaces &&
+    localCounts.boards === cloudCounts.boards &&
+    localCounts.lists === cloudCounts.lists &&
+    localCounts.cards === cloudCounts.cards
+  );
+}
+```
+
+---
+
+### Error Handling
+
+#### Partial Failure Recovery
+
+```typescript
+interface MigrationState {
+  phase: 'workspaces' | 'boards' | 'lists' | 'cards';
+  processedIds: string[];
+  failedIds: string[];
+  lastSuccessfulId?: string;
+}
+
+async function resumeMigration(
+  data: AppData,
+  userId: string,
+  previousState: MigrationState
+): Promise<MigrationResult> {
+
+  // Resume from last successful point
+  switch (previousState.phase) {
+    case 'workspaces':
+      // Some workspaces failed, retry only failed ones
+      const failedWorkspaces = data.workspaces.filter(
+        w => previousState.failedIds.includes(w.id)
+      );
+      await uploadWorkspaces(failedWorkspaces, userId);
+      break;
+
+    case 'boards':
+      // Workspaces complete, retry failed boards
+      // ... similar logic
+      break;
+
+    // ... other phases
+  }
+}
+```
+
+#### Network Error Handling
+
+```typescript
+async function uploadWithRetry<T>(
+  uploadFn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await uploadFn();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error; // Final attempt failed
+      }
+
+      // Exponential backoff
+      const delay = delayMs * Math.pow(2, attempt - 1);
+      console.log(`Upload failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+
+  throw new Error('Upload failed after max retries');
+}
+```
+
+---
+
+### Progress Tracking UI
+
+#### Migration Modal Component
+
+```typescript
+interface MigrationModalProps {
+  isOpen: boolean;
+  direction: 'local-to-cloud' | 'cloud-to-local';
+  onComplete: () => void;
+  onCancel: () => void;
+}
+
+function MigrationModal({ isOpen, direction, onComplete, onCancel }: MigrationModalProps) {
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleMigrate = async () => {
+    try {
+      if (direction === 'local-to-cloud') {
+        const data = await loadLocalData();
+        const userId = getCurrentUserId();
+
+        const result = await migrateWithRollback(
+          data,
+          userId,
+          (percent, msg) => {
+            setProgress(percent);
+            setMessage(msg);
+          }
+        );
+
+        if (result.success) {
+          onComplete();
+        } else {
+          setError(result.error);
+        }
+      } else {
+        // cloud-to-local
+        const userId = getCurrentUserId();
+
+        const result = await migrateToLocal(
+          userId,
+          (percent, msg) => {
+            setProgress(percent);
+            setMessage(msg);
+          }
+        );
+
+        if (result.success) {
+          onComplete();
+        } else {
+          setError(result.error);
+        }
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onCancel}>
+      <h2>Data Migration</h2>
+
+      {!error ? (
+        <>
+          <ProgressBar value={progress} />
+          <p>{message}</p>
+
+          {progress === 100 ? (
+            <Button onClick={onComplete}>Done</Button>
+          ) : (
+            <Button onClick={onCancel} disabled={progress > 0}>Cancel</Button>
+          )}
+        </>
+      ) : (
+        <>
+          <ErrorMessage>{error}</ErrorMessage>
+          <Button onClick={onCancel}>Close</Button>
+        </>
+      )}
+    </Modal>
+  );
+}
+```
+
+---
+
+### Testing Checklist
+
+**Pre-Migration Testing:**
+- [ ] Validate localStorage data structure
+- [ ] Check for corrupted data
+- [ ] Verify all IDs are present
+- [ ] Test with empty data
+- [ ] Test with maximum data (5MB)
+
+**Migration Testing (Local → Cloud):**
+- [ ] Test with small dataset (1 workspace, 1 board)
+- [ ] Test with medium dataset (10 workspaces, 50 boards)
+- [ ] Test with large dataset (100 workspaces, 500 boards)
+- [ ] Test with all 9 card types
+- [ ] Test with special characters in names
+- [ ] Test network interruption (rollback)
+- [ ] Test duplicate detection
+- [ ] Verify all relationships (foreign keys)
+- [ ] Verify data integrity after upload
+
+**Migration Testing (Cloud → Local):**
+- [ ] Test download with small dataset
+- [ ] Test download with large dataset
+- [ ] Verify nested structure reconstruction
+- [ ] Test localStorage size limits
+- [ ] Test with corrupted cloud data
+
+**Conflict Resolution:**
+- [ ] Test merge strategy
+- [ ] Test replace strategy
+- [ ] Test duplicate detection
+- [ ] Verify user confirmation dialogs
+
+**Rollback Testing:**
+- [ ] Test automatic backup creation
+- [ ] Test rollback on network error
+- [ ] Test rollback on validation failure
+- [ ] Verify backup restoration
+
+**Edge Cases:**
+- [ ] Empty workspaces
+- [ ] Workspaces without boards
+- [ ] Boards without lists
+- [ ] Lists without cards
+- [ ] Very long names (>255 chars)
+- [ ] Special characters (emoji, unicode)
+- [ ] Invalid timestamps
+- [ ] Missing required fields
+
+---
+
+### Implementation Files
+
+**New Files Required:**
+
+```
+lib/migration/
+├── validator.ts         # Data validation functions
+├── mapper.ts           # ID mapping functions
+├── uploader.ts         # Upload to Supabase
+├── downloader.ts       # Download from Supabase
+├── reconstructor.ts    # Rebuild nested structure
+├── conflict.ts         # Conflict resolution
+├── rollback.ts         # Backup and restore
+└── progress.ts         # Progress tracking
+
+components/migration/
+├── MigrationModal.tsx  # Main migration UI
+├── ProgressBar.tsx     # Progress indicator
+├── ConflictDialog.tsx  # Conflict resolution UI
+└── MigrationSettings.tsx # Settings page integration
+```
+
+**Updated Files:**
+
+```
+lib/context/DataContext.tsx
+  - Add migration state
+  - Add migration functions
+  - Handle storage mode switching
+
+components/layout/Header.tsx
+  - Add storage mode indicator
+  - Show migration status
+
+app/settings/page.tsx
+  - Add migration section
+  - Storage mode toggle
+```
+
+---
+
 ### Phase 3: Code Architecture Changes
 
 #### 3.1 Create Supabase Client
