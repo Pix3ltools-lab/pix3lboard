@@ -9,12 +9,19 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 ### Core Functionality
 - **Workspaces & Boards**: Organize projects with customizable workspaces and boards
 - **Kanban Lists & Cards**: Full drag & drop support for lists and cards
+- **Multiple Card Types**:
+  - **AI Content**: Music, Video, Image, Audio, Text
+  - **Project Management**: Task, Bug, Feature, Meeting
+  - Type-specific fields (bug severity, feature priority/effort, meeting attendees)
 - **AI-Specific Fields**:
-  - Card types (Music, Video, Image, Task)
   - AI prompts and tool tracking
   - Rating system (1-5 stars)
   - Tags and links management
-- **Search & Filter**: Search cards by title and filter by tags
+- **Project Management Fields**:
+  - Job Number tracking (format: Letter-2digits-4digits)
+  - Responsible person assignment
+  - Due dates and meeting dates
+- **Search & Filter**: Search cards by title, filter by tags and job number
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
@@ -116,8 +123,8 @@ pix3lboard/
 2. Click "Create Board"
 3. Choose a template option:
    - **Empty Board**: Start from scratch
-   - **Project Management Template**: 5 lists (To Do, In Progress, In Review, Approve, Delivered) with example cards
-   - **AI Music Video Template**: 6 lists (Ideas, Music, Visuals, Video, Edit, Done) with AI-specific example cards
+   - **Project Management Template**: 5 lists (To Do, In Progress, In Review, Approve, Delivered) with 5 example cards including Task, Feature, and Meeting types
+   - **AI Music Video Template**: 6 lists (Ideas, Music, Visuals, Video, Edit, Done) with 5 AI-specific example cards (Music, Video, Text, Audio, Task)
 4. Add name and description
 5. Click "Create Board"
 
@@ -126,10 +133,18 @@ pix3lboard/
 1. Click "Add a card" in any list
 2. Click on a card to open the detail modal
 3. Edit all fields:
-   - **Type**: Music, Video, Image, or Task (dropdown selector)
-   - **AI Prompt**: The prompt you used
+   - **Type**: Choose from 9 types (dropdown selector):
+     - AI Content: Music 🎵, Video 🎬, Image 🖼️, Audio 🎙️, Text 📝
+     - Project: Task ✅, Bug 🐛, Feature ✨, Meeting 📅
+   - **Job Number**: Optional tracking number (format: C-26-0001)
+   - **Description**: Detailed description
+   - **Type-Specific Fields**:
+     - Bug: Severity level (Low, Medium, High, Critical)
+     - Feature: Priority (P1/P2/P3) and Effort (S/M/L)
+     - Meeting: Attendees list (max 5) and meeting date
+   - **AI Prompt**: The prompt you used (for AI content types)
    - **Rating**: 1-5 stars
-   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney", "Claude"
+   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney", "Claude", "ElevenLabs"
    - **Responsible**: Person responsible for this card
    - **Tags**: Up to 5 tags per card
    - **Due Date**: Optional deadline
