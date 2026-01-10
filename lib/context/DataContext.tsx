@@ -15,7 +15,8 @@ import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
 import {
   createAIMusicVideoBoard,
-  createProjectManagementBoard
+  createProjectManagementBoard,
+  createSoftwareDevelopmentBoard
 } from '@/lib/storage/template';
 import { TemplateType } from '@/components/board/BoardForm';
 import { generateId } from '@/lib/utils/id';
@@ -165,6 +166,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       } else if (templateType === 'project-management') {
         // Use Project Management template
         newBoard = createProjectManagementBoard(workspaceId);
+        if (data.name) {
+          newBoard.name = data.name;
+        }
+        if (data.description) {
+          newBoard.description = data.description;
+        }
+      } else if (templateType === 'software-dev') {
+        // Use Software Development template
+        newBoard = createSoftwareDevelopmentBoard(workspaceId);
         if (data.name) {
           newBoard.name = data.name;
         }

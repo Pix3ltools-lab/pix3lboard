@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 
-export type TemplateType = 'none' | 'ai-music' | 'project-management';
+export type TemplateType = 'none' | 'ai-music' | 'project-management' | 'software-dev';
 
 interface BoardFormProps {
   isOpen: boolean;
@@ -144,6 +144,26 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
                   </div>
                   <div className="text-sm text-text-secondary">
                     6 lists: Ideas, Music, Visuals, Video, Edit, Done + 5 example cards
+                  </div>
+                </div>
+              </label>
+
+              {/* Software Development template */}
+              <label className="flex items-start gap-3 p-3 bg-bg-secondary rounded-lg border border-bg-tertiary cursor-pointer hover:border-accent-primary/50 transition-colors">
+                <input
+                  type="radio"
+                  name="template"
+                  value="software-dev"
+                  checked={templateType === 'software-dev'}
+                  onChange={(e) => setTemplateType(e.target.value as TemplateType)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium text-text-primary mb-1">
+                    💻 Software Development Template
+                  </div>
+                  <div className="text-sm text-text-secondary">
+                    5 lists: Backlog, Development, Testing, Code Review, Done + 5 example cards
                   </div>
                 </div>
               </label>

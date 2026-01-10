@@ -308,6 +308,154 @@ export function createProjectManagementBoard(workspaceId: string): Board {
 }
 
 /**
+ * Create the "Software Development" template board
+ * with 5 lists and 5 example cards
+ */
+export function createSoftwareDevelopmentBoard(workspaceId: string): Board {
+  const now = new Date().toISOString();
+  const boardId = generateId();
+
+  // Create 5 lists
+  const backlogList: List = {
+    id: generateId(),
+    boardId,
+    name: '📋 Backlog',
+    position: 1000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const developmentList: List = {
+    id: generateId(),
+    boardId,
+    name: '🔨 Development',
+    position: 2000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const testingList: List = {
+    id: generateId(),
+    boardId,
+    name: '🧪 Testing',
+    position: 3000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const reviewList: List = {
+    id: generateId(),
+    boardId,
+    name: '👀 Code Review',
+    position: 4000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  const doneList: List = {
+    id: generateId(),
+    boardId,
+    name: '✅ Done',
+    position: 5000,
+    createdAt: now,
+    updatedAt: now,
+    cards: [],
+  };
+
+  // Create 5 example cards
+  const card1: Card = {
+    id: generateId(),
+    listId: backlogList.id,
+    title: 'Fix login authentication issue',
+    description: 'Users unable to login with OAuth providers after recent update',
+    position: 1000,
+    type: 'bug',
+    severity: 'high',
+    tags: ['authentication', 'urgent'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card2: Card = {
+    id: generateId(),
+    listId: developmentList.id,
+    title: 'Add OAuth integration',
+    description: 'Implement Google and GitHub OAuth authentication',
+    position: 1000,
+    type: 'feature',
+    priority: 'high',
+    effort: 'large',
+    tags: ['authentication', 'oauth'],
+    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card3: Card = {
+    id: generateId(),
+    listId: testingList.id,
+    title: 'Update project dependencies',
+    description: 'Upgrade to Next.js 15 and update all packages',
+    position: 1000,
+    type: 'task',
+    tags: ['maintenance', 'dependencies'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card4: Card = {
+    id: generateId(),
+    listId: backlogList.id,
+    title: 'Sprint Planning Meeting',
+    description: 'Plan next 2-week sprint and assign tasks',
+    position: 2000,
+    type: 'meeting',
+    attendees: ['Tech Lead', 'Backend Dev', 'Frontend Dev', 'QA Engineer'],
+    meetingDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
+    tags: ['sprint', 'planning'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const card5: Card = {
+    id: generateId(),
+    listId: reviewList.id,
+    title: 'API Documentation',
+    description: 'Write comprehensive API endpoint documentation',
+    position: 1000,
+    type: 'text',
+    prompt: 'Generate REST API documentation for user authentication endpoints...',
+    aiTool: 'Claude',
+    tags: ['documentation', 'api'],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Assign cards to lists
+  backlogList.cards.push(card1);
+  backlogList.cards.push(card4);
+  developmentList.cards.push(card2);
+  testingList.cards.push(card3);
+  reviewList.cards.push(card5);
+
+  // Create board with all lists
+  return {
+    id: boardId,
+    workspaceId,
+    name: 'Software Development Board',
+    description: 'Template for agile software development teams',
+    allowedCardTypes: ['bug', 'feature', 'task', 'meeting', 'text'],
+    createdAt: now,
+    updatedAt: now,
+    lists: [backlogList, developmentList, testingList, reviewList, doneList],
+  };
+}
+
+/**
  * Legacy function name for backward compatibility
  */
 export function createTemplateBoard(workspaceId: string): Board {
