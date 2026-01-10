@@ -44,16 +44,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = getSupabaseBrowserClient();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Lazy-load Supabase client (only on client side)
+  const getClient = () => {
+    if (typeof window === 'undefined') {
+      throw new Error('Supabase client can only be used on client side');
+    }
+    return getSupabaseBrowserClient();
+  };
 
   // Fetch user profile from database
   const fetchProfile = useCallback(
     async (userId: string): Promise<UserProfile | null> => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await getClient()
           .from('user_profiles')
           .select('*')
           .eq('id', userId)
@@ -80,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    [supabase]
+    []
   );
 
   // Refresh profile data
@@ -99,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Get initial session
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await getClient().auth.getSession();
 
         if (mounted) {
           if (session?.user) {
@@ -122,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    } = getClient().auth.onAuthStateChange(async (event: any, session: any) => {
       if (!mounted) return;
 
       if (event === 'SIGNED_IN' && session?.user) {
@@ -131,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(userProfile);
 
         // Update last login
-        await supabase
+        await getClient()
           .from('user_profiles')
           .update({ last_login: new Date().toISOString() })
           .eq('id', session.user.id);
@@ -147,13 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase, fetchProfile]);
+  }, [fetchProfile]);
 
   // Sign in
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await getClient().auth.signInWithPassword({
           email,
           password,
         });
@@ -169,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Check if user is active
           if (userProfile && !userProfile.isActive) {
-            await supabase.auth.signOut();
+            await getClient().auth.signOut();
             setUser(null);
             setProfile(null);
             return { error: 'Account is inactive. Contact administrator.' };
@@ -181,15 +188,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: 'An unexpected error occurred' };
       }
     },
-    [supabase, fetchProfile]
+    [fetchProfile]
   );
 
   // Sign out
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await getClient().auth.signOut();
     setUser(null);
     setProfile(null);
-  }, [supabase]);
+  }, []);
 
   const value: AuthContextType = {
     user,

@@ -52,22 +52,28 @@ function toSnakeCase(obj: any): any {
 }
 
 export class SupabaseAdapter implements StorageAdapter {
-  private supabase: SupabaseClient
+  private supabase: SupabaseClient | null = null
   private userId: string | null = null
 
   constructor() {
-    this.supabase = getSupabaseBrowserClient()
-    this.initializeAuth()
+    // Lazy initialization - only create client when first used
+  }
+
+  private getClient(): SupabaseClient {
+    if (!this.supabase) {
+      this.supabase = getSupabaseBrowserClient()
+    }
+    return this.supabase
   }
 
   private async initializeAuth() {
-    const { data: { user } } = await this.supabase.auth.getUser()
+    const { data: { user } } = await this.getClient().auth.getUser()
     this.userId = user?.id || null
   }
 
   private async ensureAuth(): Promise<string> {
     if (!this.userId) {
-      const { data: { user } } = await this.supabase.auth.getUser()
+      const { data: { user } } = await this.getClient().auth.getUser()
       if (!user) {
         throw new Error('User not authenticated')
       }
@@ -791,9 +797,9 @@ export class SupabaseAdapter implements StorageAdapter {
     const userId = await this.ensureAuth()
 
     // Delete in reverse order (cards -> lists -> boards -> workspaces) due to foreign keys
-    await this.supabase.from('cards').delete().eq('user_id', userId)
-    await this.supabase.from('lists').delete().eq('user_id', userId)
-    await this.supabase.from('boards').delete().eq('user_id', userId)
-    await this.supabase.from('workspaces').delete().eq('user_id', userId)
+    await this.getClient().from('cards').delete().eq('user_id', userId)
+    await this.getClient().from('lists').delete().eq('user_id', userId)
+    await this.getClient().from('boards').delete().eq('user_id', userId)
+    await this.getClient().from('workspaces').delete().eq('user_id', userId)
   }
 }

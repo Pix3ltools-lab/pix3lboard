@@ -17,14 +17,21 @@ interface UserProfile {
 }
 
 export function useAdmin() {
-  const supabase = getSupabaseBrowserClient();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Lazy-load Supabase client (only on client side)
+  const getClient = () => {
+    if (typeof window === 'undefined') {
+      throw new Error('Supabase client can only be used on client side');
+    }
+    return getSupabaseBrowserClient();
+  };
 
   // Fetch all users (admin only)
   const fetchUsers = useCallback(async (): Promise<UserProfile[]> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getClient()
         .from('user_profiles')
         .select('*')
         .order('created_at', { ascending: false });
@@ -46,7 +53,7 @@ export function useAdmin() {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   // Create user (admin only)
   const createUser = useCallback(
@@ -61,7 +68,7 @@ export function useAdmin() {
         // Get current admin user
         const {
           data: { user: currentUser },
-        } = await supabase.auth.getUser();
+        } = await getClient().auth.getUser();
 
         if (!currentUser) {
           return { success: false, error: 'Not authenticated' };
@@ -71,7 +78,7 @@ export function useAdmin() {
         // Note: This requires service_role key, so we'll use a workaround
         // For now, we create a profile and let the user set password via invitation
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await getClient().auth.signUp({
           email,
           password,
           options: {
@@ -88,7 +95,7 @@ export function useAdmin() {
         }
 
         // Create user profile
-        const { error: profileError } = await supabase
+        const { error: profileError } = await getClient()
           .from('user_profiles')
           .insert({
             id: authData.user.id,
@@ -110,7 +117,7 @@ export function useAdmin() {
         setIsLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   // Update user profile (admin only)
@@ -130,7 +137,7 @@ export function useAdmin() {
         if (updates.role !== undefined) updateData.role = updates.role;
         if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
 
-        const { error } = await supabase
+        const { error } = await getClient()
           .from('user_profiles')
           .update(updateData)
           .eq('id', userId);
@@ -146,7 +153,7 @@ export function useAdmin() {
         setIsLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   // Delete user (admin only)
@@ -156,7 +163,7 @@ export function useAdmin() {
       try {
         // Note: This only deletes the profile, not the auth user
         // Deleting auth users requires admin API with service_role key
-        const { error } = await supabase
+        const { error } = await getClient()
           .from('user_profiles')
           .delete()
           .eq('id', userId);
@@ -172,7 +179,7 @@ export function useAdmin() {
         setIsLoading(false);
       }
     },
-    [supabase]
+    []
   );
 
   return {
