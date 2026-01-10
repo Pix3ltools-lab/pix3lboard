@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
+import { UserMenu } from '../auth/UserMenu';
 
 const APP_VERSION = '1.1.0';
 
@@ -26,6 +27,7 @@ export function Header({ showStorage = true }: HeaderProps) {
         {/* Right side */}
         <div className="flex items-center gap-4">
           {showStorage && <StorageIndicator />}
+          <UserMenu />
           <ThemeToggle />
         </div>
       </div>
