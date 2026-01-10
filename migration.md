@@ -194,12 +194,24 @@ CREATE TABLE cards (
   description TEXT,
   position INTEGER NOT NULL,
 
-  -- Card type and AI fields
-  type TEXT CHECK (type IN ('music', 'video', 'image', 'task')),
+  -- Card type (9 types: AI content + Project management)
+  type TEXT CHECK (type IN ('music', 'video', 'image', 'task', 'text', 'bug', 'feature', 'audio', 'meeting')),
+
+  -- AI-specific fields
   prompt TEXT,
   rating SMALLINT CHECK (rating >= 1 AND rating <= 5),
   ai_tool TEXT,
+
+  -- Project management fields
   responsible TEXT,
+  job_number TEXT, -- Format: Letter-2digits-4digits (e.g., C-26-0001)
+
+  -- Type-specific fields
+  severity TEXT CHECK (severity IN ('low', 'medium', 'high', 'critical')), -- For bug type
+  priority TEXT CHECK (priority IN ('low', 'medium', 'high')), -- For feature type
+  effort TEXT CHECK (effort IN ('small', 'medium', 'large')), -- For feature type
+  attendees TEXT[] DEFAULT '{}', -- For meeting type (max 5)
+  meeting_date TIMESTAMPTZ, -- For meeting type
 
   -- Arrays
   tags TEXT[] DEFAULT '{}',
