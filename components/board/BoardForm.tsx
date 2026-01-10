@@ -123,7 +123,7 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
                     📋 Project Management Template
                   </div>
                   <div className="text-sm text-text-secondary">
-                    5 lists: To Do, In Progress, In Review, Approve, Delivered + 3 example cards
+                    5 lists: To Do, In Progress, In Review, Approve, Delivered + 5 example cards
                   </div>
                 </div>
               </label>
@@ -143,7 +143,7 @@ export function BoardForm({ isOpen, onClose, onSubmit, board }: BoardFormProps) 
                     🎵 AI Music Video Template
                   </div>
                   <div className="text-sm text-text-secondary">
-                    6 lists: Ideas, Music, Visuals, Video, Edit, Done + 3 example cards
+                    6 lists: Ideas, Music, Visuals, Video, Edit, Done + 5 example cards
                   </div>
                 </div>
               </label>

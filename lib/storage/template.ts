@@ -70,7 +70,7 @@ export function createAIMusicVideoBoard(workspaceId: string): Board {
     cards: [],
   };
 
-  // Create 3 example cards
+  // Create 5 example cards
   const card1: Card = {
     id: generateId(),
     listId: musicList.id,
