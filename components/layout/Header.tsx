@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 interface HeaderProps {
   showStorage?: boolean;
