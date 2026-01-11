@@ -14,32 +14,48 @@ import { Button } from '@/components/ui/Button';
 export default function LoginPage() {
   const router = useRouter();
   const { signIn, isAuthenticated, isLoading } = useAuth();
-  const { workspaces, isInitialized } = useData();
+  const { workspaces, isInitialized, storageMode } = useData();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
+    if (hasRedirected) return; // Prevent multiple redirects
     if (!isLoading && isAuthenticated && isInitialized) {
-      // If user has workspaces, redirect to first workspace
-      if (workspaces.length > 0) {
-        const firstWorkspace = workspaces[0];
-        const firstBoard = firstWorkspace.boards[0];
+      // If in cloud mode, wait a bit for data to load from Supabase
+      if (storageMode === 'cloud') {
+        // Give it 1 second to load cloud data
+        const timer = setTimeout(() => {
+          setHasRedirected(true);
 
-        if (firstBoard) {
-          router.push(`/workspace/${firstWorkspace.id}/board/${firstBoard.id}`);
-        } else {
-          router.push(`/workspace/${firstWorkspace.id}`);
-        }
+          // If user has workspaces, redirect to first workspace
+          if (workspaces.length > 0) {
+            const firstWorkspace = workspaces[0];
+            const firstBoard = firstWorkspace.boards[0];
+
+            if (firstBoard) {
+              router.push(`/workspace/${firstWorkspace.id}/board/${firstBoard.id}`);
+            } else {
+              router.push(`/workspace/${firstWorkspace.id}`);
+            }
+          } else {
+            // No workspaces, go to welcome page
+            router.push('/');
+          }
+        }, 1000);
+
+        return () => clearTimeout(timer);
       } else {
-        // No workspaces, go to welcome page
+        // Local mode, redirect immediately
+        setHasRedirected(true);
         router.push('/');
       }
     }
-  }, [isAuthenticated, isLoading, isInitialized, workspaces, router]);
+  }, [isAuthenticated, isLoading, isInitialized, workspaces, router, storageMode, hasRedirected]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
