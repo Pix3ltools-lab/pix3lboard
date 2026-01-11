@@ -204,20 +204,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = useCallback(async () => {
-    // Sign out from Supabase first
-    await getClient().auth.signOut();
-    setUser(null);
-    setProfile(null);
-
-    // Clear ALL localStorage data to prevent data leakage
+    // CRITICAL: Clear localStorage and reload FIRST, before any React state changes
+    // that could trigger auto-save to write data back
     if (typeof window !== 'undefined') {
-      // Remove data
+      // Set flag to prevent any auto-save during logout
+      (window as any).__isLoggingOut = true;
+
+      // Remove all data immediately
       localStorage.removeItem(STORAGE_KEY);
-      // Reset storage mode to local (critical!)
+      // Reset storage mode to local
       localStorage.setItem('pix3lboard-storage-mode', 'local');
 
-      // Force immediate reload before auto-save can write data back
-      window.location.href = '/';
+      // Sign out from Supabase in background (don't wait)
+      getClient().auth.signOut().catch(console.error);
+
+      // Force immediate navigation (replace is more immediate than href)
+      window.location.replace('/');
     }
   }, []);
 

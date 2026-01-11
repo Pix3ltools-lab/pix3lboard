@@ -108,6 +108,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const saveToStorage = useMemo(
     () =>
       throttle(async (data: AppData) => {
+        // Prevent auto-save during logout to avoid data leakage
+        if ((window as any).__isLoggingOut) return;
         if (!adapter) return;
 
         try {
