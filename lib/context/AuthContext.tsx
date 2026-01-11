@@ -212,8 +212,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Remove all data immediately
       localStorage.removeItem(STORAGE_KEY);
-      // Reset storage mode to local
-      localStorage.setItem('pix3lboard-storage-mode', 'local');
+
+      // DON'T reset storage mode - keep it as 'cloud' so user can login again
+      // The fallback in useStorageAdapter will handle unauthenticated state
 
       // Sign out from Supabase in background (don't wait)
       getClient().auth.signOut().catch(console.error);

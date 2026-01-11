@@ -35,9 +35,9 @@ export function useStorageAdapter() {
       // Clear localStorage to prevent showing cloud data when not authenticated
       if (typeof window !== 'undefined') {
         localStorage.removeItem('pix3lboard-data')
-        // Also reset mode to local
-        localStorage.setItem('pix3lboard-storage-mode', 'local')
       }
+      // Use local adapter but DON'T change the storage mode preference
+      // This allows user to login again and return to cloud mode
       return createStorageAdapter('local')
     }
 
