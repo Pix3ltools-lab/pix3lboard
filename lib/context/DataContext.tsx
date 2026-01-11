@@ -84,6 +84,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Load data from storage adapter on mount
   useEffect(() => {
+    // Don't load data during logout
+    if ((window as any).__isLoggingOut) return;
     if (!adapter || !isReady) return;
 
     async function loadData() {
