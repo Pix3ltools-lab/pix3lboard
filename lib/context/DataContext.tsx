@@ -132,6 +132,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [workspaces, isInitialized, saveToStorage]);
 
+  // Listen for logout event and save immediately (not throttled)
+  useEffect(() => {
+    const handleSaveBeforeLogout = async () => {
+      if (!adapter || !isInitialized) return;
+
+      console.log('[DataContext] Final save before logout');
+      try {
+        // Direct save, bypass throttle
+        await adapter.importData({ workspaces });
+      } catch (error) {
+        console.error('Failed to save before logout:', error);
+      }
+    };
+
+    window.addEventListener('pix3lboard:saveBeforeLogout', handleSaveBeforeLogout);
+    return () => {
+      window.removeEventListener('pix3lboard:saveBeforeLogout', handleSaveBeforeLogout);
+    };
+  }, [adapter, workspaces, isInitialized]);
+
   // ===== WORKSPACE OPERATIONS =====
 
   const createWorkspace = useCallback((data: Partial<Workspace>): Workspace => {

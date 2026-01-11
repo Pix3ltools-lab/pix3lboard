@@ -204,10 +204,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = useCallback(async () => {
-    // CRITICAL: Clear localStorage and reload FIRST, before any React state changes
-    // that could trigger auto-save to write data back
     if (typeof window !== 'undefined') {
-      // Set flag to prevent any auto-save during logout
+      // Trigger final save before logout
+      const saveEvent = new CustomEvent('pix3lboard:saveBeforeLogout');
+      window.dispatchEvent(saveEvent);
+
+      // Wait for final save to complete (give it 500ms)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Now set flag to prevent any more saves
       (window as any).__isLoggingOut = true;
 
       // Remove all data immediately
