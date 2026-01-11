@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { STORAGE_KEY } from '@/lib/constants';
 
 interface UserProfile {
   id: string;
@@ -203,9 +204,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = useCallback(async () => {
+    // Clear local storage to remove any cloud data that was downloaded
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
     await getClient().auth.signOut();
     setUser(null);
     setProfile(null);
+
+    // Reload to reset app state
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   }, []);
 
   const value: AuthContextType = {
