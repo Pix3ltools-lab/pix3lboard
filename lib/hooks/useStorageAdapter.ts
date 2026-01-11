@@ -25,6 +25,15 @@ export function useStorageAdapter() {
     setIsReady(true)
   }, [])
 
+  // Auto-switch to cloud mode when user logs in
+  useEffect(() => {
+    if (isReady && !isLoading && isAuthenticated && mode === 'local') {
+      console.log('[useStorageAdapter] User authenticated but in local mode, switching to cloud');
+      setStorageMode('cloud')
+      setMode('cloud')
+    }
+  }, [isReady, isLoading, isAuthenticated, mode])
+
   // Create adapter instance (memoized)
   // If mode is 'cloud' but user is not authenticated, fallback to 'local'
   const adapter = useMemo(() => {
