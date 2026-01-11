@@ -6,7 +6,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
 import { UserMenu } from '../auth/UserMenu';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 interface HeaderProps {
   showStorage?: boolean;
