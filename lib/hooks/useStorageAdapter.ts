@@ -31,9 +31,17 @@ export function useStorageAdapter() {
     if (!isReady || isLoading) return null
 
     // Force local mode if cloud mode is selected but user is not authenticated
-    const effectiveMode = (mode === 'cloud' && !isAuthenticated) ? 'local' : mode
+    if (mode === 'cloud' && !isAuthenticated) {
+      // Clear localStorage to prevent showing cloud data when not authenticated
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pix3lboard-data')
+        // Also reset mode to local
+        localStorage.setItem('pix3lboard-storage-mode', 'local')
+      }
+      return createStorageAdapter('local')
+    }
 
-    return createStorageAdapter(effectiveMode)
+    return createStorageAdapter(mode)
   }, [mode, isReady, isAuthenticated, isLoading])
 
   // Function to switch storage mode

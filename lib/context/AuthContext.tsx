@@ -204,17 +204,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sign out
   const signOut = useCallback(async () => {
-    // Clear local storage to remove any cloud data that was downloaded
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-
+    // Sign out from Supabase first
     await getClient().auth.signOut();
     setUser(null);
     setProfile(null);
 
-    // Reload to reset app state
+    // Clear ALL localStorage data to prevent data leakage
     if (typeof window !== 'undefined') {
+      // Remove data
+      localStorage.removeItem(STORAGE_KEY);
+      // Reset storage mode to local (critical!)
+      localStorage.setItem('pix3lboard-storage-mode', 'local');
+
+      // Force immediate reload before auto-save can write data back
       window.location.href = '/';
     }
   }, []);
