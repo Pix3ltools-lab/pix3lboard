@@ -88,7 +88,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     async function loadData() {
       try {
+        console.log('[DataContext] Loading data from adapter, mode:', storageMode);
         const data = await adapter!.getAllData();
+        console.log('[DataContext] Loaded data:', data);
         if (data && data.workspaces) {
           setWorkspaces(data.workspaces);
         }
@@ -102,7 +104,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     loadData();
-  }, [adapter, isReady]);
+  }, [adapter, isReady, storageMode]);
 
   // Throttled save to storage adapter (max once per second)
   const saveToStorage = useMemo(

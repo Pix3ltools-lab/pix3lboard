@@ -28,10 +28,13 @@ export function useStorageAdapter() {
   // Create adapter instance (memoized)
   // If mode is 'cloud' but user is not authenticated, fallback to 'local'
   const adapter = useMemo(() => {
+    console.log('[useStorageAdapter] Creating adapter:', { mode, isReady, isLoading, isAuthenticated });
+
     if (!isReady || isLoading) return null
 
     // Force local mode if cloud mode is selected but user is not authenticated
     if (mode === 'cloud' && !isAuthenticated) {
+      console.log('[useStorageAdapter] Cloud mode but not authenticated, using local adapter');
       // Clear localStorage to prevent showing cloud data when not authenticated
       if (typeof window !== 'undefined') {
         localStorage.removeItem('pix3lboard-data')
@@ -41,6 +44,7 @@ export function useStorageAdapter() {
       return createStorageAdapter('local')
     }
 
+    console.log('[useStorageAdapter] Using adapter for mode:', mode);
     return createStorageAdapter(mode)
   }, [mode, isReady, isAuthenticated, isLoading])
 
