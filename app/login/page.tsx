@@ -26,33 +26,35 @@ export default function LoginPage() {
   useEffect(() => {
     if (hasRedirected) return; // Prevent multiple redirects
     if (!isLoading && isAuthenticated && isInitialized) {
-      // If in cloud mode, wait a bit for data to load from Supabase
-      if (storageMode === 'cloud') {
-        // Give it 1 second to load cloud data
-        const timer = setTimeout(() => {
-          setHasRedirected(true);
+      console.log('[LoginPage] Checking redirect, workspaces:', workspaces.length, 'mode:', storageMode);
 
-          // If user has workspaces, redirect to first workspace
-          if (workspaces.length > 0) {
-            const firstWorkspace = workspaces[0];
-            const firstBoard = firstWorkspace.boards[0];
+      // If user has workspaces, redirect to first workspace
+      if (workspaces.length > 0) {
+        setHasRedirected(true);
+        const firstWorkspace = workspaces[0];
+        const firstBoard = firstWorkspace.boards[0];
 
-            if (firstBoard) {
-              router.push(`/workspace/${firstWorkspace.id}/board/${firstBoard.id}`);
-            } else {
-              router.push(`/workspace/${firstWorkspace.id}`);
-            }
-          } else {
-            // No workspaces, go to welcome page
-            router.push('/');
-          }
-        }, 1000);
-
-        return () => clearTimeout(timer);
-      } else {
-        // Local mode, redirect immediately
+        console.log('[LoginPage] Redirecting to workspace:', firstWorkspace.id);
+        if (firstBoard) {
+          router.push(`/workspace/${firstWorkspace.id}/board/${firstBoard.id}`);
+        } else {
+          router.push(`/workspace/${firstWorkspace.id}`);
+        }
+      } else if (storageMode === 'local') {
+        // Local mode with no workspaces, redirect to welcome page immediately
+        console.log('[LoginPage] Local mode, no workspaces, redirecting to welcome');
         setHasRedirected(true);
         router.push('/');
+      } else if (storageMode === 'cloud') {
+        // Cloud mode with no workspaces - wait max 2 seconds for data to load
+        console.log('[LoginPage] Cloud mode, waiting for workspaces to load...');
+        const timer = setTimeout(() => {
+          console.log('[LoginPage] Timeout reached, redirecting to welcome (no workspaces found)');
+          setHasRedirected(true);
+          router.push('/');
+        }, 2000);
+
+        return () => clearTimeout(timer);
       }
     }
   }, [isAuthenticated, isLoading, isInitialized, workspaces, router, storageMode, hasRedirected]);

@@ -205,26 +205,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign out
   const signOut = useCallback(async () => {
     if (typeof window !== 'undefined') {
+      console.log('[AuthContext] Starting logout process...');
+
       // Set flag immediately to prevent any data loading or auto-saves
       (window as any).__isLoggingOut = true;
 
       // Trigger final save before logout (will bypass the flag check)
+      console.log('[AuthContext] Triggering final save...');
       const saveEvent = new CustomEvent('pix3lboard:saveBeforeLogout');
       window.dispatchEvent(saveEvent);
 
       // Wait for final save to complete (give it 500ms)
+      console.log('[AuthContext] Waiting for save to complete...');
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Remove all data immediately
+      console.log('[AuthContext] Clearing localStorage...');
       localStorage.removeItem(STORAGE_KEY);
 
       // DON'T reset storage mode - keep it as 'cloud' so user can login again
       // The fallback in useStorageAdapter will handle unauthenticated state
 
       // Sign out from Supabase (this invalidates the token)
+      console.log('[AuthContext] Signing out from Supabase...');
       await getClient().auth.signOut();
+      console.log('[AuthContext] Supabase signOut completed');
 
       // Force immediate navigation (replace is more immediate than href)
+      console.log('[AuthContext] Redirecting to home...');
       window.location.replace('/');
     }
   }, []);

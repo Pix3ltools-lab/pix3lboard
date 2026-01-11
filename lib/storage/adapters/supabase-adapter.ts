@@ -91,6 +91,8 @@ export class SupabaseAdapter implements StorageAdapter {
   async getWorkspaces(): Promise<Workspace[]> {
     const userId = await this.ensureAuth()
 
+    console.log('[SupabaseAdapter.getWorkspaces] Fetching workspaces for user:', userId);
+
     const { data: workspacesData, error: workspacesError } = await this.supabase
       .from('workspaces')
       .select('*')
@@ -101,8 +103,12 @@ export class SupabaseAdapter implements StorageAdapter {
       throw new Error(`Failed to fetch workspaces: ${workspacesError?.message}`)
     }
 
+    console.log('[SupabaseAdapter.getWorkspaces] Found workspaces:', workspacesData.length);
+
     // Fetch all boards for these workspaces
     const workspaceIds = workspacesData.map((w: any) => w.id)
+
+    console.log('[SupabaseAdapter.getWorkspaces] Fetching boards for workspace IDs:', workspaceIds);
 
     const { data: boardsData, error: boardsError } = await this.supabase
       .from('boards')
@@ -111,8 +117,11 @@ export class SupabaseAdapter implements StorageAdapter {
       .order('created_at', { ascending: true })
 
     if (boardsError || !boardsData) {
+      console.error('[SupabaseAdapter.getWorkspaces] Error fetching boards:', boardsError);
       throw new Error(`Failed to fetch boards: ${boardsError?.message}`)
     }
+
+    console.log('[SupabaseAdapter.getWorkspaces] Found boards:', boardsData.length, boardsData);
 
     // Fetch all lists for these boards
     const boardIds = boardsData.map((b: any) => b.id)
@@ -795,35 +804,138 @@ export class SupabaseAdapter implements StorageAdapter {
 
     const userId = await this.ensureAuth();
 
+    console.log('[SupabaseAdapter] importData called with:', {
+      workspaceCount: data.workspaces?.length || 0,
+      workspaces: data.workspaces?.map(ws => ({
+        id: ws.id,
+        name: ws.name,
+        boardCount: ws.boards?.length || 0,
+        boards: ws.boards?.map(b => ({
+          id: b.id,
+          name: b.name,
+          listCount: b.lists?.length || 0,
+          lists: b.lists?.map(l => ({ id: l.id, name: l.name, cardCount: l.cards?.length || 0 }))
+        }))
+      }))
+    });
+
     // Clear existing data
     await this.clearAllData();
 
-    // Recreate all data
-    const workspaceIdMap = new Map<string, string>();
-    const boardIdMap = new Map<string, string>();
-    const listIdMap = new Map<string, string>();
-
+    // Recreate all data PRESERVING original IDs
     for (const workspace of data.workspaces || []) {
-      const oldWsId = workspace.id;
-      const { id, boards, ...wsData } = workspace;
-      const newWs = await this.createWorkspace(wsData);
-      workspaceIdMap.set(oldWsId, newWs.id);
+      const { boards, ...wsData } = workspace;
+
+      console.log('[SupabaseAdapter] Processing workspace:', {
+        id: workspace.id,
+        name: wsData.name,
+        boardsArray: boards,
+        boardsLength: boards?.length || 0,
+        boardsType: typeof boards,
+        boardsIsArray: Array.isArray(boards)
+      });
+
+      // Insert workspace with original ID
+      const { error: wsError } = await this.getClient()
+        .from('workspaces')
+        .insert({
+          id: workspace.id,  // Preserve original ID!
+          user_id: userId,
+          name: wsData.name || 'New Workspace',
+          description: wsData.description || null,
+          icon: wsData.icon || null,
+          color: wsData.color || null,
+          created_at: wsData.createdAt,
+          updated_at: wsData.updatedAt,
+        });
+
+      if (wsError) {
+        console.error('[SupabaseAdapter] Workspace insert error:', wsError);
+        throw new Error(`Failed to import workspace: ${wsError.message}`);
+      }
+
+      console.log('[SupabaseAdapter] Workspace inserted successfully, now processing boards...');
+      console.log('[SupabaseAdapter] About to loop through boards:', boards?.length || 0, 'boards');
 
       for (const board of boards || []) {
-        const oldBoardId = board.id;
-        const { id, lists, ...boardData } = board;
-        const newBoard = await this.createBoard(newWs.id, boardData);
-        boardIdMap.set(oldBoardId, newBoard.id);
+        const { lists, ...boardData } = board;
+
+        console.log('[SupabaseAdapter] Inserting board:', {
+          id: board.id,
+          name: boardData.name,
+          workspaceId: workspace.id
+        });
+
+        // Insert board with original ID
+        const { error: boardError } = await this.getClient()
+          .from('boards')
+          .insert({
+            id: board.id,  // Preserve original ID!
+            workspace_id: workspace.id,
+            user_id: userId,
+            name: boardData.name || 'New Board',
+            description: boardData.description || null,
+            background: boardData.background || null,
+            allowed_card_types: boardData.allowedCardTypes || null,
+            created_at: boardData.createdAt,
+            updated_at: boardData.updatedAt,
+          });
+
+        if (boardError) {
+          console.error('[SupabaseAdapter] Board insert error:', boardError);
+          throw new Error(`Failed to import board: ${boardError.message}`);
+        }
+
+        console.log('[SupabaseAdapter] Board inserted successfully:', board.id);
 
         for (const list of lists || []) {
-          const oldListId = list.id;
-          const { id, cards, ...listData } = list;
-          const newList = await this.createList(newBoard.id, listData);
-          listIdMap.set(oldListId, newList.id);
+          const { cards, ...listData } = list;
+
+          // Insert list with original ID
+          const { error: listError } = await this.getClient()
+            .from('lists')
+            .insert({
+              id: list.id,  // Preserve original ID!
+              board_id: board.id,
+              user_id: userId,
+              name: listData.name || 'New List',
+              position: listData.position ?? 0,
+              created_at: listData.createdAt,
+              updated_at: listData.updatedAt,
+            });
+
+          if (listError) throw new Error(`Failed to import list: ${listError.message}`);
 
           for (const card of cards || []) {
-            const { id, ...cardData } = card;
-            await this.createCard(newList.id, cardData);
+            // Insert card with original ID
+            const { error: cardError } = await this.getClient()
+              .from('cards')
+              .insert({
+                id: card.id,  // Preserve original ID!
+                list_id: list.id,
+                user_id: userId,
+                title: card.title || 'New Card',
+                description: card.description || null,
+                position: card.position ?? 0,
+                type: card.type || null,
+                prompt: card.prompt || null,
+                rating: card.rating || null,
+                ai_tool: card.aiTool || null,
+                responsible: card.responsible || null,
+                job_number: card.jobNumber || null,
+                severity: card.severity || null,
+                priority: card.priority || null,
+                effort: card.effort || null,
+                attendees: card.attendees || null,
+                meeting_date: card.meetingDate || null,
+                tags: card.tags || null,
+                links: card.links || null,
+                due_date: card.dueDate || null,
+                created_at: card.createdAt,
+                updated_at: card.updatedAt,
+              });
+
+            if (cardError) throw new Error(`Failed to import card: ${cardError.message}`);
           }
         }
       }

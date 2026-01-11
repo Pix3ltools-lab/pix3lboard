@@ -108,7 +108,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [adapter, isReady, storageMode]);
 
-  // Throttled save to storage adapter (max once per second)
+  // Debounced save to storage adapter (wait 2 seconds after last change)
   const saveToStorage = useMemo(
     () =>
       throttle(async (data: AppData) => {
@@ -116,12 +116,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if ((window as any).__isLoggingOut) return;
         if (!adapter) return;
 
+        const adapterMode = adapter.getMode();
+        console.log('[DataContext] Auto-saving, workspaces:', data.workspaces.length, 'adapter:', adapterMode);
         try {
           await adapter.importData(data);
+          console.log('[DataContext] Auto-save completed with', adapterMode, 'adapter');
         } catch (error) {
           console.error('Failed to save:', error);
         }
-      }, 1000),
+      }, 2000),
     [adapter]
   );
 
@@ -135,14 +138,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Listen for logout event and save immediately (not throttled)
   useEffect(() => {
     const handleSaveBeforeLogout = async () => {
-      if (!adapter || !isInitialized) return;
+      if (!adapter || !isInitialized) {
+        console.log('[DataContext] Cannot save before logout - adapter:', !!adapter, 'initialized:', isInitialized);
+        return;
+      }
 
-      console.log('[DataContext] Final save before logout');
+      console.log('[DataContext] Final save before logout, workspaces:', workspaces.length);
       try {
         // Direct save, bypass throttle
         await adapter.importData({ workspaces });
+        console.log('[DataContext] Final save completed successfully');
       } catch (error) {
-        console.error('Failed to save before logout:', error);
+        console.error('[DataContext] Failed to save before logout:', error);
       }
     };
 
