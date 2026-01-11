@@ -8,11 +8,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useData } from '@/lib/context/DataContext';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
   const { signIn, isAuthenticated, isLoading } = useAuth();
+  const { workspaces, isInitialized } = useData();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,10 +23,23 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push('/');
+    if (!isLoading && isAuthenticated && isInitialized) {
+      // If user has workspaces, redirect to first workspace
+      if (workspaces.length > 0) {
+        const firstWorkspace = workspaces[0];
+        const firstBoard = firstWorkspace.boards[0];
+
+        if (firstBoard) {
+          router.push(`/workspace/${firstWorkspace.id}/board/${firstBoard.id}`);
+        } else {
+          router.push(`/workspace/${firstWorkspace.id}`);
+        }
+      } else {
+        // No workspaces, go to welcome page
+        router.push('/');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, isInitialized, workspaces, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
