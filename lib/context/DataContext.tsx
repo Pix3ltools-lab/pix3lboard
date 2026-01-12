@@ -13,6 +13,8 @@ import { Workspace, Board, List, Card, AppData, StorageInfo } from '@/types';
 import { storage } from '@/lib/storage/localStorage';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
+import { useAuth } from '@/lib/context/AuthContext';
+import { loadUserData, saveUserData } from '@/lib/storage/upstash-redis';
 import {
   createAIMusicVideoBoard,
   createProjectManagementBoard,
@@ -72,30 +74,52 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data from localStorage on mount
+  // Load data from Upstash Redis on mount
   useEffect(() => {
-    const data = storage.load();
-    if (data && data.workspaces) {
-      setWorkspaces(data.workspaces);
+    if (!user?.id) {
+      // Not authenticated, start with empty state
+      setWorkspaces([]);
+      setIsInitialized(true);
+      return;
     }
-    setIsInitialized(true);
-  }, []);
 
-  // Throttled save to localStorage (max once per second)
+    async function loadData() {
+      try {
+        const workspaces = await loadUserData(user.id);
+        setWorkspaces(workspaces);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        setWorkspaces([]);
+      } finally {
+        setIsInitialized(true);
+      }
+    }
+
+    loadData();
+  }, [user?.id]);
+
+  // Throttled save to Upstash Redis (max once per 2 seconds)
   const saveToStorage = useMemo(
     () =>
-      throttle((data: AppData) => {
-        const result = storage.save(data);
-        if (!result.success) {
-          console.error('Failed to save:', result.error);
+      throttle(async (data: AppData) => {
+        if (!user?.id) return;
+
+        try {
+          const success = await saveUserData(user.id, data.workspaces);
+          if (!success) {
+            console.error('Failed to save data to cloud');
+          }
+        } catch (error) {
+          console.error('Save error:', error);
         }
-      }, 1000),
-    []
+      }, 2000),
+    [user?.id]
   );
 
   // Auto-save on data changes
