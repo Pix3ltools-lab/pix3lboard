@@ -3,6 +3,8 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, execute, getTursoClient } from '@/lib/db/turso';
 import type { Workspace, Board, List, Card } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 // Type definitions for database rows
 interface WorkspaceRow {
   id: string;
