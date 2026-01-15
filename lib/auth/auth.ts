@@ -138,3 +138,36 @@ export async function getUserById(id: string): Promise<User | null> {
     updated_at: row.updated_at,
   };
 }
+
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: true } | { error: string }> {
+  // Get user with password hash
+  const row = await queryOne<UserRow>(
+    'SELECT * FROM users WHERE id = :id',
+    { id: userId }
+  );
+
+  if (!row) {
+    return { error: 'User not found' };
+  }
+
+  // Verify current password
+  const valid = await bcrypt.compare(currentPassword, row.password_hash);
+  if (!valid) {
+    return { error: 'Current password is incorrect' };
+  }
+
+  // Hash new password and update
+  const newPasswordHash = await bcrypt.hash(newPassword, 12);
+  const now = new Date().toISOString();
+
+  await execute(
+    'UPDATE users SET password_hash = :passwordHash, updated_at = :updatedAt WHERE id = :id',
+    { passwordHash: newPasswordHash, updatedAt: now, id: userId }
+  );
+
+  return { success: true };
+}

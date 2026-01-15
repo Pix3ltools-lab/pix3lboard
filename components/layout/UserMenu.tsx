@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { LogOut, User, ChevronDown } from 'lucide-react';
+import { LogOut, Key, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -80,6 +82,16 @@ export function UserMenu() {
             <button
               onClick={() => {
                 setIsOpen(false);
+                setShowChangePassword(true);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+            >
+              <Key className="h-4 w-4 text-text-secondary" />
+              Change Password
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
                 signOut();
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-bg-secondary transition-colors"
@@ -90,6 +102,11 @@ export function UserMenu() {
           </div>
         </div>
       )}
+
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
     </div>
   );
 }
