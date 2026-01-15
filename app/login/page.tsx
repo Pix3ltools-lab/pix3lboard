@@ -6,11 +6,13 @@ import { useAuth } from '@/lib/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, isAuthenticated, isLoading } = useAuth();
+  const { signIn, signUp, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -25,7 +27,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await signIn(email, password);
+      let result;
+      if (isRegister) {
+        result = await signUp(email, password, name || undefined);
+      } else {
+        result = await signIn(email, password);
+      }
+
       if (result.error) {
         setError(result.error);
       } else {
@@ -64,17 +72,43 @@ export default function LoginPage() {
         maxWidth: '400px'
       }}>
         <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
             Welcome to Pix3lBoard v2.0
           </h1>
           <p style={{ color: '#666', fontSize: '14px' }}>
-            Sign in to access your cloud workspaces
+            {isRegister ? 'Create your account' : 'Sign in to access your cloud workspaces'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
+          {isRegister && (
+            <div style={{ marginBottom: '16px' }}>
+              <label htmlFor="name" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                Name (optional)
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                  backgroundColor: 'white',
+                  color: '#333'
+                }}
+              />
+            </div>
+          )}
+
           <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#333' }}>
               Email
             </label>
             <input
@@ -90,29 +124,36 @@ export default function LoginPage() {
                 padding: '8px 12px',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '14px'
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                backgroundColor: 'white',
+                color: '#333'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+            <label htmlFor="password" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#333' }}>
               Password
             </label>
             <input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder={isRegister ? 'Min 6 characters' : 'Enter your password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={isRegister ? 6 : undefined}
               disabled={loading}
               style={{
                 width: '100%',
                 padding: '8px 12px',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '14px'
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                backgroundColor: 'white',
+                color: '#333'
               }}
             />
           </div>
@@ -142,11 +183,32 @@ export default function LoginPage() {
               borderRadius: '4px',
               fontSize: '14px',
               fontWeight: '500',
-              cursor: loading ? 'not-allowed' : 'pointer'
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '16px'
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (isRegister ? 'Creating account...' : 'Signing in...') : (isRegister ? 'Create Account' : 'Sign In')}
           </button>
+
+          <div style={{ textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError('');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#8b5cf6',
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

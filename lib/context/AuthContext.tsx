@@ -1,6 +1,6 @@
 /**
  * Authentication Context
- * Manages user authentication state with Supabase
+ * Manages user authentication state with Turso database
  */
 
 'use client';
@@ -13,8 +13,15 @@ import {
   useCallback,
   ReactNode,
 } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
+
+// User type (matches our Turso schema)
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   // State
@@ -24,6 +31,7 @@ interface AuthContextType {
 
   // Actions
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -33,105 +41,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Lazy-load Supabase client (only on client side)
-  const getClient = () => {
-    if (typeof window === 'undefined') {
-      throw new Error('Supabase client can only be used on client side');
-    }
-    return getSupabaseBrowserClient();
-  };
-
-  // Initialize auth state
+  // Check current session on mount
   useEffect(() => {
     let mounted = true;
-    let subscription: any = null;
 
-    async function initAuth() {
+    async function checkAuth() {
       try {
-        // Only run in browser
-        if (typeof window === 'undefined') {
-          return;
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+
+        if (mounted && data.user) {
+          setUser(data.user);
         }
-
-        // Get initial session
-        const {
-          data: { session },
-        } = await getClient().auth.getSession();
-
-        if (mounted) {
-          if (session?.user) {
-            setUser(session.user);
-          }
-          setIsLoading(false);
-        }
-
-        // Listen for auth changes
-        const {
-          data: { subscription: authSubscription },
-        } = getClient().auth.onAuthStateChange(async (event: any, session: any) => {
-          if (!mounted) return;
-
-          if (event === 'SIGNED_IN' && session?.user) {
-            setUser(session.user);
-          } else if (event === 'SIGNED_OUT') {
-            setUser(null);
-          } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-            setUser(session.user);
-          }
-        });
-
-        subscription = authSubscription;
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('Auth check error:', error);
+      } finally {
         if (mounted) {
           setIsLoading(false);
         }
       }
     }
 
-    initAuth();
+    checkAuth();
 
     return () => {
       mounted = false;
-      if (subscription) {
-        subscription.unsubscribe();
-      }
     };
   }, []);
 
   // Sign in
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      try {
-        const { data, error } = await getClient().auth.signInWithPassword({
-          email,
-          password,
-        });
+  const signIn = useCallback(async (email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-        if (error) {
-          return { error: error.message };
-        }
+      const data = await response.json();
 
-        if (data.user) {
-          setUser(data.user);
-        }
-
-        return {};
-      } catch (error) {
-        return { error: 'An unexpected error occurred' };
+      if (!response.ok) {
+        return { error: data.error || 'Login failed' };
       }
-    },
-    []
-  );
+
+      setUser(data.user);
+      return {};
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  }, []);
+
+  // Sign up
+  const signUp = useCallback(async (email: string, password: string, name?: string) => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || 'Registration failed' };
+      }
+
+      setUser(data.user);
+      return {};
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  }, []);
 
   // Sign out
   const signOut = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-      // Sign out from Supabase (this invalidates the token)
-      await getClient().auth.signOut();
-
-      // Force immediate navigation
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setUser(null);
       window.location.replace('/');
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   }, []);
 
@@ -140,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAuthenticated: !!user,
     signIn,
+    signUp,
     signOut,
   };
 

@@ -10,11 +10,9 @@ import {
   ReactNode,
 } from 'react';
 import { Workspace, Board, List, Card, AppData, StorageInfo } from '@/types';
-import { storage } from '@/lib/storage/localStorage';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
 import { useAuth } from '@/lib/context/AuthContext';
-import { loadUserData, saveUserData } from '@/lib/storage/upstash-redis';
 import {
   createAIMusicVideoBoard,
   createProjectManagementBoard,
@@ -74,60 +72,70 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [canSave, setCanSave] = useState(false); // Only true after successful load
 
-  // Load data from Upstash Redis on mount
+  // Load data from Turso on mount
   useEffect(() => {
-    if (!user?.id) {
-      // Not authenticated, start with empty state
+    if (!isAuthenticated) {
+      // Not authenticated, reset state but DON'T allow saving
       setWorkspaces([]);
       setIsInitialized(true);
+      setCanSave(false); // Prevent saving empty data on logout
       return;
     }
 
     async function loadData() {
       try {
-        const workspaces = await loadUserData(user.id);
-        setWorkspaces(workspaces);
+        const response = await fetch('/api/data');
+        const data = await response.json();
+        setWorkspaces(data.workspaces || []);
+        setCanSave(true); // Now we can save changes
       } catch (error) {
         console.error('Failed to load data:', error);
         setWorkspaces([]);
+        setCanSave(false);
       } finally {
         setIsInitialized(true);
       }
     }
 
     loadData();
-  }, [user?.id]);
+  }, [isAuthenticated]);
 
-  // Throttled save to Upstash Redis (max once per 2 seconds)
+  // Throttled save to Turso (max once per 2 seconds)
   const saveToStorage = useMemo(
     () =>
       throttle(async (data: AppData) => {
-        if (!user?.id) return;
+        if (!isAuthenticated) return;
 
         try {
-          const success = await saveUserData(user.id, data.workspaces);
-          if (!success) {
+          const response = await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workspaces: data.workspaces }),
+          });
+
+          if (!response.ok) {
             console.error('Failed to save data to cloud');
           }
         } catch (error) {
           console.error('Save error:', error);
         }
       }, 2000),
-    [user?.id]
+    [isAuthenticated]
   );
 
-  // Auto-save on data changes
+  // Auto-save on data changes (only if authenticated and loaded successfully)
   useEffect(() => {
-    if (isInitialized && workspaces.length >= 0) {
+    if (isInitialized && canSave && isAuthenticated) {
       saveToStorage({ workspaces });
     }
-  }, [workspaces, isInitialized, saveToStorage]);
+  }, [workspaces, isInitialized, canSave, isAuthenticated, saveToStorage]);
 
   // ===== WORKSPACE OPERATIONS =====
 
@@ -439,6 +447,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
               tags: data.tags,
               dueDate: data.dueDate,
               links: data.links,
+              responsible: data.responsible,
+              jobNumber: data.jobNumber,
+              severity: data.severity,
+              priority: data.priority,
+              effort: data.effort,
+              attendees: data.attendees,
+              meetingDate: data.meetingDate,
               createdAt: now,
               updatedAt: now,
             };
@@ -613,12 +628,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setWorkspaces([]);
     setActiveWorkspaceId(null);
     setActiveBoardId(null);
-    storage.clear();
   }, []);
 
   const getStorageSize = useCallback((): StorageInfo => {
-    return storage.getSize();
-  }, []);
+    // For cloud storage, we estimate based on JSON size
+    const dataStr = JSON.stringify({ workspaces });
+    const bytes = new Blob([dataStr]).size;
+    const totalBytes = 256 * 1024 * 1024; // 256MB (Turso free tier)
+    return {
+      bytes,
+      mb: bytes / (1024 * 1024),
+      percentage: (bytes / totalBytes) * 100,
+    };
+  }, [workspaces]);
 
   // ===== NAVIGATION =====
 

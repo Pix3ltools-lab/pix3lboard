@@ -1,0 +1,140 @@
+import bcrypt from 'bcryptjs';
+import { SignJWT, jwtVerify } from 'jose';
+import { nanoid } from 'nanoid';
+import { query, queryOne, execute } from '@/lib/db/turso';
+
+// User type
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserRow {
+  id: string;
+  email: string;
+  password_hash: string;
+  name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// JWT helpers
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET not configured');
+  return new TextEncoder().encode(secret);
+};
+
+export async function createToken(userId: string): Promise<string> {
+  return new SignJWT({ userId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(getJwtSecret());
+}
+
+export async function verifyToken(token: string): Promise<{ userId: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    return { userId: payload.userId as string };
+  } catch {
+    return null;
+  }
+}
+
+// Auth functions
+export async function register(
+  email: string,
+  password: string,
+  name?: string
+): Promise<{ user: User; token: string } | { error: string }> {
+  // Check if user exists
+  const existing = await queryOne<UserRow>(
+    'SELECT id FROM users WHERE email = :email',
+    { email: email.toLowerCase() }
+  );
+
+  if (existing) {
+    return { error: 'Email already registered' };
+  }
+
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, 12);
+  const now = new Date().toISOString();
+  const id = nanoid();
+
+  // Create user
+  await execute(
+    `INSERT INTO users (id, email, password_hash, name, created_at, updated_at)
+     VALUES (:id, :email, :passwordHash, :name, :createdAt, :updatedAt)`,
+    {
+      id,
+      email: email.toLowerCase(),
+      passwordHash,
+      name: name || null,
+      createdAt: now,
+      updatedAt: now,
+    }
+  );
+
+  const user: User = {
+    id,
+    email: email.toLowerCase(),
+    name: name || null,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const token = await createToken(id);
+  return { user, token };
+}
+
+export async function login(
+  email: string,
+  password: string
+): Promise<{ user: User; token: string } | { error: string }> {
+  const row = await queryOne<UserRow>(
+    'SELECT * FROM users WHERE email = :email',
+    { email: email.toLowerCase() }
+  );
+
+  if (!row) {
+    return { error: 'Invalid email or password' };
+  }
+
+  const valid = await bcrypt.compare(password, row.password_hash);
+  if (!valid) {
+    return { error: 'Invalid email or password' };
+  }
+
+  const user: User = {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+
+  const token = await createToken(row.id);
+  return { user, token };
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  const row = await queryOne<UserRow>(
+    'SELECT id, email, name, created_at, updated_at FROM users WHERE id = :id',
+    { id }
+  );
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}

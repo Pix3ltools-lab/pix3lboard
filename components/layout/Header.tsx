@@ -3,14 +3,18 @@
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 import { StorageIndicator } from './StorageIndicator';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '@/lib/context/AuthContext';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '2.0.0';
 
 interface HeaderProps {
   showStorage?: boolean;
 }
 
 export function Header({ showStorage = true }: HeaderProps) {
+  const { isAuthenticated } = useAuth();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-bg-tertiary bg-bg-primary/95 backdrop-blur">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -27,6 +31,7 @@ export function Header({ showStorage = true }: HeaderProps) {
         <div className="flex items-center gap-4">
           {showStorage && <StorageIndicator />}
           <ThemeToggle />
+          {isAuthenticated && <UserMenu />}
         </div>
       </div>
     </header>
