@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useData } from '@/lib/context/DataContext';
 import { useUI } from '@/lib/context/UIContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -15,6 +16,7 @@ import { Workspace } from '@/types';
 
 export default function Home() {
   const { workspaces, createWorkspace, updateWorkspace, deleteWorkspace, isInitialized } = useData();
+  const { isAuthenticated } = useAuth();
   const { showToast, showConfirmDialog } = useUI();
   const [showModal, setShowModal] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
@@ -88,9 +90,11 @@ export default function Home() {
                 Your privacy-first project management tool
               </p>
             </div>
-            <Button onClick={() => setShowModal(true)} className="w-full sm:w-auto">
-              Create Workspace
-            </Button>
+            {isAuthenticated && (
+              <Button onClick={() => setShowModal(true)} className="w-full sm:w-auto">
+                Create Workspace
+              </Button>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -151,12 +155,20 @@ export default function Home() {
               </div>
             ) : (
               <div className="p-12 bg-bg-secondary rounded-lg text-center">
-                <p className="text-text-secondary mb-4">
-                  No workspaces yet. Create your first one to get started!
-                </p>
-                <Button onClick={() => setShowModal(true)}>
-                  Create Your First Workspace
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <p className="text-text-secondary mb-4">
+                      No workspaces yet. Create your first one to get started!
+                    </p>
+                    <Button onClick={() => setShowModal(true)}>
+                      Create Your First Workspace
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-text-secondary">
+                    Log in to create workspaces and start managing your projects.
+                  </p>
+                )}
               </div>
             )}
           </div>
