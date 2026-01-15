@@ -1,8 +1,10 @@
 # Pix3lBoard
 
-**Privacy-first project management tool**
+**Cloud-based project management tool for AI creators**
 
-A modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. All data is stored locally in your browser - no servers, no tracking, complete privacy.
+A modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. Your data is stored securely in the cloud and syncs across all your devices.
+
+> **Note**: This is an experimental demo. Data persistence is not guaranteed and may be reset at any time.
 
 ## Features
 
@@ -25,23 +27,26 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
-### Privacy & Storage
-- **100% Local Storage**: All data stored in browser localStorage
-- **No Server Sync**: Nothing leaves your device
-- **Export Anytime**: Download full backup as JSON
-- **Storage Indicator**: Real-time storage usage monitoring (5MB limit)
+### Cloud Storage & Authentication
+- **User Accounts**: Register and login with email/password
+- **Cloud Sync**: Data automatically syncs across all devices
+- **Secure Storage**: Data stored in Turso (SQLite) cloud database
+- **JWT Authentication**: Secure token-based sessions
 
 ### User Experience
 - **Responsive Design**: Works on desktop, tablet, and mobile
+- **User Menu**: Avatar with dropdown for account info and logout
 - **Keyboard Shortcuts**: ESC to close modals, click outside to dismiss
 - **Touch Support**: Drag & drop works on touch devices
-- **Auto-save**: Changes saved automatically every second
+- **Auto-save**: Changes saved automatically (throttled to reduce API calls)
 - **Toast Notifications**: Clear feedback for all actions
 
 ## Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript (strict mode)
+- **Database**: Turso (libSQL/SQLite)
+- **Authentication**: Custom JWT with bcryptjs
 - **Styling**: Tailwind CSS with custom CSS variables
 - **Drag & Drop**: @dnd-kit
 - **Icons**: Lucide React
@@ -53,12 +58,13 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
+- Turso account (free tier available)
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Pix3ltools-lab/pix3lboard.git
 cd pix3lboard
 ```
 
@@ -67,12 +73,50 @@ cd pix3lboard
 npm install
 ```
 
-3. Run the development server:
+3. Create a Turso database:
+```bash
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
+
+# Login to Turso
+turso auth login
+
+# Create a database
+turso db create pix3lboard
+
+# Get the database URL
+turso db show pix3lboard --url
+
+# Create an auth token
+turso db tokens create pix3lboard
+```
+
+4. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` with your credentials:
+```env
+# Turso Database
+TURSO_DATABASE_URL="libsql://your-database.turso.io"
+TURSO_AUTH_TOKEN="your-auth-token"
+
+# JWT Secret (generate a random string)
+JWT_SECRET="your-random-secret-key-min-32-chars"
+```
+
+5. Initialize the database:
+```bash
+npm run db:setup
+```
+
+6. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+7. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Build for Production
 
@@ -81,35 +125,56 @@ npm run build
 npm run start
 ```
 
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import the project in Vercel
+3. Add environment variables:
+   - `TURSO_DATABASE_URL`
+   - `TURSO_AUTH_TOKEN`
+   - `JWT_SECRET`
+4. Deploy
+
 ## Project Structure
 
 ```
 pix3lboard/
 ├── app/                          # Next.js App Router pages
-│   ├── page.tsx                 # Home page (workspaces)
-│   ├── workspace/[id]/          # Workspace detail
-│   │   └── board/[boardId]/     # Board view
-│   ├── layout.tsx               # Root layout
-│   └── globals.css              # Global styles
+│   ├── api/                      # API routes
+│   │   ├── auth/                 # Authentication endpoints
+│   │   └── data/                 # Data CRUD endpoints
+│   ├── login/                    # Login/Register page
+│   ├── workspace/[id]/           # Workspace detail
+│   │   └── board/[boardId]/      # Board view
+│   ├── page.tsx                  # Home page (workspaces)
+│   ├── layout.tsx                # Root layout
+│   └── globals.css               # Global styles
 ├── components/
-│   ├── board/                   # Board-related components
-│   ├── card/                    # Card field components
-│   ├── kanban/                  # Kanban board components
-│   ├── layout/                  # Header, breadcrumb, etc.
-│   ├── providers/               # Context providers
-│   ├── ui/                      # Reusable UI components
-│   └── workspace/               # Workspace components
+│   ├── board/                    # Board-related components
+│   ├── card/                     # Card field components
+│   ├── kanban/                   # Kanban board components
+│   ├── layout/                   # Header, UserMenu, etc.
+│   ├── providers/                # Context providers
+│   ├── ui/                       # Reusable UI components
+│   └── workspace/                # Workspace components
 ├── lib/
-│   ├── constants.ts             # App constants
-│   ├── context/                 # React contexts
-│   ├── storage/                 # localStorage utilities
-│   ├── utils/                   # Helper functions
-│   └── types/                   # TypeScript types
-└── public/                      # Static assets
-
+│   ├── auth/                     # Authentication functions
+│   ├── db/                       # Database client and setup
+│   ├── context/                  # React contexts
+│   ├── storage/                  # Export/import utilities
+│   └── utils/                    # Helper functions
+├── types/                        # TypeScript types
+└── public/                       # Static assets
 ```
 
 ## Usage Guide
+
+### Creating an Account
+
+1. Go to the login page
+2. Click "Don't have an account? Register"
+3. Enter your email and password (min 6 characters)
+4. Click "Create Account"
 
 ### Creating Your First Workspace
 
@@ -123,9 +188,9 @@ pix3lboard/
 2. Click "Create Board"
 3. Choose a template option:
    - **Empty Board**: Start from scratch
-   - **Project Management Template**: 5 lists (To Do, In Progress, In Review, Approve, Delivered) with 5 example cards including Task, Feature, and Meeting types
-   - **AI Music Video Template**: 6 lists (Ideas, Music, Visuals, Video, Edit, Done) with 5 AI-specific example cards (Music, Video, Text, Audio, Task)
-   - **Software Development Template**: 5 lists (Backlog, Development, Testing, Code Review, Done) with 5 example cards including Bug, Feature, Task, Meeting, and Text types
+   - **Project Management Template**: 5 lists with example cards
+   - **AI Music Video Template**: 6 lists for AI content workflow
+   - **Software Development Template**: 5 lists for dev workflow
 4. Add name and description
 5. Click "Create Board"
 
@@ -134,19 +199,13 @@ pix3lboard/
 1. Click "Add a card" in any list
 2. Click on a card to open the detail modal
 3. Edit all fields:
-   - **Type**: Choose from 9 types (dropdown selector):
-     - AI Content: Music 🎵, Video 🎬, Image 🖼️, Audio 🎙️, Text 📝
-     - Project: Task ✅, Bug 🐛, Feature ✨, Meeting 📅
-   - **Job Number**: Optional tracking number (format: C-26-0001)
+   - **Type**: Choose from 9 types
+   - **Job Number**: Optional tracking number
    - **Description**: Detailed description
-   - **Type-Specific Fields**:
-     - Bug: Severity level (Low, Medium, High, Critical)
-     - Feature: Priority (P1/P2/P3) and Effort (S/M/L)
-     - Meeting: Attendees list (max 5) and meeting date
-   - **AI Prompt**: The prompt you used (for AI content types)
+   - **Type-Specific Fields**: Severity, Priority, Attendees, etc.
+   - **AI Prompt**: The prompt you used
    - **Rating**: 1-5 stars
-   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney", "Claude", "ElevenLabs"
-   - **Responsible**: Person responsible for this card
+   - **AI Tool**: e.g., "Suno", "Runway", "Midjourney"
    - **Tags**: Up to 5 tags per card
    - **Due Date**: Optional deadline
    - **Links**: Up to 3 URLs
@@ -158,49 +217,27 @@ pix3lboard/
 - **Reorder cards**: Drag cards vertically within a list
 - **Move cards between lists**: Drag cards to different lists
 
-### Search & Filter
-
-- Use the search bar to find cards by title
-- Click "Filter by Tag" to show only cards with a specific tag
-- Click "Clear" to remove filters
-
-### Export & Import
-
-- **Export**: Click "Export" in the board toolbar to download a JSON backup
-- **Import**: Click "Import" and select a previously exported JSON file
-- **Important**: Importing replaces all current data
-
 ## Browser Compatibility
 
-- Chrome/Edge: ✅ Fully supported
-- Firefox: ✅ Fully supported
-- Safari: ✅ Fully supported
-- Mobile browsers: ✅ Responsive design
+- Chrome/Edge: Fully supported
+- Firefox: Fully supported
+- Safari: Fully supported
+- Mobile browsers: Responsive design
 
-## Storage Limits
+## Storage
 
-- **Maximum**: 5 MB of data (enforced)
-- **Warning**: Yellow indicator at 3 MB (60%)
-- **Critical**: Red indicator at 4 MB (80%)
-- **Recommendation**: Export data regularly as backup
+- **Cloud Storage**: Turso SQLite database
+- **Free Tier Limit**: 256 MB
+- **Auto-save**: Changes saved automatically (2-second throttle)
+- **Export**: Download data as JSON backup anytime
 
 ## Known Limitations
 
-- No cloud sync between devices
-- No collaboration features
-- Single user only
-- Data tied to browser localStorage
+- No real-time collaboration (single user per account)
 - No undo/redo functionality
 - No checklist or subtasks
 - No file attachments
-
-## Planned Improvements
-
-### UI/UX Enhancements
-- **Light Mode**: Implement a light theme option alongside the existing dark mode
-- **Undo/Redo**: Add ability to undo/redo actions
-- **Checklists**: Add subtask/checklist functionality within cards
-- **File Attachments**: Support for attaching files to cards
+- No offline support
 
 ## Development
 
@@ -211,16 +248,21 @@ pix3lboard/
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run type-check` - Run TypeScript compiler
+- `npm run db:setup` - Initialize database tables
 
-### Code Style
+### Database Schema
 
-- TypeScript strict mode enabled
-- ESLint with Next.js recommended rules
-- Prettier for code formatting (optional)
+```sql
+-- users: User accounts
+-- workspaces: User workspaces
+-- boards: Boards within workspaces
+-- lists: Lists within boards
+-- cards: Cards within lists
+```
 
 ## Contributing
 
-This is a personal project, but suggestions and bug reports are welcome!
+This is an experimental project, but suggestions and bug reports are welcome!
 
 ## License
 
@@ -230,12 +272,13 @@ MIT License - feel free to use this project for your own purposes.
 
 Built with:
 - [Next.js](https://nextjs.org/)
+- [Turso](https://turso.tech/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [@dnd-kit](https://dndkit.com/)
 - [Lucide Icons](https://lucide.dev/)
 
 ---
 
-**Part of [Pix3lTools](https://x.com/pix3ltools)** 🎨
+**Part of [Pix3lTools](https://x.com/pix3ltools)**
 
-Made with ❤️ for project managers and AI content creators
+Made with the help of Claude Code
