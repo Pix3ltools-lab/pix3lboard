@@ -23,6 +23,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
   - Job Number tracking (format: Letter-2digits-4digits)
   - Responsible person assignment
   - Due dates and meeting dates
+- **Card Comments**: Add comments to cards with author and timestamp
 - **Search & Filter**: Search cards by title, filter by tags and job number
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
@@ -235,7 +236,7 @@ pix3lboard/
 
 - No real-time collaboration (single user per account)
 - No undo/redo functionality
-- No checklist or subtasks
+- No checklist or subtasks (coming soon)
 - No file attachments
 - No offline support
 
