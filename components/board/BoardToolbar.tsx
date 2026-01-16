@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
 
 interface BoardToolbarProps {
   availableTags: string[];
   onExport: () => void;
   onImport: (file: File) => void;
+  onShowArchive: () => void;
 }
 
-export function BoardToolbar({ availableTags, onExport, onImport }: BoardToolbarProps) {
+export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
 
@@ -110,6 +111,17 @@ export function BoardToolbar({ availableTags, onExport, onImport }: BoardToolbar
             Clear
           </Button>
         )}
+
+        {/* Archive */}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onShowArchive}
+          className="flex items-center gap-2"
+        >
+          <Archive className="h-4 w-4" />
+          Archive
+        </Button>
 
         {/* Export */}
         <Button

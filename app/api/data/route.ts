@@ -58,6 +58,7 @@ interface CardRow {
   attendees: string | null;
   meeting_date: string | null;
   checklist: string | null;
+  is_archived: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,12 +106,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Load all cards for these lists
+    // Load all cards for these lists (excluding archived)
     let cardRows: CardRow[] = [];
     if (listRows.length > 0) {
       const listIds = listRows.map(l => l.id);
       cardRows = await query<CardRow>(
-        `SELECT * FROM cards WHERE list_id IN (${listIds.map((_, i) => `:l${i}`).join(',')}) ORDER BY position`,
+        `SELECT * FROM cards WHERE list_id IN (${listIds.map((_, i) => `:l${i}`).join(',')}) AND (is_archived = 0 OR is_archived IS NULL) ORDER BY position`,
         Object.fromEntries(listIds.map((id, i) => [`l${i}`, id]))
       );
     }
@@ -178,6 +179,7 @@ export async function GET(request: NextRequest) {
                   attendees: c.attendees ? JSON.parse(c.attendees) : undefined,
                   meetingDate: c.meeting_date || undefined,
                   checklist: c.checklist ? JSON.parse(c.checklist) : undefined,
+                  isArchived: Boolean(c.is_archived),
                   createdAt: c.created_at,
                   updatedAt: c.updated_at,
                   commentCount: commentCounts.get(c.id) || 0,
@@ -219,6 +221,15 @@ export async function POST(request: NextRequest) {
       JOIN boards ON boards.id = lists.board_id
       JOIN workspaces ON workspaces.id = boards.workspace_id
       WHERE workspaces.user_id = :userId
+    `, { userId });
+
+    // Save archived cards before deleting (they are not in the client state but should be preserved)
+    const archivedCards = await query<CardRow>(`
+      SELECT cards.* FROM cards
+      JOIN lists ON lists.id = cards.list_id
+      JOIN boards ON boards.id = lists.board_id
+      JOIN workspaces ON workspaces.id = boards.workspace_id
+      WHERE workspaces.user_id = :userId AND cards.is_archived = 1
     `, { userId });
 
     // Use a transaction to replace all data
@@ -276,8 +287,8 @@ export async function POST(request: NextRequest) {
 
           for (const card of list.cards) {
             await execute(
-              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, created_at, updated_at)
-               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :createdAt, :updatedAt)`,
+              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, created_at, updated_at)
+               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :createdAt, :updatedAt)`,
               {
                 id: card.id,
                 listId: card.listId,
@@ -299,6 +310,7 @@ export async function POST(request: NextRequest) {
                 attendees: card.attendees ? JSON.stringify(card.attendees) : null,
                 meetingDate: card.meetingDate || null,
                 checklist: card.checklist ? JSON.stringify(card.checklist) : null,
+                isArchived: card.isArchived ? 1 : 0,
                 createdAt: card.createdAt,
                 updatedAt: card.updatedAt,
               }
@@ -308,7 +320,49 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Restore comments for cards that still exist
+    // Restore archived cards (only if their list still exists)
+    const newListIds = workspaces.flatMap(ws =>
+      ws.boards.flatMap(b =>
+        b.lists.map(l => l.id)
+      )
+    );
+
+    for (const card of archivedCards) {
+      // Only restore if the list still exists
+      if (newListIds.includes(card.list_id)) {
+        await execute(
+          `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, created_at, updated_at)
+           VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :createdAt, :updatedAt)`,
+          {
+            id: card.id,
+            listId: card.list_id,
+            title: card.title,
+            description: card.description,
+            position: card.position,
+            type: card.type,
+            prompt: card.prompt,
+            rating: card.rating,
+            aiTool: card.ai_tool,
+            tags: card.tags,
+            dueDate: card.due_date,
+            links: card.links,
+            responsible: card.responsible,
+            jobNumber: card.job_number,
+            severity: card.severity,
+            priority: card.priority,
+            effort: card.effort,
+            attendees: card.attendees,
+            meetingDate: card.meeting_date,
+            checklist: card.checklist,
+            isArchived: 1,
+            createdAt: card.created_at,
+            updatedAt: card.updated_at,
+          }
+        );
+      }
+    }
+
+    // Restore comments for cards that still exist (including archived cards)
     const newCardIds = workspaces.flatMap(ws =>
       ws.boards.flatMap(b =>
         b.lists.flatMap(l =>
@@ -316,10 +370,12 @@ export async function POST(request: NextRequest) {
         )
       )
     );
+    const archivedCardIds = archivedCards.filter(c => newListIds.includes(c.list_id)).map(c => c.id);
+    const allCardIds = [...newCardIds, ...archivedCardIds];
 
     for (const comment of existingComments) {
-      // Only restore if the card still exists
-      if (newCardIds.includes(comment.card_id)) {
+      // Only restore if the card still exists (either active or archived)
+      if (allCardIds.includes(comment.card_id)) {
         await execute(`
           INSERT INTO comments (id, card_id, user_id, content, created_at, updated_at)
           VALUES (:id, :cardId, :userId, :content, :createdAt, :updatedAt)

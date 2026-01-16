@@ -16,7 +16,7 @@ import { PrioritySelector } from '@/components/card/PrioritySelector';
 import { AttendeesList } from '@/components/card/AttendeesList';
 import { CommentsSection } from '@/components/card/CommentsSection';
 import { ChecklistSection } from '@/components/card/ChecklistSection';
-import { Copy, Trash2 } from 'lucide-react';
+import { Copy, Trash2, Archive } from 'lucide-react';
 
 interface CardModalProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ interface CardModalProps {
   onUpdate: (cardId: string, data: Partial<Card>) => void;
   onDelete: (cardId: string) => void;
   onDuplicate: (cardId: string) => void;
+  onArchive: (cardId: string) => void;
 }
 
 export function CardModal({
@@ -36,6 +37,7 @@ export function CardModal({
   onUpdate,
   onDelete,
   onDuplicate,
+  onArchive,
 }: CardModalProps) {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
@@ -135,6 +137,11 @@ export function CardModal({
 
   const handleDuplicate = () => {
     onDuplicate(card.id);
+    onClose();
+  };
+
+  const handleArchive = () => {
+    onArchive(card.id);
     onClose();
   };
 
@@ -271,6 +278,15 @@ export function CardModal({
             >
               <Copy className="h-4 w-4" />
               Duplicate
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleArchive}
+              className="flex items-center gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              Archive
             </Button>
             <Button
               variant="danger"

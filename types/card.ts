@@ -40,6 +40,9 @@ export interface Card {
   // Checklist
   checklist?: ChecklistItem[];
 
+  // Archive
+  isArchived?: boolean;
+
   createdAt: string;
   updatedAt: string;
 

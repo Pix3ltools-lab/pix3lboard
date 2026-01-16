@@ -9,6 +9,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { CardModal } from '@/components/kanban/CardModal';
 import { BoardToolbar } from '@/components/board/BoardToolbar';
+import { ArchivedCardsModal } from '@/components/board/ArchivedCardsModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -40,6 +41,7 @@ export default function BoardPage() {
   const { showToast, showConfirmDialog } = useUI();
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [showArchivedModal, setShowArchivedModal] = useState(false);
 
   const workspace = getWorkspace(workspaceId);
   const board = getBoard(boardId);
@@ -119,6 +121,26 @@ export default function BoardPage() {
     }
   };
 
+  const handleArchiveCard = async (cardId: string) => {
+    try {
+      const res = await fetch(`/api/cards/${cardId}/archive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archive: true }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to archive card');
+      }
+
+      // Remove card from local state by deleting it (it's still in DB but archived)
+      deleteCard(cardId);
+      showToast('Card archived', 'success');
+    } catch (error) {
+      showToast('Failed to archive card', 'error');
+    }
+  };
+
   const handleReorderLists = (boardId: string, listIds: string[]) => {
     reorderLists(boardId, listIds);
   };
@@ -139,6 +161,16 @@ export default function BoardPage() {
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Import failed', 'error');
     }
+  };
+
+  const handleRestoreCard = () => {
+    // Reload the page to get updated data from server
+    window.location.reload();
+  };
+
+  const handleDeleteArchivedCard = (cardId: string) => {
+    // Card is already archived, just delete it
+    deleteCard(cardId);
   };
 
   // Collect all unique tags from all cards in the board
@@ -204,6 +236,7 @@ export default function BoardPage() {
         availableTags={availableTags}
         onExport={handleExport}
         onImport={handleImport}
+        onShowArchive={() => setShowArchivedModal(true)}
       />
 
       {/* Kanban Board */}
@@ -230,8 +263,18 @@ export default function BoardPage() {
           onUpdate={handleUpdateCard}
           onDelete={handleDeleteCard}
           onDuplicate={handleDuplicateCard}
+          onArchive={handleArchiveCard}
         />
       )}
+
+      {/* Archived Cards Modal */}
+      <ArchivedCardsModal
+        isOpen={showArchivedModal}
+        onClose={() => setShowArchivedModal(false)}
+        boardId={boardId}
+        onRestore={handleRestoreCard}
+        onDelete={handleDeleteArchivedCard}
+      />
     </div>
   );
 }
