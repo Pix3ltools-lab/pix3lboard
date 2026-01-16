@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setPendingMessage('');
     setLoading(true);
 
     try {
@@ -36,6 +38,9 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error);
+      } else if ('pending' in result && result.pending && 'message' in result) {
+        // Registration successful but pending approval
+        setPendingMessage((result.message as string) || 'Account created. Waiting for admin approval.');
       } else {
         router.push('/');
       }
@@ -171,6 +176,19 @@ export default function LoginPage() {
             </div>
           )}
 
+          {pendingMessage && (
+            <div style={{
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
+              {pendingMessage}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -196,6 +214,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsRegister(!isRegister);
                 setError('');
+                setPendingMessage('');
               }}
               style={{
                 background: 'none',

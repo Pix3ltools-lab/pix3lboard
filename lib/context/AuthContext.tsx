@@ -20,6 +20,7 @@ export interface User {
   email: string;
   name: string | null;
   is_admin: boolean;
+  is_approved: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +33,7 @@ interface AuthContextType {
 
   // Actions
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ error?: string; pending?: boolean; message?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -107,7 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: data.error || 'Registration failed' };
       }
 
-      setUser(data.user);
+      // Registration returns pending status (user needs admin approval)
+      if (data.pending) {
+        return { pending: true, message: data.message };
+      }
+
       return {};
     } catch (error) {
       return { error: 'An unexpected error occurred' };

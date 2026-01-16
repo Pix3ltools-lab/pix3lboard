@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Shield, Users, Key, ArrowLeft } from 'lucide-react';
+import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserWithStats {
@@ -16,6 +16,7 @@ interface UserWithStats {
   email: string;
   name: string | null;
   is_admin: boolean;
+  is_approved: boolean;
   created_at: string;
   workspace_count: number;
   board_count: number;
@@ -32,6 +33,15 @@ export default function AdminPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState('');
+  const [userToDelete, setUserToDelete] = useState<UserWithStats | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -114,6 +124,105 @@ export default function AdminPage() {
     setError('');
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setDeleting(true);
+
+    try {
+      const res = await fetch(`/api/admin/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showToast(data.error || 'Failed to delete user', 'error');
+        return;
+      }
+
+      showToast(`User ${userToDelete.email} deleted`, 'success');
+      setUsers(users.filter(u => u.id !== userToDelete.id));
+      setUserToDelete(null);
+    } catch {
+      showToast('Failed to delete user', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleApproveUser = async (userId: string) => {
+    setApproving(userId);
+
+    try {
+      const res = await fetch('/api/admin/approve-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showToast(data.error || 'Failed to approve user', 'error');
+        return;
+      }
+
+      showToast('User approved', 'success');
+      setUsers(users.map(u => u.id === userId ? { ...u, is_approved: true } : u));
+    } catch {
+      showToast('Failed to approve user', 'error');
+    } finally {
+      setApproving(null);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError('');
+
+    if (newUserPassword.length < 8) {
+      setCreateError('Password must be at least 8 characters');
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail,
+          password: newUserPassword,
+          name: newUserName || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCreateError(data.error || 'Failed to create user');
+        return;
+      }
+
+      showToast(`User ${data.user.email} created`, 'success');
+      // Refresh user list to get the new user with stats
+      fetchUsers();
+      closeCreateModal();
+    } catch {
+      setCreateError('Failed to create user');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setNewUserEmail('');
+    setNewUserPassword('');
+    setNewUserName('');
+    setCreateError('');
+  };
+
   if (isLoading || !user?.is_admin) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -137,19 +246,36 @@ export default function AdminPage() {
         </button>
 
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-8 w-8 text-accent-primary" />
-          <h1 className="text-2xl font-bold text-text-primary">Admin Panel</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-accent-primary" />
+            <h1 className="text-2xl font-bold text-text-primary">Admin Panel</h1>
+          </div>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Create User
+          </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-bg-secondary rounded-lg p-4 border border-bg-tertiary">
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-accent-primary" />
               <div>
                 <p className="text-sm text-text-secondary">Total Users</p>
                 <p className="text-2xl font-bold text-text-primary">{users.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-bg-secondary rounded-lg p-4 border border-bg-tertiary">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-yellow-500" />
+              <div>
+                <p className="text-sm text-text-secondary">Pending Approval</p>
+                <p className="text-2xl font-bold text-text-primary">
+                  {users.filter(u => !u.is_approved).length}
+                </p>
               </div>
             </div>
           </div>
@@ -192,7 +318,7 @@ export default function AdminPage() {
                   <tr className="border-b border-bg-tertiary">
                     <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Name</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">Admin</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">Status</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">Workspaces</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-text-secondary">Boards</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Created</th>
@@ -205,11 +331,22 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-sm text-text-primary">{u.email}</td>
                       <td className="px-4 py-3 text-sm text-text-primary">{u.name || '-'}</td>
                       <td className="px-4 py-3 text-center">
-                        {u.is_admin && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent-primary/20 text-accent-primary">
-                            Admin
-                          </span>
-                        )}
+                        <div className="flex items-center justify-center gap-1">
+                          {u.is_admin && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent-primary/20 text-accent-primary">
+                              Admin
+                            </span>
+                          )}
+                          {!u.is_approved ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
+                              Pending
+                            </span>
+                          ) : !u.is_admin && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400">
+                              Approved
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center text-sm text-text-primary">{u.workspace_count}</td>
                       <td className="px-4 py-3 text-center text-sm text-text-primary">{u.board_count}</td>
@@ -218,13 +355,32 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         {u.id !== user.id && (
-                          <button
-                            onClick={() => setSelectedUser(u)}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
-                          >
-                            <Key className="h-3.5 w-3.5" />
-                            Reset Password
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {!u.is_approved && (
+                              <button
+                                onClick={() => handleApproveUser(u.id)}
+                                disabled={approving === u.id}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors disabled:opacity-50"
+                              >
+                                <UserCheck className="h-3.5 w-3.5" />
+                                {approving === u.id ? 'Approving...' : 'Approve'}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setSelectedUser(u)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                              Reset
+                            </button>
+                            <button
+                              onClick={() => setUserToDelete(u)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-sm text-text-secondary hover:text-accent-danger transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -272,6 +428,77 @@ export default function AdminPage() {
             </Button>
             <Button type="submit" disabled={resetting}>
               {resetting ? 'Resetting...' : 'Reset Password'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete User Modal */}
+      <Modal isOpen={!!userToDelete} onClose={() => setUserToDelete(null)} title="Delete User" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Are you sure you want to delete <span className="font-medium text-text-primary">{userToDelete?.email}</span>?
+          </p>
+          <p className="text-sm text-accent-danger">
+            This will permanently delete all their workspaces, boards, and cards.
+          </p>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="ghost" onClick={() => setUserToDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteUser} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete User'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create User Modal */}
+      <Modal isOpen={showCreateModal} onClose={closeCreateModal} title="Create User" size="sm">
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Create a new user account. The user will be automatically approved.
+          </p>
+
+          <Input
+            type="email"
+            label="Email"
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
+            required
+            autoComplete="email"
+            placeholder="user@example.com"
+          />
+
+          <Input
+            type="text"
+            label="Name (optional)"
+            value={newUserName}
+            onChange={(e) => setNewUserName(e.target.value)}
+            autoComplete="name"
+            placeholder="John Doe"
+          />
+
+          <Input
+            type="password"
+            label="Password"
+            value={newUserPassword}
+            onChange={(e) => setNewUserPassword(e.target.value)}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="Min 8 chars, upper, lower, number"
+          />
+
+          {createError && <p className="text-sm text-accent-danger">{createError}</p>}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button type="button" variant="ghost" onClick={closeCreateModal}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={creating}>
+              {creating ? 'Creating...' : 'Create User'}
             </Button>
           </div>
         </form>

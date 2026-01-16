@@ -29,18 +29,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const response = NextResponse.json({ user: result.user });
-
-    // Set HTTP-only cookie with token
-    response.cookies.set('auth-token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+    // Registration returns pending status (user needs admin approval)
+    return NextResponse.json({
+      pending: true,
+      message: result.message
     });
-
-    return response;
   } catch (error) {
     console.error('Register error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
