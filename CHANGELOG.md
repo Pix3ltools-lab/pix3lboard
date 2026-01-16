@@ -5,12 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2025-01-16
+
+### Added
+- **Checklists**: Add subtasks to cards with checkboxes
+  - Progress bar in card modal
+  - Progress indicator on cards (e.g., "2/5", green when complete)
+  - Add, toggle, and delete items
+
+### Fixed
+- **Date Picker**: Fixed timezone issue causing dates to show one day earlier
+
+---
+
 ## [2.0.2] - 2025-01-16
 
 ### Added
 - **Card Comments**: Add comments to cards with author name and timestamp
-  - Comment count indicator displayed on cards
-  - Real-time count update when adding/removing comments
   - Delete own comments (or any comment if admin)
 - **Login Security**: Rate limiting (5 attempts, 15 min lockout), password strength validation
 - **Admin Panel**: User management dashboard with password reset capability

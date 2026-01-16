@@ -2,7 +2,7 @@
 export type { Workspace } from './workspace';
 export type { Board } from './board';
 export type { List } from './list';
-export type { Card, CardType, BugSeverity, Priority, Effort } from './card';
+export type { Card, CardType, BugSeverity, Priority, Effort, ChecklistItem } from './card';
 
 // UI types
 export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from './ui';

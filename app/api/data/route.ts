@@ -57,6 +57,7 @@ interface CardRow {
   effort: string | null;
   attendees: string | null;
   meeting_date: string | null;
+  checklist: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -176,6 +177,7 @@ export async function GET(request: NextRequest) {
                   effort: c.effort || undefined,
                   attendees: c.attendees ? JSON.parse(c.attendees) : undefined,
                   meetingDate: c.meeting_date || undefined,
+                  checklist: c.checklist ? JSON.parse(c.checklist) : undefined,
                   createdAt: c.created_at,
                   updatedAt: c.updated_at,
                   commentCount: commentCounts.get(c.id) || 0,
@@ -274,8 +276,8 @@ export async function POST(request: NextRequest) {
 
           for (const card of list.cards) {
             await execute(
-              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, created_at, updated_at)
-               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :createdAt, :updatedAt)`,
+              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, created_at, updated_at)
+               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :createdAt, :updatedAt)`,
               {
                 id: card.id,
                 listId: card.listId,
@@ -296,6 +298,7 @@ export async function POST(request: NextRequest) {
                 effort: card.effort || null,
                 attendees: card.attendees ? JSON.stringify(card.attendees) : null,
                 meetingDate: card.meetingDate || null,
+                checklist: card.checklist ? JSON.stringify(card.checklist) : null,
                 createdAt: card.createdAt,
                 updatedAt: card.updatedAt,
               }

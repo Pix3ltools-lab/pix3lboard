@@ -24,8 +24,10 @@ export function DatePicker({ value, onChange, label = 'Due Date' }: DatePickerPr
     onChange(undefined);
   };
 
-  // Convert ISO string to YYYY-MM-DD for input
-  const inputValue = value ? value.split('T')[0] : '';
+  // Convert ISO string to YYYY-MM-DD for input (using local timezone)
+  const inputValue = value
+    ? new Date(value).toLocaleDateString('en-CA') // en-CA gives YYYY-MM-DD format
+    : '';
 
   return (
     <div>

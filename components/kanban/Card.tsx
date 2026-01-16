@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
-import { Clock, Tag, Star, User, Users, AlertCircle, MessageSquare } from 'lucide-react';
+import { Clock, Tag, Star, User, Users, AlertCircle, CheckSquare } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
 
 interface CardProps {
@@ -143,11 +143,13 @@ export function Card({ card, onClick }: CardProps) {
           </div>
         )}
 
-        {/* Comments */}
-        {card.commentCount && card.commentCount > 0 && (
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            <span>{card.commentCount}</span>
+        {/* Checklist */}
+        {card.checklist && card.checklist.length > 0 && (
+          <div className={`flex items-center gap-1 ${
+            card.checklist.every(item => item.checked) ? 'text-accent-success' : ''
+          }`}>
+            <CheckSquare className="h-3 w-3" />
+            <span>{card.checklist.filter(item => item.checked).length}/{card.checklist.length}</span>
           </div>
         )}
 

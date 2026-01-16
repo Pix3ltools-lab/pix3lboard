@@ -4,6 +4,12 @@ export type BugSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type Priority = 'low' | 'medium' | 'high';
 export type Effort = 'small' | 'medium' | 'large';
 
+export interface ChecklistItem {
+  id: string;
+  content: string;
+  checked: boolean;
+}
+
 export interface Card {
   id: string;
   listId: string;
@@ -30,6 +36,9 @@ export interface Card {
   effort?: Effort; // For feature type
   attendees?: string[]; // For meeting type, max 5
   meetingDate?: string; // For meeting type, ISO date string
+
+  // Checklist
+  checklist?: ChecklistItem[];
 
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardType, BugSeverity, Priority, Effort } from '@/types';
+import { useState, useEffect } from 'react';
+import { Card, CardType, BugSeverity, Priority, Effort, ChecklistItem } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -15,6 +15,7 @@ import { SeveritySelector } from '@/components/card/SeveritySelector';
 import { PrioritySelector } from '@/components/card/PrioritySelector';
 import { AttendeesList } from '@/components/card/AttendeesList';
 import { CommentsSection } from '@/components/card/CommentsSection';
+import { ChecklistSection } from '@/components/card/ChecklistSection';
 import { Copy, Trash2 } from 'lucide-react';
 
 interface CardModalProps {
@@ -55,6 +56,7 @@ export function CardModal({
   const [effort, setEffort] = useState<Effort | undefined>(card.effort);
   const [attendees, setAttendees] = useState<string[]>(card.attendees || []);
   const [meetingDate, setMeetingDate] = useState(card.meetingDate);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist || []);
 
   // Reset state when card changes
   useEffect(() => {
@@ -75,6 +77,7 @@ export function CardModal({
     setEffort(card.effort);
     setAttendees(card.attendees || []);
     setMeetingDate(card.meetingDate);
+    setChecklist(card.checklist || []);
   }, [card]);
 
   // Validate job number format: Letter-2digits-4digits (e.g., C-26-0001)
@@ -119,6 +122,7 @@ export function CardModal({
       effort,
       attendees: attendees.length > 0 ? attendees : undefined,
       meetingDate: type === 'meeting' ? meetingDate : undefined,
+      checklist: checklist.length > 0 ? checklist : undefined,
     });
 
     onClose();
@@ -133,10 +137,6 @@ export function CardModal({
     onDuplicate(card.id);
     onClose();
   };
-
-  const handleCommentCountChange = useCallback((count: number) => {
-    onUpdate(card.id, { commentCount: count });
-  }, [card.id, onUpdate]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Card" size="lg">
@@ -250,12 +250,14 @@ export function CardModal({
         {/* Links */}
         <LinkInput value={links} onChange={setLinks} />
 
+        {/* Checklist */}
+        <div className="pt-4 border-t border-bg-tertiary">
+          <ChecklistSection value={checklist} onChange={setChecklist} />
+        </div>
+
         {/* Comments */}
         <div className="pt-4 border-t border-bg-tertiary">
-          <CommentsSection
-            cardId={card.id}
-            onCommentCountChange={handleCommentCountChange}
-          />
+          <CommentsSection cardId={card.id} />
         </div>
 
         {/* Actions */}
