@@ -1,0 +1,31 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken, getUserById, getAllUsers } from '@/lib/auth/auth';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const currentUser = await getUserById(payload.userId);
+    if (!currentUser || !currentUser.is_admin) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    const users = await getAllUsers();
+    return NextResponse.json({ users });
+  } catch (error) {
+    console.error('Get users error:', error);
+    return NextResponse.json({ error: 'Failed to get users' }, { status: 500 });
+  }
+}

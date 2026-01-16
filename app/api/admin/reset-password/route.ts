@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, changePassword } from '@/lib/auth/auth';
+import { verifyToken, getUserById, adminResetPassword } from '@/lib/auth/auth';
 import { validatePassword } from '@/lib/auth/validation';
 
 export const dynamic = 'force-dynamic';
@@ -17,9 +17,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const { currentPassword, newPassword } = await request.json();
+    // Check if user is admin
+    const currentUser = await getUserById(payload.userId);
+    if (!currentUser || !currentUser.is_admin) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
 
-    if (!currentPassword || !newPassword) {
+    const { userId, newPassword } = await request.json();
+
+    if (!userId || !newPassword) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -29,7 +35,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: passwordValidation.error }, { status: 400 });
     }
 
-    const result = await changePassword(payload.userId, currentPassword, newPassword);
+    // Prevent admin from resetting their own password via this endpoint
+    if (userId === payload.userId) {
+      return NextResponse.json(
+        { error: 'Use the change password feature to update your own password' },
+        { status: 400 }
+      );
+    }
+
+    const result = await adminResetPassword(userId, newPassword);
 
     if ('error' in result) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -37,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Change password error:', error);
-    return NextResponse.json({ error: 'Failed to change password' }, { status: 500 });
+    console.error('Reset password error:', error);
+    return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
   }
 }

@@ -1,22 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { register } from '@/lib/auth/auth';
+import { validateEmail, validatePassword, sanitizeInput } from '@/lib/auth/validation';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const body = await request.json();
+    const email = sanitizeInput(body.email).toLowerCase();
+    const password = body.password;
+    const name = body.name ? sanitizeInput(body.name) : undefined;
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password required' },
-        { status: 400 }
-      );
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      return NextResponse.json({ error: emailValidation.error }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return NextResponse.json({ error: passwordValidation.error }, { status: 400 });
     }
 
     const result = await register(email, password, name);

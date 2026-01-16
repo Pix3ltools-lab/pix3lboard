@@ -1,22 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { login } from '@/lib/auth/auth';
+import {
+  validateEmail,
+  checkRateLimit,
+  recordFailedAttempt,
+  clearFailedAttempts,
+  sanitizeInput,
+} from '@/lib/auth/validation';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const email = sanitizeInput(body.email).toLowerCase();
+    const password = body.password;
 
-    if (!email || !password) {
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      return NextResponse.json({ error: emailValidation.error }, { status: 400 });
+    }
+
+    // Check rate limiting
+    const rateLimit = checkRateLimit(email);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: 'Email and password required' },
-        { status: 400 }
+        { error: rateLimit.error },
+        {
+          status: 429,
+          headers: rateLimit.retryAfter ? { 'Retry-After': String(rateLimit.retryAfter) } : {},
+        }
       );
+    }
+
+    if (!password) {
+      return NextResponse.json({ error: 'Password is required' }, { status: 400 });
     }
 
     const result = await login(email, password);
 
     if ('error' in result) {
+      recordFailedAttempt(email);
       return NextResponse.json({ error: result.error }, { status: 401 });
     }
+
+    // Clear failed attempts on successful login
+    clearFailedAttempts(email);
 
     const response = NextResponse.json({ user: result.user });
 

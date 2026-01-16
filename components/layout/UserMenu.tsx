@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { LogOut, Key, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LogOut, Key, ChevronDown, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
 export function UserMenu() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -79,6 +81,18 @@ export function UserMenu() {
 
           {/* Menu items */}
           <div className="py-1">
+            {user.is_admin && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  router.push('/admin');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <Shield className="h-4 w-4 text-text-secondary" />
+                Admin Panel
+              </button>
+            )}
             <button
               onClick={() => {
                 setIsOpen(false);

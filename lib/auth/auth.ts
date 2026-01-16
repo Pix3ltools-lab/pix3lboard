@@ -8,6 +8,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -17,6 +18,7 @@ interface UserRow {
   email: string;
   password_hash: string;
   name: string | null;
+  is_admin: number;
   created_at: string;
   updated_at: string;
 }
@@ -84,6 +86,7 @@ export async function register(
     id,
     email: email.toLowerCase(),
     name: name || null,
+    is_admin: false,
     created_at: now,
     updated_at: now,
   };
@@ -114,6 +117,7 @@ export async function login(
     id: row.id,
     email: row.email,
     name: row.name,
+    is_admin: Boolean(row.is_admin),
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -124,7 +128,7 @@ export async function login(
 
 export async function getUserById(id: string): Promise<User | null> {
   const row = await queryOne<UserRow>(
-    'SELECT id, email, name, created_at, updated_at FROM users WHERE id = :id',
+    'SELECT id, email, name, is_admin, created_at, updated_at FROM users WHERE id = :id',
     { id }
   );
 
@@ -134,6 +138,7 @@ export async function getUserById(id: string): Promise<User | null> {
     id: row.id,
     email: row.email,
     name: row.name,
+    is_admin: Boolean(row.is_admin),
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -158,6 +163,71 @@ export async function changePassword(
   const valid = await bcrypt.compare(currentPassword, row.password_hash);
   if (!valid) {
     return { error: 'Current password is incorrect' };
+  }
+
+  // Hash new password and update
+  const newPasswordHash = await bcrypt.hash(newPassword, 12);
+  const now = new Date().toISOString();
+
+  await execute(
+    'UPDATE users SET password_hash = :passwordHash, updated_at = :updatedAt WHERE id = :id',
+    { passwordHash: newPasswordHash, updatedAt: now, id: userId }
+  );
+
+  return { success: true };
+}
+
+// Admin functions
+export interface UserWithStats {
+  id: string;
+  email: string;
+  name: string | null;
+  is_admin: boolean;
+  created_at: string;
+  workspace_count: number;
+  board_count: number;
+}
+
+export async function getAllUsers(): Promise<UserWithStats[]> {
+  const rows = await query<{
+    id: string;
+    email: string;
+    name: string | null;
+    is_admin: number;
+    created_at: string;
+    workspace_count: number;
+    board_count: number;
+  }>(`
+    SELECT
+      u.id, u.email, u.name, u.is_admin, u.created_at,
+      COUNT(DISTINCT w.id) as workspace_count,
+      COUNT(DISTINCT b.id) as board_count
+    FROM users u
+    LEFT JOIN workspaces w ON w.user_id = u.id
+    LEFT JOIN boards b ON b.workspace_id = w.id
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
+  `);
+
+  return rows.map(row => ({
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    is_admin: Boolean(row.is_admin),
+    created_at: row.created_at,
+    workspace_count: Number(row.workspace_count),
+    board_count: Number(row.board_count),
+  }));
+}
+
+export async function adminResetPassword(
+  userId: string,
+  newPassword: string
+): Promise<{ success: true } | { error: string }> {
+  // Verify user exists
+  const row = await queryOne<{ id: string }>('SELECT id FROM users WHERE id = :id', { id: userId });
+  if (!row) {
+    return { error: 'User not found' };
   }
 
   // Hash new password and update
