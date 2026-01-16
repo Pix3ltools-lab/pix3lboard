@@ -190,9 +190,26 @@ export async function POST(request: NextRequest) {
     const { workspaces } = await request.json() as { workspaces: Workspace[] };
     const db = getTursoClient();
 
+    // Save comments before deleting (they would be cascade deleted with cards)
+    const existingComments = await query<{
+      id: string;
+      card_id: string;
+      user_id: string;
+      content: string;
+      created_at: string;
+      updated_at: string;
+    }>(`
+      SELECT c.* FROM comments c
+      JOIN cards ON cards.id = c.card_id
+      JOIN lists ON lists.id = cards.list_id
+      JOIN boards ON boards.id = lists.board_id
+      JOIN workspaces ON workspaces.id = boards.workspace_id
+      WHERE workspaces.user_id = :userId
+    `, { userId });
+
     // Use a transaction to replace all data
     await db.batch([
-      // Delete existing data (cascade will handle boards, lists, cards)
+      // Delete existing data (cascade will handle boards, lists, cards, comments)
       { sql: 'DELETE FROM workspaces WHERE user_id = :userId', args: { userId } },
     ]);
 
@@ -273,6 +290,32 @@ export async function POST(request: NextRequest) {
             );
           }
         }
+      }
+    }
+
+    // Restore comments for cards that still exist
+    const newCardIds = workspaces.flatMap(ws =>
+      ws.boards.flatMap(b =>
+        b.lists.flatMap(l =>
+          l.cards.map(c => c.id)
+        )
+      )
+    );
+
+    for (const comment of existingComments) {
+      // Only restore if the card still exists
+      if (newCardIds.includes(comment.card_id)) {
+        await execute(`
+          INSERT INTO comments (id, card_id, user_id, content, created_at, updated_at)
+          VALUES (:id, :cardId, :userId, :content, :createdAt, :updatedAt)
+        `, {
+          id: comment.id,
+          cardId: comment.card_id,
+          userId: comment.user_id,
+          content: comment.content,
+          createdAt: comment.created_at,
+          updatedAt: comment.updated_at,
+        });
       }
     }
 

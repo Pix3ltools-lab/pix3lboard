@@ -14,6 +14,7 @@ import { DatePicker } from '@/components/card/DatePicker';
 import { SeveritySelector } from '@/components/card/SeveritySelector';
 import { PrioritySelector } from '@/components/card/PrioritySelector';
 import { AttendeesList } from '@/components/card/AttendeesList';
+import { CommentsSection } from '@/components/card/CommentsSection';
 import { Copy, Trash2 } from 'lucide-react';
 
 interface CardModalProps {
@@ -244,6 +245,11 @@ export function CardModal({
 
         {/* Links */}
         <LinkInput value={links} onChange={setLinks} />
+
+        {/* Comments */}
+        <div className="pt-4 border-t border-bg-tertiary">
+          <CommentsSection cardId={card.id} />
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-bg-tertiary">
