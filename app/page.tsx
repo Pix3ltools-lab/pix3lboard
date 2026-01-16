@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useData } from '@/lib/context/DataContext';
 import { useUI } from '@/lib/context/UIContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -15,6 +16,7 @@ import { Workspace } from '@/types';
 
 export default function Home() {
   const { workspaces, createWorkspace, updateWorkspace, deleteWorkspace, isInitialized } = useData();
+  const { isAuthenticated } = useAuth();
   const { showToast, showConfirmDialog } = useUI();
   const [showModal, setShowModal] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
@@ -88,28 +90,49 @@ export default function Home() {
                 Your privacy-first project management tool
               </p>
             </div>
-            <Button onClick={() => setShowModal(true)} className="w-full sm:w-auto">
-              Create Workspace
-            </Button>
+            {isAuthenticated && (
+              <Button onClick={() => setShowModal(true)} className="w-full sm:w-auto">
+                Create Workspace
+              </Button>
+            )}
           </div>
 
           <div className="space-y-6">
-            {/* Privacy & Backup Info */}
+            {/* Experimental Warning */}
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
+              <h3 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-2">
+                ⚠️ Experimental Demo
+              </h3>
+              <p className="text-sm text-text-secondary">
+                This is an <strong>experimental version</strong> of Pix3lBoard. Data persistence is not guaranteed
+                and may be reset at any time. Use this only as a demo. The project source code is available on{' '}
+                <a
+                  href="https://github.com/Pix3ltools-lab/pix3lboard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-primary hover:underline"
+                >
+                  GitHub
+                </a>.
+              </p>
+            </div>
+
+            {/* Cloud Storage Info */}
             <div className="p-4 bg-accent-primary/10 border border-accent-primary/20 rounded-lg">
               <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
-                🔒 Your Privacy is Protected
+                ☁️ Cloud Storage
               </h3>
               <p className="text-sm text-text-secondary mb-2">
-                All your data is stored <strong>locally in your browser</strong> - nothing is sent to any server.
-                This guarantees complete privacy, but also means:
+                Your data is stored <strong>securely in the cloud</strong> and associated with your account.
+                This means:
               </p>
               <ul className="text-sm text-text-secondary space-y-1 ml-4">
-                <li>• Your data may be lost if you clear browser cache or reinstall the browser</li>
-                <li>• Data is not synced between different devices or browsers</li>
-                <li>• <strong>We recommend exporting your data regularly as backup</strong></li>
+                <li>• Your data is automatically synced across all your devices</li>
+                <li>• You can access your workspaces from any browser by logging in</li>
+                <li>• Your data is safe even if you clear your browser cache</li>
               </ul>
               <p className="text-sm text-accent-primary mt-2">
-                💡 Tip: Use the export feature in each board to download a JSON backup of your work
+                💡 Tip: You can still export your data as JSON backup from each board
               </p>
             </div>
             {/* Workspaces */}
@@ -132,12 +155,20 @@ export default function Home() {
               </div>
             ) : (
               <div className="p-12 bg-bg-secondary rounded-lg text-center">
-                <p className="text-text-secondary mb-4">
-                  No workspaces yet. Create your first one to get started!
-                </p>
-                <Button onClick={() => setShowModal(true)}>
-                  Create Your First Workspace
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <p className="text-text-secondary mb-4">
+                      No workspaces yet. Create your first one to get started!
+                    </p>
+                    <Button onClick={() => setShowModal(true)}>
+                      Create Your First Workspace
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-text-secondary">
+                    Log in to create workspaces and start managing your projects.
+                  </p>
+                )}
               </div>
             )}
           </div>

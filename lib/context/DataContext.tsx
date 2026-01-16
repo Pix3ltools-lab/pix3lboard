@@ -10,9 +10,9 @@ import {
   ReactNode,
 } from 'react';
 import { Workspace, Board, List, Card, AppData, StorageInfo } from '@/types';
-import { storage } from '@/lib/storage/localStorage';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
+import { useAuth } from '@/lib/context/AuthContext';
 import {
   createAIMusicVideoBoard,
   createProjectManagementBoard,
@@ -72,38 +72,70 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [canSave, setCanSave] = useState(false); // Only true after successful load
 
-  // Load data from localStorage on mount
+  // Load data from Turso on mount
   useEffect(() => {
-    const data = storage.load();
-    if (data && data.workspaces) {
-      setWorkspaces(data.workspaces);
+    if (!isAuthenticated) {
+      // Not authenticated, reset state but DON'T allow saving
+      setWorkspaces([]);
+      setIsInitialized(true);
+      setCanSave(false); // Prevent saving empty data on logout
+      return;
     }
-    setIsInitialized(true);
-  }, []);
 
-  // Throttled save to localStorage (max once per second)
+    async function loadData() {
+      try {
+        const response = await fetch('/api/data');
+        const data = await response.json();
+        setWorkspaces(data.workspaces || []);
+        setCanSave(true); // Now we can save changes
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        setWorkspaces([]);
+        setCanSave(false);
+      } finally {
+        setIsInitialized(true);
+      }
+    }
+
+    loadData();
+  }, [isAuthenticated]);
+
+  // Throttled save to Turso (max once per 2 seconds)
   const saveToStorage = useMemo(
     () =>
-      throttle((data: AppData) => {
-        const result = storage.save(data);
-        if (!result.success) {
-          console.error('Failed to save:', result.error);
+      throttle(async (data: AppData) => {
+        if (!isAuthenticated) return;
+
+        try {
+          const response = await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workspaces: data.workspaces }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to save data to cloud');
+          }
+        } catch (error) {
+          console.error('Save error:', error);
         }
-      }, 1000),
-    []
+      }, 2000),
+    [isAuthenticated]
   );
 
-  // Auto-save on data changes
+  // Auto-save on data changes (only if authenticated and loaded successfully)
   useEffect(() => {
-    if (isInitialized && workspaces.length >= 0) {
+    if (isInitialized && canSave && isAuthenticated) {
       saveToStorage({ workspaces });
     }
-  }, [workspaces, isInitialized, saveToStorage]);
+  }, [workspaces, isInitialized, canSave, isAuthenticated, saveToStorage]);
 
   // ===== WORKSPACE OPERATIONS =====
 
@@ -415,6 +447,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
               tags: data.tags,
               dueDate: data.dueDate,
               links: data.links,
+              responsible: data.responsible,
+              jobNumber: data.jobNumber,
+              severity: data.severity,
+              priority: data.priority,
+              effort: data.effort,
+              attendees: data.attendees,
+              meetingDate: data.meetingDate,
               createdAt: now,
               updatedAt: now,
             };
@@ -589,12 +628,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setWorkspaces([]);
     setActiveWorkspaceId(null);
     setActiveBoardId(null);
-    storage.clear();
   }, []);
 
   const getStorageSize = useCallback((): StorageInfo => {
-    return storage.getSize();
-  }, []);
+    // For cloud storage, we estimate based on JSON size
+    const dataStr = JSON.stringify({ workspaces });
+    const bytes = new Blob([dataStr]).size;
+    const totalBytes = 256 * 1024 * 1024; // 256MB (Turso free tier)
+    return {
+      bytes,
+      mb: bytes / (1024 * 1024),
+      percentage: (bytes / totalBytes) * 100,
+    };
+  }, [workspaces]);
 
   // ===== NAVIGATION =====
 
