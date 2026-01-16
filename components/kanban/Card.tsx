@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
-import { Clock, Tag, Star, User, Users, AlertCircle } from 'lucide-react';
+import { Clock, Tag, Star, User, Users, AlertCircle, MessageSquare } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
 
 interface CardProps {
@@ -140,6 +140,14 @@ export function Card({ card, onClick }: CardProps) {
           <div className="flex items-center gap-1">
             <Tag className="h-3 w-3" />
             <span>{card.tags.length}</span>
+          </div>
+        )}
+
+        {/* Comments */}
+        {card.commentCount && card.commentCount > 0 && (
+          <div className="flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            <span>{card.commentCount}</span>
           </div>
         )}
 

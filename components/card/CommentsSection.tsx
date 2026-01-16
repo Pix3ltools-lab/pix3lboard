@@ -22,9 +22,10 @@ interface Comment {
 
 interface CommentsSectionProps {
   cardId: string;
+  onCommentCountChange?: (count: number) => void;
 }
 
-export function CommentsSection({ cardId }: CommentsSectionProps) {
+export function CommentsSection({ cardId, onCommentCountChange }: CommentsSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -70,8 +71,10 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
       }
 
       const data = await res.json();
-      setComments([...comments, data.comment]);
+      const newComments = [...comments, data.comment];
+      setComments(newComments);
       setNewComment('');
+      onCommentCountChange?.(newComments.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add comment');
     } finally {
@@ -90,7 +93,9 @@ export function CommentsSection({ cardId }: CommentsSectionProps) {
         throw new Error(data.error || 'Failed to delete comment');
       }
 
-      setComments(comments.filter(c => c.id !== commentId));
+      const newComments = comments.filter(c => c.id !== commentId);
+      setComments(newComments);
+      onCommentCountChange?.(newComments.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete comment');
     }

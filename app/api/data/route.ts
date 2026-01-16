@@ -114,6 +114,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Load comment counts for all cards
+    let commentCounts: Map<string, number> = new Map();
+    if (cardRows.length > 0) {
+      const cardIds = cardRows.map(c => c.id);
+      const countRows = await query<{ card_id: string; count: number }>(
+        `SELECT card_id, COUNT(*) as count FROM comments WHERE card_id IN (${cardIds.map((_, i) => `:c${i}`).join(',')}) GROUP BY card_id`,
+        Object.fromEntries(cardIds.map((id, i) => [`c${i}`, id]))
+      );
+      commentCounts = new Map(countRows.map(r => [r.card_id, Number(r.count)]));
+    }
+
     // Assemble the nested structure
     const workspaces: Workspace[] = workspaceRows.map(ws => ({
       id: ws.id,
@@ -167,6 +178,7 @@ export async function GET(request: NextRequest) {
                   meetingDate: c.meeting_date || undefined,
                   createdAt: c.created_at,
                   updatedAt: c.updated_at,
+                  commentCount: commentCounts.get(c.id) || 0,
                 } as Card)),
             } as List)),
         } as Board)),

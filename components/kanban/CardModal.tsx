@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardType, BugSeverity, Priority, Effort } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -134,6 +134,10 @@ export function CardModal({
     onClose();
   };
 
+  const handleCommentCountChange = useCallback((count: number) => {
+    onUpdate(card.id, { commentCount: count });
+  }, [card.id, onUpdate]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Card" size="lg">
       <div className="space-y-4">
@@ -248,7 +252,10 @@ export function CardModal({
 
         {/* Comments */}
         <div className="pt-4 border-t border-bg-tertiary">
-          <CommentsSection cardId={card.id} />
+          <CommentsSection
+            cardId={card.id}
+            onCommentCountChange={handleCommentCountChange}
+          />
         </div>
 
         {/* Actions */}

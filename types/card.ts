@@ -33,4 +33,7 @@ export interface Card {
 
   createdAt: string;
   updatedAt: string;
+
+  // Computed fields (from API)
+  commentCount?: number;
 }
