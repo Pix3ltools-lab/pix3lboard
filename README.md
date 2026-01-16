@@ -31,9 +31,17 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 
 ### Cloud Storage & Authentication
 - **User Accounts**: Register and login with email/password
+- **Admin Approval**: New accounts require admin approval before access
 - **Cloud Sync**: Data automatically syncs across all devices
 - **Secure Storage**: Data stored in Turso (SQLite) cloud database
 - **JWT Authentication**: Secure token-based sessions
+
+### Admin Panel
+- **User Management**: View all users with statistics
+- **User Approval**: Approve pending user registrations
+- **Create Users**: Admin can create pre-approved accounts
+- **Delete Users**: Remove users and all their data
+- **Reset Passwords**: Admin can reset user passwords
 
 ### User Experience
 - **Responsive Design**: Works on desktop, tablet, and mobile
@@ -175,8 +183,9 @@ pix3lboard/
 
 1. Go to the login page
 2. Click "Don't have an account? Register"
-3. Enter your email and password (min 6 characters)
+3. Enter your email and password (min 8 characters, must include uppercase, lowercase, and number)
 4. Click "Create Account"
+5. Wait for admin approval (you'll see "Account pending approval" until approved)
 
 ### Creating Your First Workspace
 
