@@ -6,7 +6,7 @@ import { StorageIndicator } from './StorageIndicator';
 import { UserMenu } from './UserMenu';
 import { useAuth } from '@/lib/context/AuthContext';
 
-const APP_VERSION = '2.0.3';
+const APP_VERSION = '2.0.4';
 
 interface HeaderProps {
   showStorage?: boolean;

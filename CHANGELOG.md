@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2025-01-16
+
+### Added
+- **User Approval System**: New users require admin approval before login
+  - Registration shows "Waiting for admin approval" message
+  - Login blocked with "Account pending approval" until approved
+- **Admin User Management**:
+  - View pending users with yellow "Pending" badge
+  - Approve users with one click
+  - Create new pre-approved users
+  - Delete users (with all their data)
+
+---
+
 ## [2.0.3] - 2025-01-16
 
 ### Added
