@@ -49,4 +49,127 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgba(176, 176, 176, 0.3);
   }
+
+  /* FullCalendar dark theme styles */
+  .calendar-container {
+    --fc-border-color: var(--bg-tertiary);
+    --fc-button-bg-color: var(--bg-secondary);
+    --fc-button-border-color: var(--bg-tertiary);
+    --fc-button-text-color: var(--text-primary);
+    --fc-button-hover-bg-color: var(--bg-tertiary);
+    --fc-button-hover-border-color: var(--bg-tertiary);
+    --fc-button-active-bg-color: #3b82f6;
+    --fc-button-active-border-color: #3b82f6;
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--bg-secondary);
+    --fc-today-bg-color: rgba(59, 130, 246, 0.1);
+    --fc-event-border-color: transparent;
+  }
+
+  .calendar-container .fc {
+    font-family: inherit;
+  }
+
+  .calendar-container .fc-theme-standard td,
+  .calendar-container .fc-theme-standard th {
+    border-color: var(--bg-tertiary);
+  }
+
+  .calendar-container .fc-col-header-cell {
+    background-color: var(--bg-secondary);
+    padding: 8px 0;
+  }
+
+  .calendar-container .fc-col-header-cell-cushion {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .calendar-container .fc-daygrid-day-number {
+    color: var(--text-primary);
+    padding: 8px;
+  }
+
+  .calendar-container .fc-daygrid-day.fc-day-today {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  .calendar-container .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .calendar-container .fc-toolbar-title {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .calendar-container .fc-button {
+    background-color: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .calendar-container .fc-button:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .calendar-container .fc-button:disabled {
+    opacity: 0.5;
+  }
+
+  .calendar-container .fc-button-primary:not(:disabled).fc-button-active,
+  .calendar-container .fc-button-primary:not(:disabled):active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+  }
+
+  .calendar-container .fc-event {
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: none;
+  }
+
+  .calendar-container .fc-event:hover {
+    opacity: 0.9;
+  }
+
+  .calendar-container .fc-daygrid-event-dot {
+    display: none;
+  }
+
+  .calendar-container .fc-more-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .calendar-container .fc-more-link:hover {
+    color: var(--text-primary);
+  }
+
+  .calendar-container .fc-popover {
+    background-color: var(--bg-primary);
+    border-color: var(--bg-tertiary);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+
+  .calendar-container .fc-popover-header {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px 12px;
+  }
+
+  .calendar-container .fc-popover-body {
+    padding: 8px;
+  }
 }

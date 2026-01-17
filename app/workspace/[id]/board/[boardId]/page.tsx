@@ -8,8 +8,9 @@ import { Header } from '@/components/layout/Header';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { CardModal } from '@/components/kanban/CardModal';
-import { BoardToolbar } from '@/components/board/BoardToolbar';
+import { BoardToolbar, ViewType } from '@/components/board/BoardToolbar';
 import { ArchivedCardsModal } from '@/components/board/ArchivedCardsModal';
+import { CalendarView } from '@/components/board/CalendarView';
 import { Spinner } from '@/components/ui/Spinner';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -43,6 +44,7 @@ export default function BoardPage() {
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [showArchivedModal, setShowArchivedModal] = useState(false);
+  const [viewType, setViewType] = useState<ViewType>('kanban');
 
   const workspace = getWorkspace(workspaceId);
   const board = getBoard(boardId);
@@ -268,24 +270,33 @@ export default function BoardPage() {
         onTogglePublic={handleTogglePublic}
         background={board.background}
         onBackgroundChange={handleBackgroundChange}
+        viewType={viewType}
+        onViewTypeChange={setViewType}
       />
 
-      {/* Kanban Board */}
+      {/* Board Content */}
       <main
         className="flex-1 overflow-hidden transition-colors duration-300"
         style={{ backgroundColor: board.background || undefined }}
       >
-        <KanbanBoard
-          board={board}
-          onCardClick={handleCardClick}
-          onAddCard={handleAddCard}
-          onAddList={handleAddList}
-          onRenameList={handleRenameList}
-          onDeleteList={handleDeleteList}
-          onUpdateListColor={handleUpdateListColor}
-          onReorderLists={handleReorderLists}
-          onMoveCard={handleMoveCard}
-        />
+        {viewType === 'kanban' ? (
+          <KanbanBoard
+            board={board}
+            onCardClick={handleCardClick}
+            onAddCard={handleAddCard}
+            onAddList={handleAddList}
+            onRenameList={handleRenameList}
+            onDeleteList={handleDeleteList}
+            onUpdateListColor={handleUpdateListColor}
+            onReorderLists={handleReorderLists}
+            onMoveCard={handleMoveCard}
+          />
+        ) : (
+          <CalendarView
+            board={board}
+            onCardClick={handleCardClick}
+          />
+        )}
       </main>
 
       {/* Card Detail Modal */}

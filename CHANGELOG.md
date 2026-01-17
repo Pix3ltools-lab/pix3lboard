@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2025-01-17
+
+### Added
+- **Card Thumbnails**: Upload images to cards with Vercel Blob storage
+  - Client-side image compression (800x600 max, JPEG 80%)
+  - Thumbnail preview in card and modal
+  - Lightbox for full-size image viewing
+  - Delete thumbnail functionality
+- **Calendar View**: View cards with due dates in a calendar
+  - Monthly and weekly views using FullCalendar
+  - Cards with `dueDate` shown in blue (red if overdue)
+  - Meeting cards with `meetingDate` shown in purple
+  - Toggle between Kanban and Calendar views in toolbar
+  - Click on event to open CardModal
+  - Dark theme styling
+
+### Changed
+- Updated README with new features documentation
+
+---
+
 ## [2.1.2] - 2025-01-17
 
 ### Fixed

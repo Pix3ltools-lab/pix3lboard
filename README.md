@@ -25,7 +25,9 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
   - Due dates and meeting dates
 - **Card Comments**: Add comments to cards with author and timestamp
 - **Checklists**: Add subtasks with progress tracking
+- **Card Thumbnails**: Add images to cards with upload and lightbox preview
 - **Card Archiving**: Archive completed cards without deleting them
+- **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
 - **Search & Filter**: Search cards by title, filter by tags and job number
 - **Export/Import**: Backup and restore your data as JSON
@@ -58,6 +60,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript (strict mode)
 - **Database**: Turso (libSQL/SQLite)
+- **File Storage**: Vercel Blob
 - **Authentication**: Custom JWT with bcryptjs
 - **Styling**: Tailwind CSS with custom CSS variables
 - **Drag & Drop**: @dnd-kit
@@ -116,6 +119,9 @@ TURSO_AUTH_TOKEN="your-auth-token"
 
 # JWT Secret (generate a random string)
 JWT_SECRET="your-random-secret-key-min-32-chars"
+
+# Vercel Blob (for image uploads)
+BLOB_READ_WRITE_TOKEN="your-vercel-blob-token"
 ```
 
 5. Initialize the database:
@@ -141,11 +147,13 @@ npm run start
 
 1. Push your code to GitHub
 2. Import the project in Vercel
-3. Add environment variables:
+3. Add a Blob store in Vercel dashboard (Storage > Create > Blob)
+4. Add environment variables:
    - `TURSO_DATABASE_URL`
    - `TURSO_AUTH_TOKEN`
    - `JWT_SECRET`
-4. Deploy
+   - `BLOB_READ_WRITE_TOKEN` (auto-added when creating Blob store)
+5. Deploy
 
 ## Project Structure
 
@@ -257,7 +265,7 @@ pix3lboard/
 
 - No real-time collaboration (public boards are read-only)
 - No undo/redo functionality
-- No file attachments
+- No file attachments (only image thumbnails supported)
 - No offline support
 
 ## Development

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
 
 // Preset background colors for boards
@@ -18,6 +18,8 @@ const BOARD_BACKGROUNDS = [
   { name: 'Midnight', value: '#1e293b' },
 ];
 
+export type ViewType = 'kanban' | 'calendar';
+
 interface BoardToolbarProps {
   availableTags: string[];
   onExport: () => void;
@@ -28,9 +30,11 @@ interface BoardToolbarProps {
   onTogglePublic?: (isPublic: boolean) => void;
   background?: string;
   onBackgroundChange?: (background: string) => void;
+  viewType?: ViewType;
+  onViewTypeChange?: (viewType: ViewType) => void;
 }
 
-export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic, background, onBackgroundChange }: BoardToolbarProps) {
+export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
@@ -250,6 +254,36 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* View Toggle */}
+        {onViewTypeChange && (
+          <div className="flex items-center border border-bg-tertiary rounded-lg overflow-hidden">
+            <button
+              onClick={() => onViewTypeChange('kanban')}
+              className={`flex items-center gap-1 px-3 py-1.5 text-sm transition-colors ${
+                viewType === 'kanban'
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-primary text-text-secondary hover:text-text-primary'
+              }`}
+              title="Kanban view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Kanban</span>
+            </button>
+            <button
+              onClick={() => onViewTypeChange('calendar')}
+              className={`flex items-center gap-1 px-3 py-1.5 text-sm transition-colors ${
+                viewType === 'calendar'
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-primary text-text-secondary hover:text-text-primary'
+              }`}
+              title="Calendar view"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendar</span>
+            </button>
           </div>
         )}
 
