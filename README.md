@@ -34,6 +34,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Card Comments**: Add comments to cards with author and timestamp
 - **Checklists**: Add subtasks with progress tracking
 - **Card Thumbnails**: Add images to cards with upload and lightbox preview
+- **File Attachments**: Upload files to cards (PDF, documents, images, max 10MB)
 - **Card Archiving**: Archive completed cards without deleting them
 - **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
@@ -273,7 +274,6 @@ pix3lboard/
 
 - No real-time collaboration (public boards are read-only)
 - No undo/redo functionality
-- No file attachments (only image thumbnails supported)
 - No offline support
 
 ## Development

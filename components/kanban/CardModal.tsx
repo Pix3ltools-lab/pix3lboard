@@ -16,6 +16,7 @@ import { PrioritySelector } from '@/components/card/PrioritySelector';
 import { AttendeesList } from '@/components/card/AttendeesList';
 import { CommentsSection } from '@/components/card/CommentsSection';
 import { ChecklistSection } from '@/components/card/ChecklistSection';
+import { AttachmentsSection } from '@/components/card/AttachmentsSection';
 import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
 import { Lightbox } from '@/components/ui/Lightbox';
 import { Copy, Trash2, Archive } from 'lucide-react';
@@ -281,6 +282,11 @@ export function CardModal({
         {/* Checklist */}
         <div className="pt-4 border-t border-bg-tertiary">
           <ChecklistSection value={checklist} onChange={setChecklist} />
+        </div>
+
+        {/* Attachments */}
+        <div className="pt-4 border-t border-bg-tertiary">
+          <AttachmentsSection cardId={card.id} />
         </div>
 
         {/* Comments */}

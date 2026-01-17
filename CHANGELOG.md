@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-01-17
+
+### Added
+- **File Attachments**: Upload files to cards with Vercel Blob storage
+  - Support for any file type (max 10MB)
+  - File list with type-specific icons
+  - Image preview for image attachments
+  - Download and delete functionality
+  - New `attachments` table in database
+
+### Changed
+- Updated README with attachments feature documentation
+- Completed Phase 4 (Media & Attachments) in improvement roadmap
+
+---
+
 ## [2.1.3] - 2025-01-17
 
 ### Added

@@ -5,7 +5,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { useAuth } from '@/lib/context/AuthContext';
 
-const APP_VERSION = '2.1.3';
+const APP_VERSION = '2.2.0';
 
 export function Header() {
   const { isAuthenticated } = useAuth();
