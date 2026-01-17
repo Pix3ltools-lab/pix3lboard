@@ -174,11 +174,6 @@ export default function BoardPage() {
     window.location.reload();
   };
 
-  const handleDeleteArchivedCard = (cardId: string) => {
-    // Card is already archived, just delete it
-    deleteCard(cardId);
-  };
-
   const handleTogglePublic = async (makePublic: boolean) => {
     try {
       const res = await fetch(`/api/boards/${boardId}/public`, {
@@ -313,7 +308,6 @@ export default function BoardPage() {
         onClose={() => setShowArchivedModal(false)}
         boardId={boardId}
         onRestore={handleRestoreCard}
-        onDelete={handleDeleteArchivedCard}
       />
     </div>
   );

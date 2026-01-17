@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2025-01-17
+
+### Fixed
+- **Archived Cards Bug**: Fixed bug where archived cards would disappear after sync
+  - Disabled foreign key checks during sync to prevent constraint errors
+  - Added proper cascade delete order for data integrity
+  - Used INSERT OR IGNORE for archived cards restoration
+- **Permanent Delete**: Fixed permanent deletion of archived cards (now actually deletes from database)
+
+### Added
+- **DELETE /api/cards/[cardId]**: New API endpoint for permanent card deletion
+
+---
+
 ## [2.1.1] - 2025-01-17
 
 ### Added

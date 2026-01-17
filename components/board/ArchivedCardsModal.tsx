@@ -24,7 +24,6 @@ interface ArchivedCardsModalProps {
   onClose: () => void;
   boardId: string;
   onRestore: (cardId: string) => void;
-  onDelete: (cardId: string) => void;
 }
 
 export function ArchivedCardsModal({
@@ -32,7 +31,6 @@ export function ArchivedCardsModal({
   onClose,
   boardId,
   onRestore,
-  onDelete,
 }: ArchivedCardsModalProps) {
   const { showToast, showConfirmDialog } = useUI();
   const [cards, setCards] = useState<ArchivedCard[]>([]);
@@ -85,7 +83,12 @@ export function ArchivedCardsModal({
       variant: 'danger',
       onConfirm: async () => {
         try {
-          onDelete(card.id);
+          const res = await fetch(`/api/cards/${card.id}`, {
+            method: 'DELETE',
+          });
+
+          if (!res.ok) throw new Error('Failed to delete card');
+
           setCards(cards.filter(c => c.id !== card.id));
           showToast('Card deleted permanently', 'success');
         } catch (error) {

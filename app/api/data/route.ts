@@ -236,11 +236,16 @@ export async function POST(request: NextRequest) {
       WHERE workspaces.user_id = :userId AND cards.is_archived = 1
     `, { userId });
 
-    // Use a transaction to replace all data
-    await db.batch([
-      // Delete existing data (cascade will handle boards, lists, cards, comments)
-      { sql: 'DELETE FROM workspaces WHERE user_id = :userId', args: { userId } },
-    ]);
+    // Disable foreign key checks during sync to avoid constraint issues
+    await execute('PRAGMA foreign_keys = OFF', {});
+
+    try {
+      // Delete existing data
+      await execute('DELETE FROM comments WHERE card_id IN (SELECT id FROM cards WHERE list_id IN (SELECT id FROM lists WHERE board_id IN (SELECT id FROM boards WHERE workspace_id IN (SELECT id FROM workspaces WHERE user_id = :userId))))', { userId });
+      await execute('DELETE FROM cards WHERE list_id IN (SELECT id FROM lists WHERE board_id IN (SELECT id FROM boards WHERE workspace_id IN (SELECT id FROM workspaces WHERE user_id = :userId)))', { userId });
+      await execute('DELETE FROM lists WHERE board_id IN (SELECT id FROM boards WHERE workspace_id IN (SELECT id FROM workspaces WHERE user_id = :userId))', { userId });
+      await execute('DELETE FROM boards WHERE workspace_id IN (SELECT id FROM workspaces WHERE user_id = :userId)', { userId });
+      await execute('DELETE FROM workspaces WHERE user_id = :userId', { userId });
 
     // Insert all new data
     for (const ws of workspaces) {
@@ -333,38 +338,51 @@ export async function POST(request: NextRequest) {
       )
     );
 
+    // Also collect all card IDs from client state to avoid duplicates
+    const clientCardIds = new Set(workspaces.flatMap(ws =>
+      ws.boards.flatMap(b =>
+        b.lists.flatMap(l =>
+          l.cards.map(c => c.id)
+        )
+      )
+    ));
+
     for (const card of archivedCards) {
-      // Only restore if the list still exists
-      if (newListIds.includes(card.list_id)) {
-        await execute(
-          `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, created_at, updated_at)
-           VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :createdAt, :updatedAt)`,
-          {
-            id: card.id,
-            listId: card.list_id,
-            title: card.title,
-            description: card.description,
-            position: card.position,
-            type: card.type,
-            prompt: card.prompt,
-            rating: card.rating,
-            aiTool: card.ai_tool,
-            tags: card.tags,
-            dueDate: card.due_date,
-            links: card.links,
-            responsible: card.responsible,
-            jobNumber: card.job_number,
-            severity: card.severity,
-            priority: card.priority,
-            effort: card.effort,
-            attendees: card.attendees,
-            meetingDate: card.meeting_date,
-            checklist: card.checklist,
-            isArchived: 1,
-            createdAt: card.created_at,
-            updatedAt: card.updated_at,
-          }
-        );
+      // Only restore if the list still exists AND card wasn't already inserted from client state
+      if (newListIds.includes(card.list_id) && !clientCardIds.has(card.id)) {
+        try {
+          await execute(
+            `INSERT OR IGNORE INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, created_at, updated_at)
+             VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :createdAt, :updatedAt)`,
+            {
+              id: card.id,
+              listId: card.list_id,
+              title: card.title,
+              description: card.description,
+              position: card.position,
+              type: card.type,
+              prompt: card.prompt,
+              rating: card.rating,
+              aiTool: card.ai_tool,
+              tags: card.tags,
+              dueDate: card.due_date,
+              links: card.links,
+              responsible: card.responsible,
+              jobNumber: card.job_number,
+              severity: card.severity,
+              priority: card.priority,
+              effort: card.effort,
+              attendees: card.attendees,
+              meetingDate: card.meeting_date,
+              checklist: card.checklist,
+              isArchived: 1,
+              createdAt: card.created_at,
+              updatedAt: card.updated_at,
+            }
+          );
+        } catch (err) {
+          console.error(`Failed to restore archived card ${card.id}:`, err);
+        }
       }
     }
 
@@ -396,7 +414,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+      // Re-enable foreign key checks
+      await execute('PRAGMA foreign_keys = ON', {});
+
+      return NextResponse.json({ success: true });
+    } catch (innerError) {
+      // Re-enable foreign keys even on error
+      try { await execute('PRAGMA foreign_keys = ON', {}); } catch {}
+      throw innerError;
+    }
   } catch (error) {
     console.error('Save data error:', error);
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
