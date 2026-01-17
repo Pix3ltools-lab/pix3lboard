@@ -6,6 +6,14 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 
 > **Note**: This is an experimental demo. Data persistence is not guaranteed and may be reset at any time.
 
+## Screenshots
+
+### Kanban View
+![Kanban View](KanbanView.jpg)
+
+### Calendar View
+![Calendar View](CalendarView.jpg)
+
 ## Features
 
 ### Core Functionality
