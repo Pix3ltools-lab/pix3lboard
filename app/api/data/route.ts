@@ -34,6 +34,7 @@ interface ListRow {
   board_id: string;
   name: string;
   position: number;
+  color: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -156,6 +157,7 @@ export async function GET(request: NextRequest) {
               boardId: l.board_id,
               name: l.name,
               position: l.position,
+              color: l.color || undefined,
               createdAt: l.created_at,
               updatedAt: l.updated_at,
               cards: cardRows
@@ -276,13 +278,14 @@ export async function POST(request: NextRequest) {
 
         for (const list of board.lists) {
           await execute(
-            `INSERT INTO lists (id, board_id, name, position, created_at, updated_at)
-             VALUES (:id, :boardId, :name, :position, :createdAt, :updatedAt)`,
+            `INSERT INTO lists (id, board_id, name, position, color, created_at, updated_at)
+             VALUES (:id, :boardId, :name, :position, :color, :createdAt, :updatedAt)`,
             {
               id: list.id,
               boardId: list.boardId,
               name: list.name,
               position: list.position,
+              color: list.color || null,
               createdAt: list.createdAt,
               updatedAt: list.updatedAt,
             }

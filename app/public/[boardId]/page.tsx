@@ -127,7 +127,7 @@ export default function PublicBoardPage() {
   if (error || !board) {
     return (
       <div className="min-h-screen bg-bg-primary">
-        <Header showStorage={false} />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-center">
             <Globe className="w-16 h-16 text-text-secondary mx-auto mb-4" />
@@ -141,7 +141,7 @@ export default function PublicBoardPage() {
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
-      <Header showStorage={false} />
+      <Header />
 
       {/* Board Header */}
       <div className="border-b border-bg-tertiary bg-bg-secondary/50 px-4 py-3">

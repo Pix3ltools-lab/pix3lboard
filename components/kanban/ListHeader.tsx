@@ -1,19 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Palette } from 'lucide-react';
+
+// Preset colors for lists
+const LIST_COLORS = [
+  { name: 'Default', value: '' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Yellow', value: '#eab308' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Pink', value: '#ec4899' },
+];
 
 interface ListHeaderProps {
   name: string;
   cardCount: number;
+  color?: string;
   onRename?: (newName: string) => void;
   onDelete?: () => void;
+  onColorChange?: (color: string) => void;
 }
 
-export function ListHeader({ name, cardCount, onRename, onDelete }: ListHeaderProps) {
+export function ListHeader({ name, cardCount, color, onRename, onDelete, onColorChange }: ListHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(name);
   const [showMenu, setShowMenu] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const handleSubmit = () => {
     if (editName.trim() && editName !== name && onRename) {
@@ -84,6 +100,18 @@ export function ListHeader({ name, cardCount, onRename, onDelete }: ListHeaderPr
                     Rename
                   </button>
                 )}
+                {onColorChange && (
+                  <button
+                    onClick={() => {
+                      setShowColorPicker(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-bg-tertiary transition-colors flex items-center gap-2"
+                  >
+                    <Palette className="h-4 w-4" />
+                    Color
+                  </button>
+                )}
                 {onDelete && (
                   <button
                     onClick={() => {
@@ -96,6 +124,37 @@ export function ListHeader({ name, cardCount, onRename, onDelete }: ListHeaderPr
                     Delete
                   </button>
                 )}
+              </div>
+            </>
+          )}
+
+          {/* Color Picker */}
+          {showColorPicker && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowColorPicker(false)}
+              />
+              <div className="absolute right-0 mt-1 bg-bg-secondary border border-bg-tertiary rounded-lg shadow-lg z-20 p-3 w-32">
+                <p className="text-xs text-text-secondary mb-2">List color</p>
+                <div className="flex flex-wrap gap-2">
+                  {LIST_COLORS.map((c) => (
+                    <button
+                      key={c.name}
+                      onClick={() => {
+                        onColorChange?.(c.value);
+                        setShowColorPicker(false);
+                      }}
+                      className={`w-8 h-8 flex-shrink-0 rounded-lg border-2 transition-all ${
+                        color === c.value
+                          ? 'border-accent-primary scale-110'
+                          : 'border-transparent hover:border-bg-tertiary'
+                      }`}
+                      style={{ backgroundColor: c.value || 'var(--bg-tertiary)' }}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           )}

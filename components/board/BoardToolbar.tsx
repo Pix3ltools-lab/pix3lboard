@@ -3,8 +3,20 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
+
+// Preset background colors for boards
+const BOARD_BACKGROUNDS = [
+  { name: 'Default', value: '' },
+  { name: 'Ocean', value: '#0ea5e9' },
+  { name: 'Forest', value: '#22c55e' },
+  { name: 'Sunset', value: '#f97316' },
+  { name: 'Berry', value: '#a855f7' },
+  { name: 'Rose', value: '#ec4899' },
+  { name: 'Slate', value: '#64748b' },
+  { name: 'Midnight', value: '#1e293b' },
+];
 
 interface BoardToolbarProps {
   availableTags: string[];
@@ -14,11 +26,14 @@ interface BoardToolbarProps {
   boardId: string;
   isPublic?: boolean;
   onTogglePublic?: (isPublic: boolean) => void;
+  background?: string;
+  onBackgroundChange?: (background: string) => void;
 }
 
-export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic }: BoardToolbarProps) {
+export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic, background, onBackgroundChange }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
   const [showPublicMenu, setShowPublicMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -123,6 +138,51 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
             <X className="h-4 w-4" />
             Clear
           </Button>
+        )}
+
+        {/* Background Color */}
+        {onBackgroundChange && (
+          <div className="relative">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowBackgroundMenu(!showBackgroundMenu)}
+              className="flex items-center gap-2"
+            >
+              <Palette className="h-4 w-4" />
+              <span className="hidden sm:inline">Background</span>
+            </Button>
+
+            {showBackgroundMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowBackgroundMenu(false)}
+                />
+                <div className="absolute top-full mt-2 right-0 bg-bg-primary border border-bg-tertiary rounded-lg shadow-lg p-3 z-50">
+                  <p className="text-xs text-text-secondary mb-2">Board background</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {BOARD_BACKGROUNDS.map((bg) => (
+                      <button
+                        key={bg.name}
+                        onClick={() => {
+                          onBackgroundChange(bg.value);
+                          setShowBackgroundMenu(false);
+                        }}
+                        className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                          background === bg.value
+                            ? 'border-accent-primary scale-110'
+                            : 'border-transparent hover:border-bg-tertiary'
+                        }`}
+                        style={{ backgroundColor: bg.value || 'var(--bg-tertiary)' }}
+                        title={bg.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {/* Public Toggle */}

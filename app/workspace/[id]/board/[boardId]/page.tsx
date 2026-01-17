@@ -67,6 +67,11 @@ export default function BoardPage() {
     showToast('List renamed', 'success');
   };
 
+  const handleUpdateListColor = (listId: string, color: string) => {
+    updateList(listId, { color: color || undefined });
+    showToast('List color updated', 'success');
+  };
+
   const handleDeleteList = (listId: string) => {
     const list = board?.lists.find(l => l.id === listId);
     if (!list) return;
@@ -194,6 +199,11 @@ export default function BoardPage() {
     }
   };
 
+  const handleBackgroundChange = (background: string) => {
+    updateBoard(boardId, { background: background || undefined });
+    showToast('Background updated', 'success');
+  };
+
   // Collect all unique tags from all cards in the board
   const availableTags = board
     ? Array.from(
@@ -261,10 +271,15 @@ export default function BoardPage() {
         boardId={boardId}
         isPublic={board.isPublic}
         onTogglePublic={handleTogglePublic}
+        background={board.background}
+        onBackgroundChange={handleBackgroundChange}
       />
 
       {/* Kanban Board */}
-      <main className="flex-1 overflow-hidden">
+      <main
+        className="flex-1 overflow-hidden transition-colors duration-300"
+        style={{ backgroundColor: board.background || undefined }}
+      >
         <KanbanBoard
           board={board}
           onCardClick={handleCardClick}
@@ -272,6 +287,7 @@ export default function BoardPage() {
           onAddList={handleAddList}
           onRenameList={handleRenameList}
           onDeleteList={handleDeleteList}
+          onUpdateListColor={handleUpdateListColor}
           onReorderLists={handleReorderLists}
           onMoveCard={handleMoveCard}
         />

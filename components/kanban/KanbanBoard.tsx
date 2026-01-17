@@ -27,6 +27,7 @@ interface KanbanBoardProps {
   onAddList?: (name: string) => void;
   onRenameList?: (listId: string, newName: string) => void;
   onDeleteList?: (listId: string) => void;
+  onUpdateListColor?: (listId: string, color: string) => void;
   onReorderLists?: (boardId: string, listIds: string[]) => void;
   onMoveCard?: (cardId: string, targetListId: string, targetIndex: number) => void;
 }
@@ -38,6 +39,7 @@ export function KanbanBoard({
   onAddList,
   onRenameList,
   onDeleteList,
+  onUpdateListColor,
   onReorderLists,
   onMoveCard,
 }: KanbanBoardProps) {
@@ -200,6 +202,7 @@ export function KanbanBoard({
                 onAddCard={onAddCard}
                 onRenameList={onRenameList}
                 onDeleteList={onDeleteList}
+                onUpdateListColor={onUpdateListColor}
               />
             ))}
           </SortableContext>

@@ -15,6 +15,7 @@ interface ListProps {
   onAddCard?: (listId: string, title: string) => void;
   onRenameList?: (listId: string, newName: string) => void;
   onDeleteList?: (listId: string) => void;
+  onUpdateListColor?: (listId: string, color: string) => void;
 }
 
 export function List({
@@ -23,6 +24,7 @@ export function List({
   onAddCard,
   onRenameList,
   onDeleteList,
+  onUpdateListColor,
 }: ListProps) {
   const sortedCards = [...list.cards].sort((a, b) => a.position - b.position);
   const cardIds = sortedCards.map((card) => card.id);
@@ -58,23 +60,35 @@ export function List({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  return (
-    <div
-      ref={setSortableRef}
-      style={{
+  // Calculate background color - apply color as semi-transparent overlay on default bg
+  const listStyle = list.color
+    ? {
         ...style,
         height: 'calc(100vh - 280px)',
         maxHeight: 'calc(100vh - 280px)',
-      }}
-      className="flex-shrink-0 w-72 bg-bg-secondary rounded-lg p-3 flex flex-col"
+        backgroundColor: list.color,
+      }
+    : {
+        ...style,
+        height: 'calc(100vh - 280px)',
+        maxHeight: 'calc(100vh - 280px)'
+      };
+
+  return (
+    <div
+      ref={setSortableRef}
+      style={listStyle}
+      className={`flex-shrink-0 w-72 rounded-lg p-3 flex flex-col ${list.color ? '' : 'bg-bg-secondary'}`}
     >
       {/* List header with drag handle */}
       <div {...attributes} {...listeners} className="flex-shrink-0">
         <ListHeader
           name={list.name}
           cardCount={list.cards.length}
+          color={list.color}
           onRename={onRenameList ? (newName) => onRenameList(list.id, newName) : undefined}
           onDelete={onDeleteList ? () => onDeleteList(list.id) : undefined}
+          onColorChange={onUpdateListColor ? (color) => onUpdateListColor(list.id, color) : undefined}
         />
       </div>
 

@@ -5,6 +5,7 @@ export interface List {
   boardId: string;
   name: string;
   position: number;
+  color?: string;
   createdAt: string;
   updatedAt: string;
   cards: Card[];

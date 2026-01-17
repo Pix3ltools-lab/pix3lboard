@@ -2,17 +2,12 @@
 
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
-import { StorageIndicator } from './StorageIndicator';
 import { UserMenu } from './UserMenu';
 import { useAuth } from '@/lib/context/AuthContext';
 
 const APP_VERSION = '2.1.0';
 
-interface HeaderProps {
-  showStorage?: boolean;
-}
-
-export function Header({ showStorage = true }: HeaderProps) {
+export function Header() {
   const { isAuthenticated } = useAuth();
 
   return (
@@ -29,7 +24,6 @@ export function Header({ showStorage = true }: HeaderProps) {
 
         {/* Right side */}
         <div className="flex items-center gap-4">
-          {showStorage && <StorageIndicator />}
           <ThemeToggle />
           {isAuthenticated && <UserMenu />}
         </div>
