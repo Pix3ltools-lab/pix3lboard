@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Pix3lBoard - Kanban for Project Management',
-  description: 'Your privacy-first project management tool. All data stored locally in your browser.',
+  description: 'Cloud-based project management tool for AI creators. Your data syncs across all devices.',
 };
 
 export const viewport: Viewport = {

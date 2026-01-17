@@ -24,6 +24,7 @@ interface BoardRow {
   description: string | null;
   background: string | null;
   allowed_card_types: string | null;
+  is_public: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -145,6 +146,7 @@ export async function GET(request: NextRequest) {
           description: b.description || undefined,
           background: b.background || undefined,
           allowedCardTypes: b.allowed_card_types ? JSON.parse(b.allowed_card_types) : undefined,
+          isPublic: Boolean(b.is_public),
           createdAt: b.created_at,
           updatedAt: b.updated_at,
           lists: listRows
@@ -257,8 +259,8 @@ export async function POST(request: NextRequest) {
 
       for (const board of ws.boards) {
         await execute(
-          `INSERT INTO boards (id, workspace_id, name, description, background, allowed_card_types, created_at, updated_at)
-           VALUES (:id, :workspaceId, :name, :description, :background, :allowedCardTypes, :createdAt, :updatedAt)`,
+          `INSERT INTO boards (id, workspace_id, name, description, background, allowed_card_types, is_public, created_at, updated_at)
+           VALUES (:id, :workspaceId, :name, :description, :background, :allowedCardTypes, :isPublic, :createdAt, :updatedAt)`,
           {
             id: board.id,
             workspaceId: board.workspaceId,
@@ -266,6 +268,7 @@ export async function POST(request: NextRequest) {
             description: board.description || null,
             background: board.background || null,
             allowedCardTypes: board.allowedCardTypes ? JSON.stringify(board.allowedCardTypes) : null,
+            isPublic: board.isPublic ? 1 : 0,
             createdAt: board.createdAt,
             updatedAt: board.updatedAt,
           }

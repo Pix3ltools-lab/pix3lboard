@@ -25,6 +25,8 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
   - Due dates and meeting dates
 - **Card Comments**: Add comments to cards with author and timestamp
 - **Checklists**: Add subtasks with progress tracking
+- **Card Archiving**: Archive completed cards without deleting them
+- **Public Boards**: Share boards publicly with a read-only link
 - **Search & Filter**: Search cards by title, filter by tags and job number
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
@@ -228,6 +230,15 @@ pix3lboard/
 - **Reorder cards**: Drag cards vertically within a list
 - **Move cards between lists**: Drag cards to different lists
 
+### Public Boards
+
+1. Open a board
+2. Click the "Private" button in the toolbar
+3. Toggle "Public access" on
+4. Copy the public link
+5. Share the link - anyone can view (read-only) without logging in
+6. Toggle off to make the board private again
+
 ## Browser Compatibility
 
 - Chrome/Edge: Fully supported
@@ -244,7 +255,7 @@ pix3lboard/
 
 ## Known Limitations
 
-- No real-time collaboration (single user per account)
+- No real-time collaboration (public boards are read-only)
 - No undo/redo functionality
 - No file attachments
 - No offline support

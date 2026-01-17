@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-17
+
+### Added
+- **Public Boards**: Share boards publicly with a read-only link
+  - Toggle "Private/Public" in board toolbar
+  - Copy shareable link for public access
+  - Public page at `/public/[boardId]` (no login required)
+  - Read-only view for visitors (no editing, no drag & drop)
+
+### Changed
+- Updated welcome page tagline to "Cloud-based project management tool for AI creators"
+- Updated meta description for SEO
+
+---
+
 ## [2.0.5] - 2025-01-16
 
 ### Added

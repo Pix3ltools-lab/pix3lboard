@@ -8,6 +8,7 @@ export interface Board {
   description?: string;
   background?: string;
   allowedCardTypes?: CardType[]; // If undefined, all types are allowed
+  isPublic?: boolean;
   createdAt: string;
   updatedAt: string;
   lists: List[];

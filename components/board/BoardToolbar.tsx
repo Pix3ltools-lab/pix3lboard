@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
 
 interface BoardToolbarProps {
@@ -11,11 +11,24 @@ interface BoardToolbarProps {
   onExport: () => void;
   onImport: (file: File) => void;
   onShowArchive: () => void;
+  boardId: string;
+  isPublic?: boolean;
+  onTogglePublic?: (isPublic: boolean) => void;
 }
 
-export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive }: BoardToolbarProps) {
+export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showPublicMenu, setShowPublicMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/public/${boardId}` : '';
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -110,6 +123,74 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive 
             <X className="h-4 w-4" />
             Clear
           </Button>
+        )}
+
+        {/* Public Toggle */}
+        {onTogglePublic && (
+          <div className="relative">
+            <Button
+              variant={isPublic ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setShowPublicMenu(!showPublicMenu)}
+              className="flex items-center gap-2"
+            >
+              <Globe className="h-4 w-4" />
+              {isPublic ? 'Public' : 'Private'}
+            </Button>
+
+            {showPublicMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowPublicMenu(false)}
+                />
+                <div className="absolute top-full mt-2 right-0 bg-bg-primary border border-bg-tertiary rounded-lg shadow-lg p-3 z-50 min-w-[250px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-text-primary font-medium">Public access</span>
+                    <button
+                      onClick={() => {
+                        onTogglePublic(!isPublic);
+                        if (!isPublic) setShowPublicMenu(true);
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        isPublic ? 'bg-accent-primary' : 'bg-bg-tertiary'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                          isPublic ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {isPublic && (
+                    <>
+                      <p className="text-xs text-text-secondary mb-2">
+                        Anyone with the link can view this board (read-only).
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={publicUrl}
+                          readOnly
+                          className="flex-1 text-xs bg-bg-secondary border border-bg-tertiary rounded px-2 py-1.5 text-text-primary"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleCopyLink}
+                          className="flex items-center gap-1"
+                        >
+                          {copied ? <Check className="h-3 w-3" /> : <Link className="h-3 w-3" />}
+                          {copied ? 'Copied' : 'Copy'}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         {/* Archive */}

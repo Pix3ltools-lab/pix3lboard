@@ -24,6 +24,7 @@ export default function BoardPage() {
   const {
     getWorkspace,
     getBoard,
+    updateBoard,
     createList,
     updateList,
     deleteList,
@@ -173,6 +174,26 @@ export default function BoardPage() {
     deleteCard(cardId);
   };
 
+  const handleTogglePublic = async (makePublic: boolean) => {
+    try {
+      const res = await fetch(`/api/boards/${boardId}/public`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: makePublic }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update board visibility');
+      }
+
+      // Update local state (this will also sync to server)
+      updateBoard(boardId, { isPublic: makePublic });
+      showToast(makePublic ? 'Board is now public' : 'Board is now private', 'success');
+    } catch (error) {
+      showToast('Failed to update board visibility', 'error');
+    }
+  };
+
   // Collect all unique tags from all cards in the board
   const availableTags = board
     ? Array.from(
@@ -237,6 +258,9 @@ export default function BoardPage() {
         onExport={handleExport}
         onImport={handleImport}
         onShowArchive={() => setShowArchivedModal(true)}
+        boardId={boardId}
+        isPublic={board.isPublic}
+        onTogglePublic={handleTogglePublic}
       />
 
       {/* Kanban Board */}

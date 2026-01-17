@@ -87,7 +87,7 @@ export default function Home() {
                 Welcome to <span>Pix<span style={{ color: '#ef4444' }}>3</span><span style={{ color: '#3b82f6' }}>l</span>Board</span>
               </h1>
               <p className="text-sm sm:text-base md:text-lg text-text-secondary">
-                Your privacy-first project management tool
+                Cloud-based project management tool for AI creators
               </p>
             </div>
             {isAuthenticated && (
