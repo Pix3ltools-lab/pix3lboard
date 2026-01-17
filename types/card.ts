@@ -43,6 +43,9 @@ export interface Card {
   // Archive
   isArchived?: boolean;
 
+  // Thumbnail image
+  thumbnail?: string; // URL from Vercel Blob
+
   createdAt: string;
   updatedAt: string;
 

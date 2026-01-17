@@ -16,6 +16,8 @@ import { PrioritySelector } from '@/components/card/PrioritySelector';
 import { AttendeesList } from '@/components/card/AttendeesList';
 import { CommentsSection } from '@/components/card/CommentsSection';
 import { ChecklistSection } from '@/components/card/ChecklistSection';
+import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
+import { Lightbox } from '@/components/ui/Lightbox';
 import { Copy, Trash2, Archive } from 'lucide-react';
 
 interface CardModalProps {
@@ -59,6 +61,15 @@ export function CardModal({
   const [attendees, setAttendees] = useState<string[]>(card.attendees || []);
   const [meetingDate, setMeetingDate] = useState(card.meetingDate);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist || []);
+  const [thumbnail, setThumbnail] = useState(card.thumbnail);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Handle thumbnail change - update both local state and parent
+  const handleThumbnailChange = (url: string | undefined) => {
+    setThumbnail(url);
+    // Immediately update parent so the change persists when modal is closed
+    onUpdate(card.id, { thumbnail: url });
+  };
 
   // Reset state when card changes
   useEffect(() => {
@@ -80,6 +91,8 @@ export function CardModal({
     setAttendees(card.attendees || []);
     setMeetingDate(card.meetingDate);
     setChecklist(card.checklist || []);
+    setThumbnail(card.thumbnail);
+    setLightboxOpen(false);
   }, [card]);
 
   // Validate job number format: Letter-2digits-4digits (e.g., C-26-0001)
@@ -177,6 +190,14 @@ export function CardModal({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Add a more detailed description..."
           rows={5}
+        />
+
+        {/* Thumbnail */}
+        <ThumbnailUpload
+          cardId={card.id}
+          value={thumbnail}
+          onChange={handleThumbnailChange}
+          onViewFullSize={() => setLightboxOpen(true)}
         />
 
         {/* Type Selector */}
@@ -309,6 +330,16 @@ export function CardModal({
           </div>
         </div>
       </div>
+
+      {/* Lightbox for viewing full-size thumbnail */}
+      {thumbnail && (
+        <Lightbox
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          imageUrl={thumbnail}
+          alt={`Thumbnail for ${title}`}
+        />
+      )}
     </Modal>
   );
 }

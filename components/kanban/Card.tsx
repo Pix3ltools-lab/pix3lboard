@@ -84,6 +84,17 @@ export function Card({ card, onClick }: CardProps) {
         </p>
       )}
 
+      {/* Thumbnail */}
+      {card.thumbnail && (
+        <div className="mb-2 rounded overflow-hidden">
+          <img
+            src={card.thumbnail}
+            alt=""
+            className="w-full h-24 object-cover"
+          />
+        </div>
+      )}
+
       {/* Responsible */}
       {card.responsible && (
         <div className="flex items-center gap-1 mb-2 text-xs">
