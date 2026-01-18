@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.9] - 2025-01-18
+
+### Added
+- **Board Sharing**: Share boards with other users
+  - Share boards by email with role selection (Owner/Viewer)
+  - Owners can edit the board, Viewers have read-only access
+  - "Shared with me" workspace shows boards shared by others
+  - Changes made by shared owners sync to the original board
+  - Share management modal with user list and role badges
+  - New `board_shares` table in database
+
+### Fixed
+- Fixed SQL query errors in shares API (removed non-existent column references)
+
+---
+
 ## [2.2.0] - 2025-01-17
 
 ### Added

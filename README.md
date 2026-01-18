@@ -38,6 +38,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Card Archiving**: Archive completed cards without deleting them
 - **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
+- **Board Sharing**: Share boards with specific users (Owner or Viewer role)
 - **Search & Filter**: Search cards by title, filter by tags and job number
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
@@ -246,6 +247,17 @@ pix3lboard/
 - **Reorder lists**: Drag list headers horizontally
 - **Reorder cards**: Drag cards vertically within a list
 - **Move cards between lists**: Drag cards to different lists
+
+### Sharing Boards with Users
+
+1. Open a board
+2. Click the "Share" button in the toolbar
+3. Enter the email of a registered user
+4. Select role:
+   - **Viewer**: Can view but not edit
+   - **Owner**: Can view and edit (changes sync to original)
+5. Click "Add" to share
+6. Shared users see the board in "Shared with me" workspace
 
 ### Public Boards
 

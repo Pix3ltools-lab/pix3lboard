@@ -10,6 +10,7 @@ import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { CardModal } from '@/components/kanban/CardModal';
 import { BoardToolbar, ViewType } from '@/components/board/BoardToolbar';
 import { ArchivedCardsModal } from '@/components/board/ArchivedCardsModal';
+import { ShareBoardModal } from '@/components/board/ShareBoardModal';
 import { CalendarView } from '@/components/board/CalendarView';
 import { Spinner } from '@/components/ui/Spinner';
 import { ArrowLeft } from 'lucide-react';
@@ -44,6 +45,7 @@ export default function BoardPage() {
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [showArchivedModal, setShowArchivedModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [viewType, setViewType] = useState<ViewType>('kanban');
 
   const workspace = getWorkspace(workspaceId);
@@ -265,6 +267,7 @@ export default function BoardPage() {
         onExport={handleExport}
         onImport={handleImport}
         onShowArchive={() => setShowArchivedModal(true)}
+        onShare={() => setShowShareModal(true)}
         boardId={boardId}
         isPublic={board.isPublic}
         onTogglePublic={handleTogglePublic}
@@ -319,6 +322,14 @@ export default function BoardPage() {
         onClose={() => setShowArchivedModal(false)}
         boardId={boardId}
         onRestore={handleRestoreCard}
+      />
+
+      {/* Share Board Modal */}
+      <ShareBoardModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        boardId={boardId}
+        boardName={board.name}
       />
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
 
 // Preset background colors for boards
@@ -25,6 +25,7 @@ interface BoardToolbarProps {
   onExport: () => void;
   onImport: (file: File) => void;
   onShowArchive: () => void;
+  onShare?: () => void;
   boardId: string;
   isPublic?: boolean;
   onTogglePublic?: (isPublic: boolean) => void;
@@ -34,7 +35,7 @@ interface BoardToolbarProps {
   onViewTypeChange?: (viewType: ViewType) => void;
 }
 
-export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
+export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, onShare, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
@@ -187,6 +188,19 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
               </>
             )}
           </div>
+        )}
+
+        {/* Share Button */}
+        {onShare && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onShare}
+            className="flex items-center gap-2"
+          >
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Share</span>
+          </Button>
         )}
 
         {/* Public Toggle */}

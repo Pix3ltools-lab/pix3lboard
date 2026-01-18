@@ -6,6 +6,7 @@ export interface Workspace {
   description?: string;
   icon?: string; // Emoji icon
   color?: string; // Hex color
+  isShared?: boolean; // True for "Shared with me" workspace
   createdAt: string;
   updatedAt: string;
   boards: Board[];
