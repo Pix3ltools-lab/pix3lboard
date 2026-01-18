@@ -284,7 +284,6 @@ pix3lboard/
 
 ## Known Limitations
 
-- No real-time collaboration (public boards are read-only)
 - No undo/redo functionality
 - No offline support
 
