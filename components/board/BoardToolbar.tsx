@@ -36,7 +36,7 @@ interface BoardToolbarProps {
 }
 
 export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, onShare, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
-  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, clearFilters, hasActiveFilters } = useSearch();
+  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, clearFilters, hasActiveFilters } = useSearch();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
   const [showPublicMenu, setShowPublicMenu] = useState(false);
@@ -81,6 +81,15 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
             value={jobNumberFilter}
             onChange={setJobNumberFilter}
             placeholder="Job number..."
+          />
+        </div>
+
+        {/* Responsible Filter */}
+        <div className="sm:w-48">
+          <SearchBar
+            value={responsibleFilter}
+            onChange={setResponsibleFilter}
+            placeholder="Responsible..."
           />
         </div>
 

@@ -10,6 +10,8 @@ interface SearchContextType {
   setSelectedTag: (tag: string | null) => void;
   jobNumberFilter: string;
   setJobNumberFilter: (jobNumber: string) => void;
+  responsibleFilter: string;
+  setResponsibleFilter: (responsible: string) => void;
   filterCards: (cards: Card[]) => Card[];
   clearFilters: () => void;
   hasActiveFilters: boolean;
@@ -21,6 +23,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [jobNumberFilter, setJobNumberFilter] = useState('');
+  const [responsibleFilter, setResponsibleFilter] = useState('');
 
   /**
    * Filter cards based on search query, selected tag, and job number
@@ -44,21 +47,27 @@ export function SearchProvider({ children }: { children: ReactNode }) {
           ? card.jobNumber?.toLowerCase().includes(jobNumberFilter.toLowerCase()) ?? false
           : true;
 
-        return matchesQuery && matchesTag && matchesJobNumber;
+        // Filter by responsible (partial match, case-insensitive)
+        const matchesResponsible = responsibleFilter
+          ? card.responsible?.toLowerCase().includes(responsibleFilter.toLowerCase()) ?? false
+          : true;
+
+        return matchesQuery && matchesTag && matchesJobNumber && matchesResponsible;
       });
     },
-    [query, selectedTag, jobNumberFilter]
+    [query, selectedTag, jobNumberFilter, responsibleFilter]
   );
 
   const clearFilters = useCallback(() => {
     setQuery('');
     setSelectedTag(null);
     setJobNumberFilter('');
+    setResponsibleFilter('');
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return query.length > 0 || selectedTag !== null || jobNumberFilter.length > 0;
-  }, [query, selectedTag, jobNumberFilter]);
+    return query.length > 0 || selectedTag !== null || jobNumberFilter.length > 0 || responsibleFilter.length > 0;
+  }, [query, selectedTag, jobNumberFilter, responsibleFilter]);
 
   const value: SearchContextType = {
     query,
@@ -67,6 +76,8 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     setSelectedTag,
     jobNumberFilter,
     setJobNumberFilter,
+    responsibleFilter,
+    setResponsibleFilter,
     filterCards,
     clearFilters,
     hasActiveFilters,

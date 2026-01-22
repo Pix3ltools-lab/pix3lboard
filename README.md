@@ -39,7 +39,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
 - **Board Sharing**: Share boards with specific users (Owner or Viewer role)
-- **Search & Filter**: Search cards by title, filter by tags and job number
+- **Search & Filter**: Search cards by title, filter by tags, job number and responsible
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
