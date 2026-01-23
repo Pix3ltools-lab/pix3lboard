@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limiting
-    const rateLimit = checkRateLimit(email);
+    const rateLimit = await checkRateLimit(email);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: rateLimit.error },
@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
     const result = await login(email, password);
 
     if ('error' in result) {
-      recordFailedAttempt(email);
+      await recordFailedAttempt(email);
       return NextResponse.json({ error: result.error }, { status: 401 });
     }
 
     // Clear failed attempts on successful login
-    clearFailedAttempts(email);
+    await clearFailedAttempts(email);
 
     const response = NextResponse.json({ user: result.user });
 

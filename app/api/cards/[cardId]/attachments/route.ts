@@ -6,6 +6,31 @@ import { nanoid } from 'nanoid';
 
 export const dynamic = 'force-dynamic';
 
+// Allowed MIME types for file uploads (security whitelist)
+const ALLOWED_MIME_TYPES = [
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Images
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  // Text
+  'text/plain',
+  'text/csv',
+  'text/markdown',
+  // Archives (optional - can be removed if not needed)
+  'application/zip',
+  'application/x-zip-compressed',
+];
+
 interface Attachment {
   id: string;
   card_id: string;
@@ -105,6 +130,13 @@ export async function POST(
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
+    }
+
+    // Validate MIME type (security whitelist)
+    if (!file.type || !ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json({
+        error: 'File type not allowed. Allowed types: PDF, Word, Excel, PowerPoint, images (JPG, PNG, GIF, WebP, SVG), text files, and ZIP archives.'
+      }, { status: 400 });
     }
 
     // Upload to Vercel Blob
