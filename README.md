@@ -72,6 +72,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Database**: Turso (libSQL/SQLite)
 - **File Storage**: Vercel Blob
 - **Authentication**: Custom JWT with bcryptjs
+- **Validation**: Zod schema validation
 - **Styling**: Tailwind CSS with custom CSS variables
 - **Drag & Drop**: @dnd-kit
 - **Icons**: Lucide React
@@ -274,6 +275,20 @@ pix3lboard/
 - Firefox: Fully supported
 - Safari: Fully supported
 - Mobile browsers: Responsive design
+
+## Security
+
+Pix3lBoard implements multiple layers of security:
+
+- **Authentication**: JWT tokens stored in HttpOnly cookies with SameSite protection
+- **Password Security**: bcrypt hashing with 12 salt rounds
+- **Rate Limiting**: Persistent database-backed rate limiting for login attempts
+- **Input Validation**: Zod schema validation on all API inputs
+- **File Uploads**: MIME type whitelist validation (max 10MB)
+- **Security Headers**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **SQL Injection Prevention**: Parameterized queries throughout
+- **Authorization**: Access control on all resources (comments, attachments, boards)
+- **Error Handling**: Sanitized error messages (no internal details exposed)
 
 ## Storage
 
