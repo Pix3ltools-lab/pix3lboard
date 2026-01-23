@@ -4,6 +4,12 @@ export type { Board } from './board';
 export type { List } from './list';
 export type { Card, CardType, BugSeverity, Priority, Effort, ChecklistItem } from './card';
 
+// API types
+export type { PaginatedResponse, WorkspaceSummary, BoardSummary, ListSummary } from './api';
+
+// Sync types
+export type { EntityType, SyncOperation, SyncChange, SyncPayload, SyncResult } from './sync';
+
 // UI types
 export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from './ui';
 

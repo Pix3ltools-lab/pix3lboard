@@ -87,7 +87,25 @@ export const DataPayloadSchema = z.object({
   workspaces: z.array(WorkspaceSchema).max(50),
 });
 
+// Sync change schema
+export const SyncChangeSchema = z.object({
+  entityType: z.enum(['workspace', 'board', 'list', 'card']),
+  entityId: z.string().max(50),
+  operation: z.enum(['create', 'update', 'delete']),
+  parentId: z.string().max(50).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  timestamp: z.number().int().positive(),
+});
+
+// Sync payload schema
+export const SyncPayloadSchema = z.object({
+  changes: z.array(SyncChangeSchema).max(1000),
+  clientVersion: z.number().int().optional(),
+});
+
 export type ValidatedWorkspace = z.infer<typeof WorkspaceSchema>;
 export type ValidatedBoard = z.infer<typeof BoardSchema>;
 export type ValidatedList = z.infer<typeof ListSchema>;
 export type ValidatedCard = z.infer<typeof CardSchema>;
+export type ValidatedSyncChange = z.infer<typeof SyncChangeSchema>;
+export type ValidatedSyncPayload = z.infer<typeof SyncPayloadSchema>;
