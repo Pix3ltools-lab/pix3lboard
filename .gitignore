@@ -39,3 +39,8 @@ next-env.d.ts
 # personal notes
 todo.md
 improvement.md
+security.md
+scalability.md
+
+# database backups
+/backups/
