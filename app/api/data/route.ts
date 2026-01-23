@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute, getTursoClient } from '@/lib/db/turso';
+import { DataPayloadSchema } from '@/lib/validation/schemas';
 import type { Workspace, Board, List, Card } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -253,7 +254,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { workspaces: allWorkspaces } = await request.json() as { workspaces: Workspace[] };
+    // Parse and validate request body
+    const body = await request.json();
+    const validation = DataPayloadSchema.safeParse(body);
+
+    if (!validation.success) {
+      console.error('Validation error:', validation.error.issues);
+      return NextResponse.json(
+        { error: 'Invalid data format' },
+        { status: 400 }
+      );
+    }
+
+    const { workspaces: allWorkspaces } = validation.data as { workspaces: Workspace[] };
     // Filter out the virtual "Shared with me" workspace (id: __shared__)
     const workspaces = allWorkspaces.filter(ws => ws.id !== '__shared__' && !ws.isShared);
     // Extract shared boards with owner role for updating

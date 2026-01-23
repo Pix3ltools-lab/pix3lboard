@@ -175,7 +175,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('Add share error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: `Failed to add share: ${errorMessage}` }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to add share' }, { status: 500 });
   }
 }

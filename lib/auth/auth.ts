@@ -101,13 +101,11 @@ export async function login(
   }
 
   const valid = await bcrypt.compare(password, row.password_hash);
-  if (!valid) {
-    return { error: 'Invalid email or password' };
-  }
 
-  // Check if user is approved
-  if (!row.is_approved) {
-    return { error: 'Account pending approval. Please wait for admin to approve your account.' };
+  // Use same error message for invalid password and unapproved account
+  // to prevent account enumeration attacks
+  if (!valid || !row.is_approved) {
+    return { error: 'Invalid email or password' };
   }
 
   const user: User = {
