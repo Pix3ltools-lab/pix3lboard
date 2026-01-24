@@ -199,7 +199,7 @@ export default function BoardPage() {
   };
 
   const handleBackgroundChange = (background: string) => {
-    updateBoard(boardId, { background: background || undefined });
+    updateBoard(boardId, { background: background || null });
     showToast('Background updated', 'success');
   };
 
