@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { list, del } from '@vercel/blob';
-import { verifyToken } from '@/lib/auth/auth';
-import { query, queryOne } from '@/lib/db/turso';
+import { verifyToken, getUserById } from '@/lib/auth/auth';
+import { query } from '@/lib/db/turso';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +13,8 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
   const payload = await verifyToken(token);
   if (!payload?.userId) return false;
 
-  const user = await queryOne<{ role: string }>(
-    'SELECT role FROM users WHERE id = :userId',
-    { userId: payload.userId }
-  );
-
-  return user?.role === 'admin';
+  const user = await getUserById(payload.userId);
+  return user?.is_admin === true;
 }
 
 interface OrphanedBlob {
