@@ -29,7 +29,7 @@ interface BoardToolbarProps {
   boardId: string;
   isPublic?: boolean;
   onTogglePublic?: (isPublic: boolean) => void;
-  background?: string;
+  background?: string | null;
   onBackgroundChange?: (background: string) => void;
   viewType?: ViewType;
   onViewTypeChange?: (viewType: ViewType) => void;
@@ -184,7 +184,7 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
                           setShowBackgroundMenu(false);
                         }}
                         className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                          background === bg.value
+                          (background ?? '') === bg.value
                             ? 'border-accent-primary scale-110'
                             : 'border-transparent hover:border-bg-tertiary'
                         }`}

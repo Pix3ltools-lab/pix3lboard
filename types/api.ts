@@ -28,7 +28,7 @@ export interface BoardSummary {
   workspaceId: string;
   name: string;
   description?: string;
-  background?: string;
+  background?: string | null;
   allowedCardTypes?: string[];
   isPublic?: boolean;
   shareRole?: 'owner' | 'viewer';

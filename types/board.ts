@@ -6,7 +6,7 @@ export interface Board {
   workspaceId: string;
   name: string;
   description?: string;
-  background?: string;
+  background?: string | null;
   allowedCardTypes?: CardType[]; // If undefined, all types are allowed
   isPublic?: boolean;
   shareRole?: 'owner' | 'viewer'; // For shared boards, the user's role
