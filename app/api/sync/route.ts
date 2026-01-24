@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, execute, queryOne } from '@/lib/db/turso';
 import { SyncPayloadSchema } from '@/lib/validation/schemas';
-import type { SyncChange, SyncResult, Workspace, Board, List, Card } from '@/types';
+import type { SyncChange, SyncResult, SyncConflict, Workspace, Board, List, Card } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +52,76 @@ async function verifyCardAccess(userId: string, cardId: string): Promise<boolean
   );
   if (!result) return false;
   return verifyListAccess(userId, result.list_id);
+}
+
+// Get entity for conflict check
+interface EntityWithTimestamp {
+  name?: string;
+  title?: string;
+  updated_at: string;
+}
+
+async function getEntityForConflictCheck(
+  entityType: string,
+  entityId: string
+): Promise<EntityWithTimestamp | null> {
+  switch (entityType) {
+    case 'workspace':
+      return queryOne<EntityWithTimestamp>(
+        'SELECT name, updated_at FROM workspaces WHERE id = :id',
+        { id: entityId }
+      );
+    case 'board':
+      return queryOne<EntityWithTimestamp>(
+        'SELECT name, updated_at FROM boards WHERE id = :id',
+        { id: entityId }
+      );
+    case 'list':
+      return queryOne<EntityWithTimestamp>(
+        'SELECT name, updated_at FROM lists WHERE id = :id',
+        { id: entityId }
+      );
+    case 'card':
+      return queryOne<EntityWithTimestamp>(
+        'SELECT title, updated_at FROM cards WHERE id = :id',
+        { id: entityId }
+      );
+    default:
+      return null;
+  }
+}
+
+// Check for conflict (returns conflict info if detected, null otherwise)
+async function checkConflict(
+  change: SyncChange
+): Promise<SyncConflict | null> {
+  // Only check conflicts for update operations with expectedUpdatedAt
+  if (change.operation !== 'update' || !change.expectedUpdatedAt) {
+    return null;
+  }
+
+  const entity = await getEntityForConflictCheck(change.entityType, change.entityId);
+  if (!entity) {
+    return null; // Entity doesn't exist, will fail on apply
+  }
+
+  // Compare timestamps - if server is newer, there's a conflict
+  const clientTime = new Date(change.expectedUpdatedAt).getTime();
+  const serverTime = new Date(entity.updated_at).getTime();
+
+  if (serverTime > clientTime) {
+    return {
+      entityType: change.entityType,
+      entityId: change.entityId,
+      entityName: entity.name || entity.title || 'Unknown',
+      clientUpdatedAt: change.expectedUpdatedAt,
+      serverUpdatedAt: entity.updated_at,
+      serverData: entity,
+      pendingChange: change,
+    };
+  }
+
+  return null;
 }
 
 // Apply a single change
@@ -477,6 +547,7 @@ export async function PATCH(request: NextRequest) {
 
     const { changes } = validation.data;
     const failedChanges: Array<{ change: SyncChange; error: string }> = [];
+    const conflicts: SyncConflict[] = [];
     let appliedCount = 0;
 
     // Apply changes in order (sorted by timestamp to ensure correct order)
@@ -484,6 +555,13 @@ export async function PATCH(request: NextRequest) {
 
     for (const change of sortedChanges) {
       try {
+        // Check for conflicts before applying
+        const conflict = await checkConflict(change);
+        if (conflict) {
+          conflicts.push(conflict);
+          continue; // Skip this change, let client handle conflict
+        }
+
         await applyChange(userId, change);
         appliedCount++;
       } catch (error) {
@@ -496,9 +574,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     const result: SyncResult = {
-      success: failedChanges.length === 0,
+      success: failedChanges.length === 0 && conflicts.length === 0,
       appliedCount,
       failedChanges: failedChanges.length > 0 ? failedChanges : undefined,
+      conflicts: conflicts.length > 0 ? conflicts : undefined,
       serverVersion: Date.now(),
     };
 

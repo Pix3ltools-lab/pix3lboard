@@ -8,7 +8,7 @@ export type { Card, CardType, BugSeverity, Priority, Effort, ChecklistItem } fro
 export type { PaginatedResponse, WorkspaceSummary, BoardSummary, ListSummary } from './api';
 
 // Sync types
-export type { EntityType, SyncOperation, SyncChange, SyncPayload, SyncResult } from './sync';
+export type { EntityType, SyncOperation, SyncChange, SyncPayload, SyncConflict, SyncResult } from './sync';
 
 // UI types
 export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from './ui';

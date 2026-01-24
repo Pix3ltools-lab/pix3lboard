@@ -10,7 +10,7 @@ import {
   useRef,
   ReactNode,
 } from 'react';
-import { Workspace, Board, List, Card, AppData, StorageInfo, SyncChange } from '@/types';
+import { Workspace, Board, List, Card, AppData, StorageInfo, SyncChange, SyncConflict } from '@/types';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
 import { importData as importDataUtil } from '@/lib/storage/import';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -23,6 +23,7 @@ import { TemplateType } from '@/components/board/BoardForm';
 import { generateId } from '@/lib/utils/id';
 import { throttle } from '@/lib/utils/debounce';
 import { calculateCardPosition, calculateListPosition } from '@/lib/utils/position';
+import { ConflictModal } from '@/components/ui/ConflictModal';
 
 // ===== INDEXED STATE STRUCTURE =====
 interface IndexedState {
@@ -196,9 +197,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const syncInProgressRef = useRef(false);
   const clientVersionRef = useRef(Date.now());
 
-  // Track change helper
-  const trackChange = useCallback((change: Omit<SyncChange, 'timestamp'>) => {
-    setPendingChanges(prev => [...prev, { ...change, timestamp: Date.now() }]);
+  // Conflict resolution
+  const [currentConflict, setCurrentConflict] = useState<SyncConflict | null>(null);
+  const conflictQueueRef = useRef<SyncConflict[]>([]);
+
+  // Track change helper - includes expectedUpdatedAt for conflict detection on updates
+  const trackChange = useCallback((change: Omit<SyncChange, 'timestamp'>, expectedUpdatedAt?: string) => {
+    const syncChange: SyncChange = {
+      ...change,
+      timestamp: Date.now(),
+    };
+
+    // Add expectedUpdatedAt for update operations (for conflict detection)
+    if (change.operation === 'update' && expectedUpdatedAt) {
+      syncChange.expectedUpdatedAt = expectedUpdatedAt;
+    }
+
+    setPendingChanges(prev => [...prev, syncChange]);
   }, []);
 
   // Derive workspaces array from indexed state (backward compatibility)
@@ -234,6 +249,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [isAuthenticated]);
 
+  // Show next conflict from queue
+  const showNextConflict = useCallback(() => {
+    if (conflictQueueRef.current.length > 0) {
+      setCurrentConflict(conflictQueueRef.current.shift() || null);
+    } else {
+      setCurrentConflict(null);
+    }
+  }, []);
+
+  // Handle conflict resolution - overwrite server with local changes
+  const handleConflictOverwrite = useCallback(() => {
+    if (!currentConflict) return;
+
+    // Re-add the change without expectedUpdatedAt to force overwrite
+    const change = currentConflict.pendingChange;
+    setPendingChanges(prev => [...prev, {
+      ...change,
+      timestamp: Date.now(),
+      expectedUpdatedAt: undefined, // Remove to bypass conflict check
+    }]);
+
+    showNextConflict();
+  }, [currentConflict, showNextConflict]);
+
+  // Handle conflict resolution - discard local changes
+  const handleConflictDiscard = useCallback(() => {
+    // Just close the modal - the change was already skipped server-side
+    showNextConflict();
+  }, [showNextConflict]);
+
   // Throttled sync with delta changes
   const syncChanges = useMemo(
     () =>
@@ -254,9 +299,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           if (response.ok) {
             const result = await response.json();
             clientVersionRef.current = result.serverVersion || Date.now();
-            // Clear synced changes
+
+            // Handle conflicts
+            if (result.conflicts && result.conflicts.length > 0) {
+              conflictQueueRef.current = [...conflictQueueRef.current, ...result.conflicts];
+              if (!currentConflict) {
+                setCurrentConflict(conflictQueueRef.current.shift() || null);
+              }
+            }
+
+            // Clear successfully synced changes (not the conflicted ones)
+            const conflictedTimestamps = new Set(
+              (result.conflicts || []).map((c: SyncConflict) => c.pendingChange.timestamp)
+            );
             setPendingChanges(prev =>
-              prev.filter(c => !changes.some(sc => sc.timestamp === c.timestamp))
+              prev.filter(c =>
+                !changes.some(sc => sc.timestamp === c.timestamp) ||
+                conflictedTimestamps.has(c.timestamp)
+              )
             );
           } else {
             console.error('Sync failed, will retry with full save');
@@ -270,7 +330,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           syncInProgressRef.current = false;
         }
       }, 2000),
-    [isAuthenticated]
+    [isAuthenticated, currentConflict]
   );
 
   // Fallback to full save if sync fails
@@ -332,11 +392,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [trackChange]);
 
   const updateWorkspace = useCallback((id: string, data: Partial<Workspace>) => {
-    setIndexedState(prev => {
-      const existing = prev.workspacesById.get(id);
-      if (!existing) return prev;
+    const existing = indexedState.workspacesById.get(id);
+    const expectedUpdatedAt = existing?.updatedAt;
 
-      const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
+    setIndexedState(prev => {
+      const ws = prev.workspacesById.get(id);
+      if (!ws) return prev;
+
+      const updated = { ...ws, ...data, updatedAt: new Date().toISOString() };
       const next = { ...prev };
       next.workspacesById = new Map(prev.workspacesById);
       next.workspacesById.set(id, updated);
@@ -348,8 +411,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       entityId: id,
       operation: 'update',
       data,
-    });
-  }, [trackChange]);
+    }, expectedUpdatedAt);
+  }, [indexedState, trackChange]);
 
   const deleteWorkspace = useCallback((id: string) => {
     setIndexedState(prev => {
@@ -526,11 +589,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 
   const updateBoard = useCallback((id: string, data: Partial<Board>) => {
-    setIndexedState(prev => {
-      const existing = prev.boardsById.get(id);
-      if (!existing) return prev;
+    const existing = indexedState.boardsById.get(id);
+    const expectedUpdatedAt = existing?.updatedAt;
 
-      const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
+    setIndexedState(prev => {
+      const board = prev.boardsById.get(id);
+      if (!board) return prev;
+
+      const updated = { ...board, ...data, updatedAt: new Date().toISOString() };
       const next = { ...prev };
       next.boardsById = new Map(prev.boardsById);
       next.boardsById.set(id, updated);
@@ -542,8 +608,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       entityId: id,
       operation: 'update',
       data,
-    });
-  }, [trackChange]);
+    }, expectedUpdatedAt);
+  }, [indexedState, trackChange]);
 
   const deleteBoard = useCallback(
     (id: string) => {
@@ -788,11 +854,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [indexedState, trackChange]);
 
   const updateList = useCallback((id: string, data: Partial<List>) => {
-    setIndexedState(prev => {
-      const existing = prev.listsById.get(id);
-      if (!existing) return prev;
+    const existing = indexedState.listsById.get(id);
+    const expectedUpdatedAt = existing?.updatedAt;
 
-      const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
+    setIndexedState(prev => {
+      const list = prev.listsById.get(id);
+      if (!list) return prev;
+
+      const updated = { ...list, ...data, updatedAt: new Date().toISOString() };
       const next = { ...prev };
       next.listsById = new Map(prev.listsById);
       next.listsById.set(id, updated);
@@ -804,8 +873,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       entityId: id,
       operation: 'update',
       data,
-    });
-  }, [trackChange]);
+    }, expectedUpdatedAt);
+  }, [indexedState, trackChange]);
 
   const deleteList = useCallback((id: string) => {
     setIndexedState(prev => {
@@ -964,11 +1033,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [indexedState, trackChange]);
 
   const updateCard = useCallback((id: string, data: Partial<Card>) => {
-    setIndexedState(prev => {
-      const existing = prev.cardsById.get(id);
-      if (!existing) return prev;
+    const existing = indexedState.cardsById.get(id);
+    const expectedUpdatedAt = existing?.updatedAt;
 
-      const updated = { ...existing, ...data, updatedAt: new Date().toISOString() };
+    setIndexedState(prev => {
+      const card = prev.cardsById.get(id);
+      if (!card) return prev;
+
+      const updated = { ...card, ...data, updatedAt: new Date().toISOString() };
       const next = { ...prev };
       next.cardsById = new Map(prev.cardsById);
       next.cardsById.set(id, updated);
@@ -980,8 +1052,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       entityId: id,
       operation: 'update',
       data,
-    });
-  }, [trackChange]);
+    }, expectedUpdatedAt);
+  }, [indexedState, trackChange]);
 
   const deleteCard = useCallback((id: string) => {
     setIndexedState(prev => {
@@ -1212,7 +1284,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setActiveBoard,
   };
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider value={value}>
+      {children}
+      <ConflictModal
+        conflict={currentConflict}
+        onOverwrite={handleConflictOverwrite}
+        onDiscard={handleConflictDiscard}
+        onClose={() => setCurrentConflict(null)}
+      />
+    </DataContext.Provider>
+  );
 }
 
 export function useData() {
