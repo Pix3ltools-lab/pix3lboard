@@ -66,12 +66,13 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Auto-save**: Changes saved automatically (throttled to reduce API calls)
 - **Toast Notifications**: Clear feedback for all actions
 
-### Performance & Scalability (v2.4.0)
+### Performance & Scalability (v2.4.2)
 - **Indexed State**: O(1) entity lookups using Map-based data structures
 - **Delta Sync**: Only changed entities are sent to the server (not full data)
 - **Granular API Endpoints**: Separate endpoints for workspaces, boards, lists, cards
 - **Paginated Cards**: Load cards in pages (50 per request by default)
 - **Change Tracking**: Automatic tracking of mutations for efficient sync
+- **Conflict Resolution**: Detects concurrent edits and prompts user to overwrite or discard
 - **Optimized for 500-1000 concurrent users**
 
 ## Tech Stack
