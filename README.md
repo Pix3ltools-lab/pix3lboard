@@ -56,6 +56,7 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Create Users**: Admin can create pre-approved accounts
 - **Delete Users**: Remove users and all their data
 - **Reset Passwords**: Admin can reset user passwords
+- **Storage Cleanup**: Analyze and delete orphaned blob files to free storage space
 
 ### User Experience
 - **Responsive Design**: Works on desktop, tablet, and mobile
@@ -64,6 +65,14 @@ A modern, lightweight Kanban board application built with Next.js 14, designed f
 - **Touch Support**: Drag & drop works on touch devices
 - **Auto-save**: Changes saved automatically (throttled to reduce API calls)
 - **Toast Notifications**: Clear feedback for all actions
+
+### Performance & Scalability (v2.4.0)
+- **Indexed State**: O(1) entity lookups using Map-based data structures
+- **Delta Sync**: Only changed entities are sent to the server (not full data)
+- **Granular API Endpoints**: Separate endpoints for workspaces, boards, lists, cards
+- **Paginated Cards**: Load cards in pages (50 per request by default)
+- **Change Tracking**: Automatic tracking of mutations for efficient sync
+- **Optimized for 500-1000 concurrent users**
 
 ## Tech Stack
 
@@ -173,7 +182,14 @@ pix3lboard/
 ├── app/                          # Next.js App Router pages
 │   ├── api/                      # API routes
 │   │   ├── auth/                 # Authentication endpoints
-│   │   └── data/                 # Data CRUD endpoints
+│   │   ├── admin/                # Admin endpoints (users, cleanup)
+│   │   ├── workspaces/           # Workspace endpoints
+│   │   ├── boards/               # Board endpoints
+│   │   ├── lists/                # List endpoints
+│   │   ├── cards/                # Card endpoints
+│   │   ├── sync/                 # Delta sync endpoint
+│   │   └── data/                 # Legacy data endpoint
+│   ├── admin/                    # Admin panel page
 │   ├── login/                    # Login/Register page
 │   ├── workspace/[id]/           # Workspace detail
 │   │   └── board/[boardId]/      # Board view
@@ -195,6 +211,9 @@ pix3lboard/
 │   ├── storage/                  # Export/import utilities
 │   └── utils/                    # Helper functions
 ├── types/                        # TypeScript types
+│   ├── index.ts                  # Core domain types
+│   ├── api.ts                    # API response types
+│   └── sync.ts                   # Delta sync types
 └── public/                       # Static assets
 ```
 
@@ -293,9 +312,12 @@ Pix3lBoard implements multiple layers of security:
 ## Storage
 
 - **Cloud Storage**: Turso SQLite database
-- **Free Tier Limit**: 256 MB
+- **File Storage**: Vercel Blob for attachments and thumbnails
+- **Free Tier Limit**: 256 MB (Turso)
 - **Auto-save**: Changes saved automatically (2-second throttle)
+- **Delta Sync**: Only changed entities are synced to reduce bandwidth
 - **Export**: Download data as JSON backup anytime
+- **Cleanup**: Admin can analyze and delete orphaned blob files
 
 ## Known Limitations
 

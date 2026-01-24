@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock } from 'lucide-react';
+import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserWithStats {
@@ -20,6 +20,24 @@ interface UserWithStats {
   created_at: string;
   workspace_count: number;
   board_count: number;
+}
+
+interface BlobCleanupResult {
+  message: string;
+  orphanedCount: number;
+  orphanedSize: number;
+  orphanedSizeMB: string;
+  totalBlobsChecked: number;
+  referencedCount: number;
+  orphanedBlobs?: Array<{
+    url: string;
+    pathname: string;
+    size: number;
+    uploadedAt: string;
+  }>;
+  deletedCount?: number;
+  failedCount?: number;
+  freedSpaceMB?: string;
 }
 
 export default function AdminPage() {
@@ -42,6 +60,9 @@ export default function AdminPage() {
   const [newUserName, setNewUserName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [blobAnalyzing, setBlobAnalyzing] = useState(false);
+  const [blobCleaning, setBlobCleaning] = useState(false);
+  const [blobResult, setBlobResult] = useState<BlobCleanupResult | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -223,6 +244,46 @@ export default function AdminPage() {
     setCreateError('');
   };
 
+  const handleAnalyzeBlobs = async () => {
+    setBlobAnalyzing(true);
+    setBlobResult(null);
+
+    try {
+      const res = await fetch('/api/admin/cleanup-blobs');
+      if (!res.ok) {
+        throw new Error('Failed to analyze blobs');
+      }
+      const data = await res.json();
+      setBlobResult(data);
+    } catch (err) {
+      console.error('Error analyzing blobs:', err);
+      showToast('Failed to analyze storage', 'error');
+    } finally {
+      setBlobAnalyzing(false);
+    }
+  };
+
+  const handleCleanupBlobs = async () => {
+    setBlobCleaning(true);
+
+    try {
+      const res = await fetch('/api/admin/cleanup-blobs', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to cleanup blobs');
+      }
+      const data = await res.json();
+      setBlobResult(data);
+      showToast(`Cleaned up ${data.deletedCount || 0} orphaned files`, 'success');
+    } catch (err) {
+      console.error('Error cleaning up blobs:', err);
+      showToast('Failed to cleanup storage', 'error');
+    } finally {
+      setBlobCleaning(false);
+    }
+  };
+
   if (isLoading || !user?.is_admin) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -300,6 +361,68 @@ export default function AdminPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Storage Cleanup Section */}
+        <div className="bg-bg-secondary rounded-lg border border-bg-tertiary overflow-hidden mb-8">
+          <div className="p-4 border-b border-bg-tertiary flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <HardDrive className="h-5 w-5 text-accent-primary" />
+              <h2 className="text-lg font-semibold text-text-primary">Storage Cleanup</h2>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleAnalyzeBlobs}
+                disabled={blobAnalyzing || blobCleaning}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${blobAnalyzing ? 'animate-spin' : ''}`} />
+                {blobAnalyzing ? 'Analyzing...' : 'Analyze'}
+              </Button>
+              {blobResult && blobResult.orphanedCount > 0 && !blobResult.deletedCount && (
+                <Button
+                  variant="danger"
+                  onClick={handleCleanupBlobs}
+                  disabled={blobCleaning}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {blobCleaning ? 'Cleaning...' : `Delete ${blobResult.orphanedCount} orphaned files`}
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="p-4">
+            {!blobResult ? (
+              <p className="text-sm text-text-secondary">
+                Click &quot;Analyze&quot; to scan for orphaned files in blob storage that are no longer referenced by any cards or attachments.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-bg-tertiary/50 rounded-lg p-3">
+                    <p className="text-xs text-text-secondary">Total Blobs</p>
+                    <p className="text-lg font-semibold text-text-primary">{blobResult.totalBlobsChecked}</p>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-3">
+                    <p className="text-xs text-text-secondary">Referenced</p>
+                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">{blobResult.referencedCount}</p>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-3">
+                    <p className="text-xs text-text-secondary">Orphaned</p>
+                    <p className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">{blobResult.orphanedCount}</p>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-3">
+                    <p className="text-xs text-text-secondary">{blobResult.freedSpaceMB ? 'Freed Space' : 'Orphaned Size'}</p>
+                    <p className="text-lg font-semibold text-accent-primary">{blobResult.freedSpaceMB || blobResult.orphanedSizeMB} MB</p>
+                  </div>
+                </div>
+                <p className="text-sm text-text-secondary">{blobResult.message}</p>
+                {blobResult.failedCount && blobResult.failedCount > 0 && (
+                  <p className="text-sm text-accent-danger">Failed to delete {blobResult.failedCount} files</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
