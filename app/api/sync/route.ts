@@ -379,8 +379,8 @@ async function applyCardChange(
         throw new Error('List not found or access denied');
       }
       await execute(
-        `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
-         VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
+        `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, responsible_user_id, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
+         VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :responsibleUserId, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
         {
           id: entityId,
           listId: parentId,
@@ -395,6 +395,7 @@ async function applyCardChange(
           dueDate: data.dueDate || null,
           links: data.links ? JSON.stringify(data.links) : null,
           responsible: data.responsible || null,
+          responsibleUserId: data.responsibleUserId || null,
           jobNumber: data.jobNumber || null,
           severity: data.severity || null,
           priority: data.priority || null,
@@ -470,6 +471,10 @@ async function applyCardChange(
       if (data.responsible !== undefined) {
         updateFields.push('responsible = :responsible');
         updateParams.responsible = data.responsible || null;
+      }
+      if (data.responsibleUserId !== undefined) {
+        updateFields.push('responsible_user_id = :responsibleUserId');
+        updateParams.responsibleUserId = data.responsibleUserId || null;
       }
       if (data.jobNumber !== undefined) {
         updateFields.push('job_number = :jobNumber');

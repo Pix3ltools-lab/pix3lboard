@@ -95,11 +95,13 @@ export function Card({ card, onClick }: CardProps) {
         </div>
       )}
 
-      {/* Responsible */}
-      {card.responsible && (
+      {/* Responsible - show user name if linked, otherwise legacy text */}
+      {(card.responsibleUserName || card.responsible) && (
         <div className="flex items-center gap-1 mb-2 text-xs">
           <User className="h-3 w-3 text-accent-primary" />
-          <span className="text-text-primary font-medium">{card.responsible}</span>
+          <span className="text-text-primary font-medium">
+            {card.responsibleUserName || card.responsible}
+          </span>
         </div>
       )}
 

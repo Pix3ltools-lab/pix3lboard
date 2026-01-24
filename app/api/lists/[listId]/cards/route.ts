@@ -19,6 +19,9 @@ interface CardRow {
   due_date: string | null;
   links: string | null;
   responsible: string | null;
+  responsible_user_id: string | null;
+  responsible_user_name: string | null;
+  responsible_user_email: string | null;
   job_number: string | null;
   severity: string | null;
   priority: string | null;
@@ -78,11 +81,13 @@ export async function GET(
     );
     const total = Number(countResult[0]?.count || 0);
 
-    // Load cards with pagination
+    // Load cards with pagination, including responsible user info
     const cardRows = await query<CardRow>(
-      `SELECT * FROM cards
-       WHERE list_id = :listId AND (is_archived = 0 OR is_archived IS NULL)
-       ORDER BY position
+      `SELECT c.*, u.name as responsible_user_name, u.email as responsible_user_email
+       FROM cards c
+       LEFT JOIN users u ON u.id = c.responsible_user_id
+       WHERE c.list_id = :listId AND (c.is_archived = 0 OR c.is_archived IS NULL)
+       ORDER BY c.position
        LIMIT :limit OFFSET :offset`,
       { listId, limit, offset }
     );
@@ -114,6 +119,9 @@ export async function GET(
       dueDate: c.due_date || undefined,
       links: c.links ? JSON.parse(c.links) : undefined,
       responsible: c.responsible || undefined,
+      responsibleUserId: c.responsible_user_id || undefined,
+      responsibleUserName: c.responsible_user_name || undefined,
+      responsibleUserEmail: c.responsible_user_email || undefined,
       jobNumber: c.job_number || undefined,
       severity: c.severity || undefined,
       priority: c.priority || undefined,

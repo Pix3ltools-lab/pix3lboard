@@ -48,8 +48,11 @@ export function SearchProvider({ children }: { children: ReactNode }) {
           : true;
 
         // Filter by responsible (partial match, case-insensitive)
+        // Search in both legacy text field and linked user name/email
         const matchesResponsible = responsibleFilter
-          ? card.responsible?.toLowerCase().includes(responsibleFilter.toLowerCase()) ?? false
+          ? (card.responsible?.toLowerCase().includes(responsibleFilter.toLowerCase()) ||
+             card.responsibleUserName?.toLowerCase().includes(responsibleFilter.toLowerCase()) ||
+             card.responsibleUserEmail?.toLowerCase().includes(responsibleFilter.toLowerCase())) ?? false
           : true;
 
         return matchesQuery && matchesTag && matchesJobNumber && matchesResponsible;

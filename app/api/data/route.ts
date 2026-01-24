@@ -60,6 +60,9 @@ interface CardRow {
   due_date: string | null;
   links: string | null;
   responsible: string | null;
+  responsible_user_id: string | null;
+  responsible_user_name: string | null;
+  responsible_user_email: string | null;
   job_number: string | null;
   severity: string | null;
   priority: string | null;
@@ -134,12 +137,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Load all cards for these lists (excluding archived)
+    // Load all cards for these lists (excluding archived), with responsible user info
     let cardRows: CardRow[] = [];
     if (listRows.length > 0) {
       const listIds = listRows.map(l => l.id);
       cardRows = await query<CardRow>(
-        `SELECT * FROM cards WHERE list_id IN (${listIds.map((_, i) => `:l${i}`).join(',')}) AND (is_archived = 0 OR is_archived IS NULL) ORDER BY position`,
+        `SELECT c.*, u.name as responsible_user_name, u.email as responsible_user_email
+         FROM cards c
+         LEFT JOIN users u ON u.id = c.responsible_user_id
+         WHERE c.list_id IN (${listIds.map((_, i) => `:l${i}`).join(',')}) AND (c.is_archived = 0 OR c.is_archived IS NULL)
+         ORDER BY c.position`,
         Object.fromEntries(listIds.map((id, i) => [`l${i}`, id]))
       );
     }
@@ -193,6 +200,9 @@ export async function GET(request: NextRequest) {
               dueDate: c.due_date || undefined,
               links: c.links ? JSON.parse(c.links) : undefined,
               responsible: c.responsible || undefined,
+              responsibleUserId: c.responsible_user_id || undefined,
+              responsibleUserName: c.responsible_user_name || undefined,
+              responsibleUserEmail: c.responsible_user_email || undefined,
               jobNumber: c.job_number || undefined,
               severity: c.severity || undefined,
               priority: c.priority || undefined,

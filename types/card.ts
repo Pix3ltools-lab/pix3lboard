@@ -27,7 +27,10 @@ export interface Card {
   tags?: string[]; // Max 5 tags
   dueDate?: string; // ISO date string
   links?: string[]; // Simple URL array, max 3
-  responsible?: string; // Person responsible for the card (free text)
+  responsible?: string; // Person responsible for the card (legacy free text)
+  responsibleUserId?: string; // User ID of the responsible person
+  responsibleUserName?: string; // Computed: name of the responsible user
+  responsibleUserEmail?: string; // Computed: email of the responsible user
   jobNumber?: string; // Job number in format: Letter-2digits-4digits (e.g., C-26-0001)
 
   // Type-specific fields

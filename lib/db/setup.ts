@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS cards (
   due_date TEXT,
   links TEXT,
   responsible TEXT,
+  responsible_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   job_number TEXT,
   severity TEXT,
   priority TEXT,
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS cards (
   FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id);
+CREATE INDEX IF NOT EXISTS idx_cards_responsible_user_id ON cards(responsible_user_id);
 `;
 
 async function setup() {

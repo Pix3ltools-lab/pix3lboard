@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardType, BugSeverity, Priority, Effort, ChecklistItem } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -19,7 +19,15 @@ import { ChecklistSection } from '@/components/card/ChecklistSection';
 import { AttachmentsSection } from '@/components/card/AttachmentsSection';
 import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
 import { Lightbox } from '@/components/ui/Lightbox';
-import { Copy, Trash2, Archive } from 'lucide-react';
+import { Copy, Trash2, Archive, Loader2, X, UserCheck } from 'lucide-react';
+import { debounce } from '@/lib/utils/debounce';
+import { useAuth } from '@/lib/context/AuthContext';
+
+interface UserSuggestion {
+  id: string;
+  email: string;
+  name: string | null;
+}
 
 interface CardModalProps {
   isOpen: boolean;
@@ -42,6 +50,7 @@ export function CardModal({
   onDuplicate,
   onArchive,
 }: CardModalProps) {
+  const { user: currentUser } = useAuth();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
   const [type, setType] = useState(card.type);
@@ -52,8 +61,21 @@ export function CardModal({
   const [dueDate, setDueDate] = useState(card.dueDate);
   const [links, setLinks] = useState(card.links || []);
   const [responsible, setResponsible] = useState(card.responsible || '');
+  const [responsibleUserId, setResponsibleUserId] = useState(card.responsibleUserId);
+  const [responsibleUserName, setResponsibleUserName] = useState(card.responsibleUserName);
+  const [responsibleUserEmail, setResponsibleUserEmail] = useState(card.responsibleUserEmail);
+  const [responsibleDisplay, setResponsibleDisplay] = useState(
+    card.responsibleUserName || card.responsibleUserEmail || card.responsible || ''
+  );
   const [jobNumber, setJobNumber] = useState(card.jobNumber || '');
   const [jobNumberError, setJobNumberError] = useState('');
+
+  // Autocomplete state for responsible field
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const responsibleInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Type-specific fields
   const [severity, setSeverity] = useState<BugSeverity | undefined>(card.severity);
@@ -72,6 +94,95 @@ export function CardModal({
     onUpdate(card.id, { thumbnail: url });
   };
 
+  // Debounced search for responsible user
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        if (query.length < 2) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+          return;
+        }
+        setIsSearching(true);
+        try {
+          const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&limit=10`);
+          if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data.users || []);
+            setShowSuggestions(true);
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300),
+    []
+  );
+
+  // Handle responsible input change
+  const handleResponsibleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setResponsibleDisplay(value);
+    // Clear the user ID when typing (user is entering free text)
+    setResponsibleUserId(undefined);
+    setResponsibleUserName(undefined);
+    setResponsibleUserEmail(undefined);
+    setResponsible(value);
+    debouncedSearch(value);
+  };
+
+  // Handle selecting a user from suggestions
+  const handleSelectUser = (user: UserSuggestion) => {
+    setResponsibleUserId(user.id);
+    setResponsibleUserName(user.name || undefined);
+    setResponsibleUserEmail(user.email);
+    setResponsibleDisplay(user.name || user.email);
+    setResponsible(''); // Clear legacy field when selecting a real user
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Clear responsible
+  const handleClearResponsible = () => {
+    setResponsibleUserId(undefined);
+    setResponsibleUserName(undefined);
+    setResponsibleUserEmail(undefined);
+    setResponsibleDisplay('');
+    setResponsible('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Assign to current user
+  const handleAssignToMe = () => {
+    if (!currentUser) return;
+    setResponsibleUserId(currentUser.id);
+    setResponsibleUserName(currentUser.name || undefined);
+    setResponsibleUserEmail(currentUser.email);
+    setResponsibleDisplay(currentUser.name || currentUser.email);
+    setResponsible('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        responsibleInputRef.current &&
+        !responsibleInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Reset state when card changes
   useEffect(() => {
     setTitle(card.title);
@@ -84,6 +195,14 @@ export function CardModal({
     setDueDate(card.dueDate);
     setLinks(card.links || []);
     setResponsible(card.responsible || '');
+    setResponsibleUserId(card.responsibleUserId);
+    setResponsibleUserName(card.responsibleUserName);
+    setResponsibleUserEmail(card.responsibleUserEmail);
+    setResponsibleDisplay(
+      card.responsibleUserName || card.responsibleUserEmail || card.responsible || ''
+    );
+    setSuggestions([]);
+    setShowSuggestions(false);
     setJobNumber(card.jobNumber || '');
     setJobNumberError('');
     setSeverity(card.severity);
@@ -132,6 +251,9 @@ export function CardModal({
       dueDate,
       links: links.length > 0 ? links : undefined,
       responsible: responsible.trim() || undefined,
+      responsibleUserId: responsibleUserId || undefined,
+      responsibleUserName: responsibleUserName || undefined,
+      responsibleUserEmail: responsibleUserEmail || undefined,
       jobNumber: jobNumber.trim() || undefined,
       severity,
       priority,
@@ -262,13 +384,86 @@ export function CardModal({
           placeholder="e.g., Suno, Runway, Midjourney, Claude..."
         />
 
-        {/* Responsible */}
-        <Input
-          label="Responsible"
-          value={responsible}
-          onChange={(e) => setResponsible(e.target.value)}
-          placeholder="Person responsible for this card..."
-        />
+        {/* Responsible - with user autocomplete */}
+        <div className="w-full">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-text-primary">
+              Responsible
+            </label>
+            {currentUser && (
+              <button
+                type="button"
+                onClick={handleAssignToMe}
+                className="flex items-center gap-1 text-xs text-accent-primary hover:text-accent-primary/80 transition-colors"
+              >
+                <UserCheck className="h-3 w-3" />
+                Assign to me
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <Input
+              ref={responsibleInputRef}
+              value={responsibleDisplay}
+              onChange={handleResponsibleChange}
+              onFocus={() => responsibleDisplay.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
+              placeholder="Search for a user..."
+              autoComplete="off"
+            />
+            {responsibleDisplay && (
+              <button
+                type="button"
+                onClick={handleClearResponsible}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-secondary hover:text-text-primary rounded"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {/* Autocomplete dropdown */}
+            {showSuggestions && (
+              <div
+                ref={suggestionsRef}
+                className="absolute z-50 w-full mt-1 bg-bg-secondary border border-bg-tertiary rounded-lg shadow-lg max-h-48 overflow-y-auto"
+              >
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+                  </div>
+                ) : suggestions.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-text-secondary">
+                    No users found
+                  </div>
+                ) : (
+                  suggestions.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => handleSelectUser(user)}
+                      className="w-full px-3 py-2 text-left hover:bg-bg-tertiary transition-colors flex items-center gap-2"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-accent-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-medium text-accent-primary">
+                          {(user.name || user.email)[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-text-primary truncate">
+                          {user.name || user.email}
+                        </p>
+                        {user.name && (
+                          <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+          {responsibleUserId && (
+            <p className="mt-1 text-xs text-accent-success">Linked to registered user</p>
+          )}
+        </div>
 
         {/* Tags */}
         <TagInput value={tags} onChange={setTags} />
