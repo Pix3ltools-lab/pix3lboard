@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Users, Trash2, Loader2, Crown, Eye } from 'lucide-react';
+import { debounce } from '@/lib/utils/debounce';
 
 interface BoardShare {
   id: string;
@@ -14,6 +15,12 @@ interface BoardShare {
   created_at: string;
   user_email?: string;
   user_name?: string;
+}
+
+interface UserSuggestion {
+  id: string;
+  email: string;
+  name: string | null;
 }
 
 interface ShareBoardModalProps {
@@ -30,6 +37,70 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
   const [role, setRole] = useState<'owner' | 'viewer'>('viewer');
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search function
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        if (query.length < 2) {
+          setSuggestions([]);
+          setShowSuggestions(false);
+          return;
+        }
+        setIsSearching(true);
+        try {
+          const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}&limit=10`);
+          if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data.users || []);
+            setShowSuggestions(true);
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300),
+    []
+  );
+
+  // Handle email input change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    debouncedSearch(value);
+  };
+
+  // Handle suggestion selection
+  const handleSelectSuggestion = (user: UserSuggestion) => {
+    setEmail(user.email);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchShares = async () => {
     try {
@@ -51,6 +122,8 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
       fetchShares();
       setEmail('');
       setError(null);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   }, [isOpen, boardId]);
 
@@ -111,14 +184,57 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
         {/* Add share form */}
         <form onSubmit={handleAddShare} className="space-y-3">
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Input
+                ref={inputRef}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                onFocus={() => email.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="Enter email address..."
                 type="email"
                 disabled={isAdding}
+                autoComplete="off"
               />
+              {/* Autocomplete dropdown */}
+              {showSuggestions && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 bg-bg-secondary border border-bg-tertiary rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                >
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+                    </div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-text-secondary">
+                      No users found
+                    </div>
+                  ) : (
+                    suggestions.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(user)}
+                        className="w-full px-3 py-2 text-left hover:bg-bg-tertiary transition-colors flex items-center gap-2"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-accent-primary/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-medium text-accent-primary">
+                            {(user.name || user.email)[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-text-primary truncate">
+                            {user.name || user.email}
+                          </p>
+                          {user.name && (
+                            <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
             <select
               value={role}
