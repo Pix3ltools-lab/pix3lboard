@@ -1,6 +1,9 @@
 # Pix3lBoard
 
-**The cloud Kanban for AI creators** - [Try it live → https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql](https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql) ✨
+[![AI Creators Kanban](https://img.shields.io/badge/✨-Built_for_AI_Creators-blueviolet?style=for-the-badge&logo=midjourney&logoColor=white)](https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql)
+
+**Prompt → Rating → Tool (Midjourney / Suno / Flux / etc.) → Job # → Secure Cloud Sharing**
+
 Pix3lboard is a modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. Your data is stored securely in the cloud and syncs across all your devices.
 
 > **Note**: This is an experimental demo. Data persistence is not guaranteed and may be reset at any time.
