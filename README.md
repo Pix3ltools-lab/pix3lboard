@@ -1,8 +1,7 @@
 # Pix3lBoard
 
-**Cloud-based project management tool for AI creators**
-
-A modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. Your data is stored securely in the cloud and syncs across all your devices.
+**The cloud Kanban for AI creators** - [Try it live → https://board.pix3ltools.com](https://board.pix3ltools.com) ✨
+Pix3lboard is a modern, lightweight Kanban board application built with Next.js 14, designed for project management with support for AI-specific workflows. Your data is stored securely in the cloud and syncs across all your devices.
 
 > **Note**: This is an experimental demo. Data persistence is not guaranteed and may be reset at any time.
 
