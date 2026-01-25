@@ -37,6 +37,7 @@ export function DatePicker({ value, onChange, label = 'Due Date' }: DatePickerPr
       <div className="flex gap-2">
         <input
           type="date"
+          lang="en"
           value={inputValue}
           onChange={handleChange}
           className="flex-1 px-3 py-2 bg-bg-primary border border-bg-tertiary rounded text-sm text-text-primary outline-none focus:border-accent-primary"
