@@ -584,6 +584,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
         data: newBoard,
       });
 
+      // Track changes for template lists and cards
+      for (const list of newBoard.lists) {
+        trackChange({
+          entityType: 'list',
+          entityId: list.id,
+          operation: 'create',
+          parentId: newBoard.id,
+          data: list,
+        });
+
+        for (const card of list.cards) {
+          trackChange({
+            entityType: 'card',
+            entityId: card.id,
+            operation: 'create',
+            parentId: list.id,
+            data: card,
+          });
+        }
+      }
+
       return newBoard;
     },
     [trackChange]
