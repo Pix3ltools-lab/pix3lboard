@@ -171,6 +171,7 @@ interface DataContextType {
   moveCard: (cardId: string, targetListId: string, targetIndex: number) => void;
   duplicateCard: (id: string) => Card | null;
   getCard: (id: string) => Card | undefined;
+  removeCardFromState: (id: string) => void; // Remove from local state without sync
 
   // Storage operations
   exportData: () => void;
@@ -1150,6 +1151,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
   }, [trackChange]);
 
+  // Remove card from local state without tracking sync change
+  // Used when the API has already handled the change (e.g., archiving)
+  const removeCardFromState = useCallback((id: string) => {
+    setIndexedState(prev => {
+      const card = prev.cardsById.get(id);
+      if (!card) return prev;
+
+      const next = { ...prev };
+      next.cardsById = new Map(prev.cardsById);
+      next.cardsById.delete(id);
+
+      next.cardsByListId = new Map(prev.cardsByListId);
+      const listCards = new Set<string>(prev.cardsByListId.get(card.listId) || []);
+      listCards.delete(id);
+      next.cardsByListId.set(card.listId, listCards);
+
+      next.cardOrderByListId = new Map(prev.cardOrderByListId);
+      const order = (prev.cardOrderByListId.get(card.listId) || []).filter(cid => cid !== id);
+      next.cardOrderByListId.set(card.listId, order);
+
+      return next;
+    });
+  }, []);
+
   const moveCard = useCallback(
     (cardId: string, targetListId: string, targetIndex: number) => {
       let newPosition: number | undefined;
@@ -1341,6 +1366,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     createCard,
     updateCard,
     deleteCard,
+    removeCardFromState,
     moveCard,
     duplicateCard,
     getCard,

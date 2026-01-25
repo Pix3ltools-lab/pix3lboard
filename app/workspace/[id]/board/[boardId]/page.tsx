@@ -35,6 +35,7 @@ export default function BoardPage() {
     createCard,
     updateCard,
     deleteCard,
+    removeCardFromState,
     duplicateCard,
     moveCard,
     getCard,
@@ -144,8 +145,8 @@ export default function BoardPage() {
         throw new Error('Failed to archive card');
       }
 
-      // Remove card from local state by deleting it (it's still in DB but archived)
-      deleteCard(cardId);
+      // Remove card from local state without tracking sync (API already handled the archive)
+      removeCardFromState(cardId);
       showToast('Card archived', 'success');
     } catch (error) {
       showToast('Failed to archive card', 'error');
