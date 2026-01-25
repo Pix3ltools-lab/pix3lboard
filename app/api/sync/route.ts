@@ -255,6 +255,14 @@ async function applyBoardChange(
       const updateFields: string[] = [];
       const updateParams: Record<string, unknown> = { id: entityId };
 
+      if (data.workspaceId !== undefined) {
+        // Verify user owns the target workspace
+        if (!(await verifyWorkspaceOwnership(userId, data.workspaceId))) {
+          throw new Error('Target workspace not found or access denied');
+        }
+        updateFields.push('workspace_id = :workspaceId');
+        updateParams.workspaceId = data.workspaceId;
+      }
       if (data.name !== undefined) {
         updateFields.push('name = :name');
         updateParams.name = data.name;

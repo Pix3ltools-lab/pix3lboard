@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { BoardList } from '@/components/board/BoardList';
 import { BoardForm, TemplateType } from '@/components/board/BoardForm';
+import { MoveBoardModal } from '@/components/board/MoveBoardModal';
 import { Board } from '@/types';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -20,17 +21,20 @@ export default function WorkspacePage() {
   const workspaceId = params.id as string;
 
   const {
+    workspaces,
     getWorkspace,
     createBoard,
     updateBoard,
     deleteBoard,
     duplicateBoard,
+    moveBoard,
     isInitialized,
   } = useData();
   const { showToast, showConfirmDialog } = useUI();
 
   const [showBoardForm, setShowBoardForm] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
+  const [movingBoard, setMovingBoard] = useState<Board | null>(null);
 
   const workspace = getWorkspace(workspaceId);
 
@@ -77,6 +81,13 @@ export default function WorkspacePage() {
     if (duplicated) {
       showToast(`Duplicated board: ${duplicated.name}`, 'success');
     }
+  };
+
+  const handleMoveBoard = (boardId: string, targetWorkspaceId: string) => {
+    const targetWorkspace = workspaces.find(ws => ws.id === targetWorkspaceId);
+    moveBoard(boardId, targetWorkspaceId);
+    showToast(`Board moved to ${targetWorkspace?.name || 'workspace'}`, 'success');
+    setMovingBoard(null);
   };
 
   if (!isInitialized || !workspace) {
@@ -145,6 +156,7 @@ export default function WorkspacePage() {
                 }}
                 onDelete={handleDeleteBoard}
                 onDuplicate={handleDuplicateBoard}
+                onMove={(board) => setMovingBoard(board)}
               />
             </div>
           ) : (
@@ -167,6 +179,16 @@ export default function WorkspacePage() {
         }}
         onSubmit={handleCreateBoard}
         board={editingBoard || undefined}
+      />
+
+      {/* Move Board Modal */}
+      <MoveBoardModal
+        isOpen={!!movingBoard}
+        onClose={() => setMovingBoard(null)}
+        board={movingBoard}
+        workspaces={workspaces}
+        currentWorkspaceId={workspaceId}
+        onMove={handleMoveBoard}
       />
     </>
   );

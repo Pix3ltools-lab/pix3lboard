@@ -154,6 +154,7 @@ interface DataContextType {
   updateBoard: (id: string, data: Partial<Board>) => void;
   deleteBoard: (id: string) => void;
   duplicateBoard: (id: string) => Board | null;
+  moveBoard: (boardId: string, targetWorkspaceId: string) => void;
   getBoard: (id: string) => Board | undefined;
 
   // List operations
@@ -764,6 +765,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return duplicatedBoard;
   }, [indexedState, trackChange]);
 
+  const moveBoard = useCallback((boardId: string, targetWorkspaceId: string) => {
+    const board = indexedState.boardsById.get(boardId);
+    if (!board) return;
+
+    const sourceWorkspaceId = board.workspaceId;
+    if (sourceWorkspaceId === targetWorkspaceId) return;
+
+    const expectedUpdatedAt = board.updatedAt;
+
+    setIndexedState(prev => {
+      const existingBoard = prev.boardsById.get(boardId);
+      if (!existingBoard) return prev;
+
+      const next = { ...prev };
+
+      // Update board with new workspaceId
+      next.boardsById = new Map(prev.boardsById);
+      next.boardsById.set(boardId, {
+        ...existingBoard,
+        workspaceId: targetWorkspaceId,
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Remove from source workspace
+      next.boardsByWorkspaceId = new Map(prev.boardsByWorkspaceId);
+      const sourceBoards = new Set<string>(prev.boardsByWorkspaceId.get(sourceWorkspaceId) || []);
+      sourceBoards.delete(boardId);
+      next.boardsByWorkspaceId.set(sourceWorkspaceId, sourceBoards);
+
+      // Add to target workspace
+      const targetBoards = new Set<string>(prev.boardsByWorkspaceId.get(targetWorkspaceId) || []);
+      targetBoards.add(boardId);
+      next.boardsByWorkspaceId.set(targetWorkspaceId, targetBoards);
+
+      return next;
+    });
+
+    trackChange({
+      entityType: 'board',
+      entityId: boardId,
+      operation: 'update',
+      data: { workspaceId: targetWorkspaceId },
+    }, expectedUpdatedAt);
+  }, [indexedState, trackChange]);
+
   // O(1) lookup - reconstructs board with current lists and cards from indices
   const getBoard = useCallback(
     (id: string): Board | undefined => {
@@ -1264,6 +1310,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateBoard,
     deleteBoard,
     duplicateBoard,
+    moveBoard,
     getBoard,
     createList,
     updateList,

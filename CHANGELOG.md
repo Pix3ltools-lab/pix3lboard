@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] - 2025-01-25
+
+### Added
+- **User Autocomplete in Share Board**: Search users by name/email when sharing boards
+  - Debounced search with 300ms delay
+  - Shows user name and email in dropdown
+- **Responsible Field Linked to Users**: Assign registered users as card responsible
+  - User autocomplete when typing in Responsible field
+  - "Assign to me" button for quick self-assignment
+  - Backward compatible with legacy text values
+  - New `responsible_user_id` column in database
+- **Move Board Between Workspaces**: Move boards to different workspaces
+  - "Move to..." option in board menu
+  - Modal to select destination workspace
+  - Full sync support for workspace changes
+
+### Changed
+- **Registration Disabled**: Public registration is no longer available
+  - Login page shows "Registration is currently not available"
+  - New users must be created by admin
+
+---
+
 ## [2.2.9] - 2025-01-18
 
 ### Added

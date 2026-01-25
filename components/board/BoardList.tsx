@@ -9,9 +9,10 @@ interface BoardListProps {
   onEdit?: (board: Board) => void;
   onDelete?: (board: Board) => void;
   onDuplicate?: (board: Board) => void;
+  onMove?: (board: Board) => void;
 }
 
-export function BoardList({ boards, workspaceId, onEdit, onDelete, onDuplicate }: BoardListProps) {
+export function BoardList({ boards, workspaceId, onEdit, onDelete, onDuplicate, onMove }: BoardListProps) {
   if (boards.length === 0) {
     return (
       <div className="text-center py-12 text-text-secondary">
@@ -30,6 +31,7 @@ export function BoardList({ boards, workspaceId, onEdit, onDelete, onDuplicate }
           onEdit={onEdit}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
+          onMove={onMove}
         />
       ))}
     </div>

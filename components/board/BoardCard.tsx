@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Board } from '@/types';
-import { MoreVertical, Trash2, Edit, Copy } from 'lucide-react';
+import { MoreVertical, Trash2, Edit, Copy, FolderInput } from 'lucide-react';
 import { useState } from 'react';
 import { formatRelative } from '@/lib/utils/date';
 
@@ -12,9 +12,10 @@ interface BoardCardProps {
   onEdit?: (board: Board) => void;
   onDelete?: (board: Board) => void;
   onDuplicate?: (board: Board) => void;
+  onMove?: (board: Board) => void;
 }
 
-export function BoardCard({ board, workspaceId, onEdit, onDelete, onDuplicate }: BoardCardProps) {
+export function BoardCard({ board, workspaceId, onEdit, onDelete, onDuplicate, onMove }: BoardCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   const totalCards = board.lists.reduce((sum, list) => sum + list.cards.length, 0);
@@ -57,7 +58,7 @@ export function BoardCard({ board, workspaceId, onEdit, onDelete, onDuplicate }:
       </Link>
 
       {/* Actions menu */}
-      {(onEdit || onDelete || onDuplicate) && (
+      {(onEdit || onDelete || onDuplicate || onMove) && (
         <div className="absolute top-4 right-4">
           <button
             onClick={(e) => {
@@ -103,6 +104,19 @@ export function BoardCard({ board, workspaceId, onEdit, onDelete, onDuplicate }:
                   >
                     <Copy className="h-4 w-4" />
                     Duplicate
+                  </button>
+                )}
+                {onMove && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onMove(board);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-bg-tertiary transition-colors flex items-center gap-2"
+                  >
+                    <FolderInput className="h-4 w-4" />
+                    Move to...
                   </button>
                 )}
                 {onDelete && (
