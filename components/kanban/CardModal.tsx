@@ -250,7 +250,7 @@ export function CardModal({
       tags: tags.length > 0 ? tags : undefined,
       dueDate,
       links: links.length > 0 ? links : undefined,
-      responsible: responsibleUserId ? null : (responsible.trim() || undefined),
+      responsible: responsibleUserId ? '' : (responsible.trim() || undefined),
       responsibleUserId: responsibleUserId || undefined,
       responsibleUserName: responsibleUserName || undefined,
       responsibleUserEmail: responsibleUserEmail || undefined,
