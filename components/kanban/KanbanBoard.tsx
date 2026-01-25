@@ -190,8 +190,8 @@ export function KanbanBoard({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex-1 overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-4 p-4 h-full items-start min-w-max">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden h-full">
+        <div className="flex gap-4 p-4 h-full items-stretch min-w-max">
           {/* Lists with horizontal sorting */}
           <SortableContext items={listIds} strategy={horizontalListSortingStrategy}>
             {sortedLists.map((list) => (

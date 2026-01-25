@@ -64,15 +64,9 @@ export function List({
   const listStyle = list.color
     ? {
         ...style,
-        height: 'calc(100vh - 280px)',
-        maxHeight: 'calc(100vh - 280px)',
         backgroundColor: list.color,
       }
-    : {
-        ...style,
-        height: 'calc(100vh - 280px)',
-        maxHeight: 'calc(100vh - 280px)'
-      };
+    : style;
 
   return (
     <div

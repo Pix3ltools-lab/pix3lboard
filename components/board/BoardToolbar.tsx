@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2 } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
+import { useUI } from '@/lib/context/UIContext';
 
 // Preset background colors for boards
 const BOARD_BACKGROUNDS = [
@@ -37,6 +38,7 @@ interface BoardToolbarProps {
 
 export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, onShare, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, clearFilters, hasActiveFilters } = useSearch();
+  const { compactMode, toggleCompactMode } = useUI();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
   const [showPublicMenu, setShowPublicMenu] = useState(false);
@@ -64,8 +66,8 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
   };
 
   return (
-    <div className="bg-bg-secondary border-b border-bg-tertiary p-3 md:p-4">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
+    <div className={`bg-bg-secondary border-b border-bg-tertiary ${compactMode ? 'p-2' : 'p-3 md:p-4'}`}>
+      <div className={`flex flex-col sm:flex-row items-stretch sm:items-center ${compactMode ? 'gap-1.5' : 'gap-2 md:gap-3'}`}>
         {/* Search */}
         <div className="flex-1 min-w-0">
           <SearchBar
@@ -309,6 +311,18 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
             </button>
           </div>
         )}
+
+        {/* Compact Mode Toggle */}
+        <Button
+          variant={compactMode ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={toggleCompactMode}
+          className="flex items-center gap-2"
+          title={compactMode ? 'Switch to normal view' : 'Switch to compact view'}
+        >
+          {compactMode ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+          <span className="hidden sm:inline">{compactMode ? 'Normal' : 'Compact'}</span>
+        </Button>
 
         {/* Archive */}
         <Button

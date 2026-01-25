@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useData } from '@/lib/context/DataContext';
 import { useUI } from '@/lib/context/UIContext';
+import { clsx } from 'clsx';
 import { Header } from '@/components/layout/Header';
 import { Breadcrumb } from '@/components/layout/Breadcrumb';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
@@ -41,7 +42,7 @@ export default function BoardPage() {
     importData,
     isInitialized,
   } = useData();
-  const { showToast, showConfirmDialog } = useUI();
+  const { showToast, showConfirmDialog, compactMode } = useUI();
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [showArchivedModal, setShowArchivedModal] = useState(false);
@@ -227,37 +228,61 @@ export default function BoardPage() {
       <Header />
 
       {/* Board Header */}
-      <div className="border-b bg-bg-primary p-3 sm:p-4">
+      <div className={clsx(
+        "border-b bg-bg-primary transition-all",
+        compactMode ? "px-3 py-1.5" : "p-3 sm:p-4"
+      )}>
         <div className="max-w-full">
-          {/* Back button + Breadcrumb */}
-          <div className="mb-2 sm:mb-3">
-            <Link
-              href={`/workspace/${workspaceId}`}
-              className="inline-flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-2 text-sm"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back to workspace</span>
-              <span className="sm:hidden">Back</span>
-            </Link>
-
-            <div className="hidden sm:block">
-              <Breadcrumb
-                items={[
-                  { label: 'Workspaces', href: '/' },
-                  { label: workspace.name, href: `/workspace/${workspaceId}`, icon: workspace.icon },
-                  { label: board.name },
-                ]}
-              />
+          {compactMode ? (
+            /* Compact header - single line */
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/workspace/${workspaceId}`}
+                className="text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <span>{workspace.icon}</span>
+                <span>{workspace.name}</span>
+                <span>/</span>
+              </div>
+              <h1 className="text-base font-semibold text-text-primary truncate">{board.name}</h1>
             </div>
-          </div>
+          ) : (
+            /* Normal header */
+            <>
+              {/* Back button + Breadcrumb */}
+              <div className="mb-2 sm:mb-3">
+                <Link
+                  href={`/workspace/${workspaceId}`}
+                  className="inline-flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-2 text-sm"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Back to workspace</span>
+                  <span className="sm:hidden">Back</span>
+                </Link>
 
-          {/* Board title and description */}
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-1">{board.name}</h1>
-            {board.description && (
-              <p className="text-xs sm:text-sm text-text-secondary line-clamp-2">{board.description}</p>
-            )}
-          </div>
+                <div className="hidden sm:block">
+                  <Breadcrumb
+                    items={[
+                      { label: 'Workspaces', href: '/' },
+                      { label: workspace.name, href: `/workspace/${workspaceId}`, icon: workspace.icon },
+                      { label: board.name },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Board title and description */}
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-1">{board.name}</h1>
+                {board.description && (
+                  <p className="text-xs sm:text-sm text-text-secondary line-clamp-2">{board.description}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

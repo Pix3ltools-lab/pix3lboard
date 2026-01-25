@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { Toast, ToastType, ModalType, ConfirmDialogData } from '@/types';
 import { generateId } from '@/lib/utils/id';
 import { TOAST_DURATION, TOAST_DURATION_ERROR } from '@/lib/constants';
@@ -25,6 +25,10 @@ interface UIContextType {
   // Loading state
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+
+  // Compact mode
+  compactMode: boolean;
+  toggleCompactMode: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -42,6 +46,25 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
+
+  // Compact mode state
+  const [compactMode, setCompactMode] = useState(false);
+
+  // Load compact mode from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('pix3lboard-compact-mode');
+    if (saved === 'true') {
+      setCompactMode(true);
+    }
+  }, []);
+
+  const toggleCompactMode = useCallback(() => {
+    setCompactMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('pix3lboard-compact-mode', String(newValue));
+      return newValue;
+    });
+  }, []);
 
   // Modal functions
   const openModal = useCallback((modal: ModalType, data?: unknown) => {
@@ -100,6 +123,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
     closeConfirmDialog,
     isLoading,
     setIsLoading,
+    compactMode,
+    toggleCompactMode,
   };
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

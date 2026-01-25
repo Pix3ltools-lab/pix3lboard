@@ -37,7 +37,7 @@ export function AddList({ onAdd }: AddListProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="flex-shrink-0 w-72 p-4 bg-bg-secondary hover:bg-bg-tertiary rounded-lg transition-colors flex items-center gap-2 text-text-secondary"
+        className="flex-shrink-0 self-start w-72 p-4 bg-bg-secondary hover:bg-bg-tertiary rounded-lg transition-colors flex items-center gap-2 text-text-secondary"
       >
         <Plus className="h-5 w-5" />
         <span className="font-medium">Add a list</span>
@@ -46,7 +46,7 @@ export function AddList({ onAdd }: AddListProps) {
   }
 
   return (
-    <div className="flex-shrink-0 w-72 p-4 bg-bg-secondary rounded-lg border-2 border-accent-primary">
+    <div className="flex-shrink-0 self-start w-72 p-4 bg-bg-secondary rounded-lg border-2 border-accent-primary">
       <input
         autoFocus
         type="text"

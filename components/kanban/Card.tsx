@@ -6,6 +6,8 @@ import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
 import { Clock, Tag, Star, User, Users, AlertCircle, CheckSquare } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
+import { useUI } from '@/lib/context/UIContext';
+import { clsx } from 'clsx';
 
 interface CardProps {
   card: CardType;
@@ -13,6 +15,7 @@ interface CardProps {
 }
 
 export function Card({ card, onClick }: CardProps) {
+  const { compactMode } = useUI();
   const {
     attributes,
     listeners,
@@ -52,61 +55,75 @@ export function Card({ card, onClick }: CardProps) {
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className="group bg-bg-primary rounded-lg border-2 border-bg-tertiary p-3 cursor-pointer hover:border-accent-primary transition-all hover:shadow-md touch-none"
+      className={clsx(
+        "group bg-bg-primary rounded-lg border-2 border-bg-tertiary cursor-pointer hover:border-accent-primary transition-all hover:shadow-md touch-none",
+        compactMode ? "p-2" : "p-3"
+      )}
     >
       {/* Header row with type and job number */}
-      <div className="flex items-center justify-between gap-2 mb-2">
-        {/* Card type indicator */}
-        {cardType && (
-          <div className="flex items-center gap-1">
-            <span className="text-sm">{cardType.icon}</span>
-            <span className="text-xs text-text-secondary">{cardType.label}</span>
-          </div>
-        )}
+      {(cardType || card.jobNumber) && (
+        <div className={clsx(
+          "flex items-center justify-between gap-2",
+          compactMode ? "mb-1" : "mb-2"
+        )}>
+          {/* Card type indicator */}
+          {cardType && (
+            <div className="flex items-center gap-1">
+              <span className={compactMode ? "text-xs" : "text-sm"}>{cardType.icon}</span>
+              {!compactMode && <span className="text-xs text-text-secondary">{cardType.label}</span>}
+            </div>
+          )}
 
-        {/* Job Number badge */}
-        {card.jobNumber && (
-          <div className="px-2 py-0.5 bg-bg-secondary border border-bg-tertiary rounded text-xs font-mono text-text-primary">
-            {card.jobNumber}
-          </div>
-        )}
-      </div>
+          {/* Job Number badge */}
+          {card.jobNumber && (
+            <div className="px-1.5 py-0.5 bg-bg-secondary border border-bg-tertiary rounded text-xs font-mono text-text-primary">
+              {card.jobNumber}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Title */}
-      <h4 className="text-sm font-medium text-text-primary mb-2 line-clamp-3">
+      <h4 className={clsx(
+        "text-sm font-medium text-text-primary",
+        compactMode ? "mb-1 line-clamp-2" : "mb-2 line-clamp-3"
+      )}>
         {card.title}
       </h4>
 
-      {/* Description preview */}
-      {card.description && (
+      {/* Description preview - hidden in compact mode */}
+      {!compactMode && card.description && (
         <p className="text-xs text-text-secondary mb-2 line-clamp-2">
           {card.description}
         </p>
       )}
 
-      {/* Thumbnail */}
+      {/* Thumbnail - smaller in compact mode */}
       {card.thumbnail && (
-        <div className="mb-2 rounded overflow-hidden">
+        <div className={clsx("rounded overflow-hidden", compactMode ? "mb-1" : "mb-2")}>
           <img
             src={card.thumbnail}
             alt=""
-            className="w-full h-24 object-cover"
+            className={clsx("w-full object-cover", compactMode ? "h-16" : "h-24")}
           />
         </div>
       )}
 
       {/* Responsible - show user name if linked, otherwise legacy text */}
       {(card.responsibleUserName || card.responsible) && (
-        <div className="flex items-center gap-1 mb-2 text-xs">
+        <div className={clsx("flex items-center gap-1 text-xs", compactMode ? "mb-1" : "mb-2")}>
           <User className="h-3 w-3 text-accent-primary" />
-          <span className="text-text-primary font-medium">
+          <span className="text-text-primary font-medium truncate">
             {card.responsibleUserName || card.responsible}
           </span>
         </div>
       )}
 
       {/* Metadata row */}
-      <div className="flex items-center gap-3 text-xs text-text-secondary flex-wrap">
+      <div className={clsx(
+        "flex items-center text-xs text-text-secondary flex-wrap",
+        compactMode ? "gap-2" : "gap-3"
+      )}>
         {/* Bug severity */}
         {card.type === 'bug' && card.severity && (
           <div className="flex items-center gap-1">
@@ -114,7 +131,7 @@ export function Card({ card, onClick }: CardProps) {
               className="h-3 w-3"
               style={{ color: severityColors[card.severity] }}
             />
-            <span className="capitalize">{card.severity}</span>
+            {!compactMode && <span className="capitalize">{card.severity}</span>}
           </div>
         )}
 
@@ -175,8 +192,8 @@ export function Card({ card, onClick }: CardProps) {
         )}
       </div>
 
-      {/* AI Tool badge */}
-      {card.aiTool && (
+      {/* AI Tool badge - hidden in compact mode */}
+      {!compactMode && card.aiTool && (
         <div className="mt-2 pt-2 border-t border-bg-tertiary">
           <span className="text-xs text-text-secondary">🤖 {card.aiTool}</span>
         </div>
