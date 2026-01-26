@@ -215,7 +215,7 @@ export function CardModal({
     setLightboxOpen(false);
   }, [card]);
 
-  // Validate job number format: Letter-2digits-4digits (e.g., C-26-0001)
+  // Validate job number format: Letter-2digits-4digits (e.g., A-26-0001)
   const validateJobNumber = (value: string): boolean => {
     if (!value.trim()) return true; // Optional field
     const regex = /^[A-Z]-\d{2}-\d{4}$/;
@@ -225,7 +225,7 @@ export function CardModal({
   const handleJobNumberChange = (value: string) => {
     setJobNumber(value);
     if (value.trim() && !validateJobNumber(value)) {
-      setJobNumberError('Format: Letter-2digits-4digits (e.g., C-26-0001)');
+      setJobNumberError('Format: Letter-2digits-4digits (e.g., A-26-0001)');
     } else {
       setJobNumberError('');
     }
@@ -236,7 +236,7 @@ export function CardModal({
 
     // Validate job number before saving
     if (jobNumber.trim() && !validateJobNumber(jobNumber)) {
-      setJobNumberError('Invalid format. Use: Letter-2digits-4digits (e.g., C-26-0001)');
+      setJobNumberError('Invalid format. Use: Letter-2digits-4digits (e.g., A-26-0001)');
       return;
     }
 
@@ -299,7 +299,7 @@ export function CardModal({
             label="Job Number (optional)"
             value={jobNumber}
             onChange={(e) => handleJobNumberChange(e.target.value)}
-            placeholder="e.g., C-26-0001"
+            placeholder="e.g., A-26-0001"
           />
           {jobNumberError && (
             <p className="mt-1 text-xs text-accent-danger">{jobNumberError}</p>
