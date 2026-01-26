@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw } from 'lucide-react';
+import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw, Download, Database } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserWithStats {
@@ -63,6 +63,7 @@ export default function AdminPage() {
   const [blobAnalyzing, setBlobAnalyzing] = useState(false);
   const [blobCleaning, setBlobCleaning] = useState(false);
   const [blobResult, setBlobResult] = useState<BlobCleanupResult | null>(null);
+  const [backingUp, setBackingUp] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -284,6 +285,40 @@ export default function AdminPage() {
     }
   };
 
+  const handleBackup = async () => {
+    setBackingUp(true);
+
+    try {
+      const res = await fetch('/api/admin/backup');
+      if (!res.ok) {
+        throw new Error('Failed to create backup');
+      }
+
+      // Get the filename from Content-Disposition header
+      const contentDisposition = res.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : 'pix3lboard-backup.json';
+
+      // Download the file
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast('Backup downloaded successfully', 'success');
+    } catch (err) {
+      console.error('Error creating backup:', err);
+      showToast('Failed to create backup', 'error');
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
   if (isLoading || !user?.is_admin) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -361,6 +396,31 @@ export default function AdminPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Database Backup Section */}
+        <div className="bg-bg-secondary rounded-lg border border-bg-tertiary overflow-hidden mb-8">
+          <div className="p-4 border-b border-bg-tertiary flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Database className="h-5 w-5 text-accent-primary" />
+              <h2 className="text-lg font-semibold text-text-primary">Database Backup</h2>
+            </div>
+            <Button
+              onClick={handleBackup}
+              disabled={backingUp}
+            >
+              <Download className={`h-4 w-4 mr-2 ${backingUp ? 'animate-pulse' : ''}`} />
+              {backingUp ? 'Creating backup...' : 'Download Backup'}
+            </Button>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-text-secondary">
+              Download a complete backup of the database as a JSON file. This includes all users, workspaces, boards, lists, cards, comments, and attachments metadata.
+            </p>
+            <p className="text-xs text-text-secondary mt-2">
+              Note: To restore a backup, use the command line script: <code className="bg-bg-tertiary px-1 rounded">npx tsx lib/db/restore.ts</code>
+            </p>
           </div>
         </div>
 
