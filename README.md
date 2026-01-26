@@ -59,6 +59,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Create Users**: Admin can create pre-approved accounts
 - **Delete Users**: Remove users and all their data
 - **Reset Passwords**: Admin can reset user passwords
+- **Database Backup**: Download complete database backup as JSON file
 - **Storage Cleanup**: Analyze and delete orphaned blob files to free storage space
 
 ### User Experience
