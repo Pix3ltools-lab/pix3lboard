@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] - 2025-01-26
+
+### Added
+- **Database Backup in Admin Panel**: Download complete database backup as JSON file
+  - New "Database Backup" section in admin panel
+  - Includes all tables: users, workspaces, boards, lists, cards, comments, attachments
+  - Restore remains command-line only for safety
+- **YouTube Demo Video**: Added demo video badge/link to README
+
+### Fixed
+- **Archived Cards Persistence**: Cards now correctly stay archived instead of being deleted
+  - Fixed sync tracking that was sending DELETE instead of preserving archive status
+  - Added `removeCardFromState` function for local-only state changes
+- **Responsible Field Search**: Legacy text values now cleared when linking to user
+  - Fixes search returning wrong cards after reassignment
+- **Date Picker Locale**: Set English locale for date input placeholder
+- **Job Number Format**: Updated examples to clarify any letter (A-Z) is valid, not just "C"
+
+---
+
 ## [2.4.3] - 2025-01-25
 
 ### Added
