@@ -20,6 +20,7 @@ interface ArchivedCardRow {
   responsible_user_name: string | null;
   responsible_user_email: string | null;
   job_number: string | null;
+  links: string | null;
   thumbnail: string | null;
   checklist: string | null;
   created_at: string;
@@ -58,6 +59,7 @@ interface ExportedCard {
   dueDate: string | null;
   responsible: string | null;
   jobNumber: string | null;
+  links: string[];
   prompt: string | null;
   rating: number | null;
   aiTool: string | null;
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
       SELECT
         c.id, c.title, c.description, c.position, c.type, c.prompt, c.rating,
         c.ai_tool, c.tags, c.due_date, c.responsible, c.responsible_user_id,
-        c.job_number, c.thumbnail, c.checklist, c.created_at, c.updated_at,
+        c.job_number, c.links, c.thumbnail, c.checklist, c.created_at, c.updated_at,
         u.name as responsible_user_name, u.email as responsible_user_email,
         l.name as list_name,
         b.name as board_name,
@@ -169,6 +171,7 @@ export async function GET(request: NextRequest) {
       // Parse JSON fields safely
       let tags: string[] = [];
       let checklist: Array<{ text: string; completed: boolean }> = [];
+      let links: string[] = [];
 
       try {
         if (card.tags) {
@@ -184,6 +187,14 @@ export async function GET(request: NextRequest) {
         }
       } catch {
         checklist = [];
+      }
+
+      try {
+        if (card.links) {
+          links = JSON.parse(card.links);
+        }
+      } catch {
+        links = [];
       }
 
       // Build responsible field: prefer linked user, fallback to legacy text
@@ -207,6 +218,7 @@ export async function GET(request: NextRequest) {
         dueDate: card.due_date,
         responsible,
         jobNumber: card.job_number,
+        links,
         prompt: card.prompt,
         rating: card.rating,
         aiTool: card.ai_tool,
