@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw, Download, Database } from 'lucide-react';
+import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw, Download, Database, Archive } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserWithStats {
@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [blobCleaning, setBlobCleaning] = useState(false);
   const [blobResult, setBlobResult] = useState<BlobCleanupResult | null>(null);
   const [backingUp, setBackingUp] = useState(false);
+  const [exportingArchived, setExportingArchived] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -319,6 +320,40 @@ export default function AdminPage() {
     }
   };
 
+  const handleExportArchived = async () => {
+    setExportingArchived(true);
+
+    try {
+      const res = await fetch('/api/admin/archived-cards/export');
+      if (!res.ok) {
+        throw new Error('Failed to export archived cards');
+      }
+
+      // Get the filename from Content-Disposition header
+      const contentDisposition = res.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : 'pix3lboard-archived-cards.json';
+
+      // Download the file
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast('Archived cards exported successfully', 'success');
+    } catch (err) {
+      console.error('Error exporting archived cards:', err);
+      showToast('Failed to export archived cards', 'error');
+    } finally {
+      setExportingArchived(false);
+    }
+  };
+
   if (isLoading || !user?.is_admin) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -420,6 +455,28 @@ export default function AdminPage() {
             </p>
             <p className="text-xs text-text-secondary mt-2">
               Note: To restore a backup, use the command line script: <code className="bg-bg-tertiary px-1 rounded">npx tsx lib/db/restore.ts</code>
+            </p>
+          </div>
+        </div>
+
+        {/* Archived Cards Export Section */}
+        <div className="bg-bg-secondary rounded-lg border border-bg-tertiary overflow-hidden mb-8">
+          <div className="p-4 border-b border-bg-tertiary flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Archive className="h-5 w-5 text-accent-primary" />
+              <h2 className="text-lg font-semibold text-text-primary">Archived Cards Export</h2>
+            </div>
+            <Button
+              onClick={handleExportArchived}
+              disabled={exportingArchived}
+            >
+              <Download className={`h-4 w-4 mr-2 ${exportingArchived ? 'animate-pulse' : ''}`} />
+              {exportingArchived ? 'Exporting...' : 'Export Archived Cards'}
+            </Button>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-text-secondary">
+              Export all archived cards as a JSON file. Includes card details, workspace/board/list names, tags, checklists, and all comments with author information.
             </p>
           </div>
         </div>
