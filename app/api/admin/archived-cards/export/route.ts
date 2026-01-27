@@ -16,6 +16,9 @@ interface ArchivedCardRow {
   tags: string | null;
   due_date: string | null;
   responsible: string | null;
+  responsible_user_id: string | null;
+  responsible_user_name: string | null;
+  responsible_user_email: string | null;
   job_number: string | null;
   thumbnail: string | null;
   checklist: string | null;
@@ -88,8 +91,9 @@ export async function GET(request: NextRequest) {
     const archivedCards = await query<ArchivedCardRow>(`
       SELECT
         c.id, c.title, c.description, c.position, c.type, c.prompt, c.rating,
-        c.ai_tool, c.tags, c.due_date, c.responsible, c.job_number,
-        c.thumbnail, c.checklist, c.created_at, c.updated_at,
+        c.ai_tool, c.tags, c.due_date, c.responsible, c.responsible_user_id,
+        c.job_number, c.thumbnail, c.checklist, c.created_at, c.updated_at,
+        u.name as responsible_user_name, u.email as responsible_user_email,
         l.name as list_name,
         b.name as board_name,
         w.name as workspace_name
@@ -97,6 +101,7 @@ export async function GET(request: NextRequest) {
       JOIN lists l ON l.id = c.list_id
       JOIN boards b ON b.id = l.board_id
       JOIN workspaces w ON w.id = b.workspace_id
+      LEFT JOIN users u ON u.id = c.responsible_user_id
       WHERE c.is_archived = 1
       ORDER BY c.updated_at DESC
     `);
@@ -181,6 +186,14 @@ export async function GET(request: NextRequest) {
         checklist = [];
       }
 
+      // Build responsible field: prefer linked user, fallback to legacy text
+      let responsible: string | null = null;
+      if (card.responsible_user_id && card.responsible_user_name) {
+        responsible = `${card.responsible_user_name} (${card.responsible_user_email})`;
+      } else if (card.responsible) {
+        responsible = card.responsible;
+      }
+
       return {
         id: card.id,
         title: card.title,
@@ -192,7 +205,7 @@ export async function GET(request: NextRequest) {
         tags,
         checklist,
         dueDate: card.due_date,
-        responsible: card.responsible,
+        responsible,
         jobNumber: card.job_number,
         prompt: card.prompt,
         rating: card.rating,
