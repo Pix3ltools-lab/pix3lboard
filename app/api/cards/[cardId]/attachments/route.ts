@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';
+import { logActivity } from '@/lib/db/activityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -163,6 +164,15 @@ export async function POST(
         createdAt: now,
       }
     );
+
+    // Log activity
+    await logActivity({
+      entityType: 'card',
+      entityId: cardId,
+      userId: payload.userId,
+      action: 'attachment_added',
+      details: { attachmentId: id, filename: file.name },
+    });
 
     return NextResponse.json({
       attachment: {

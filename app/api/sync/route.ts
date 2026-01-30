@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
-import { query, execute, queryOne } from '@/lib/db/turso';
+import { execute, queryOne } from '@/lib/db/turso';
 import { SyncPayloadSchema } from '@/lib/validation/schemas';
 import type { SyncChange, SyncResult, SyncConflict, Workspace, Board, List, Card } from '@/types';
 import type { BoardRole } from '@/types/board';
 import { canManageBoard, canManageLists, canEditCards } from '@/lib/auth/permissions';
+import { logActivity } from '@/lib/db/activityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -623,6 +624,39 @@ export async function PATCH(request: NextRequest) {
 
         await applyChange(userId, change);
         appliedCount++;
+
+        // Log activity for card and list operations
+        if (change.entityType === 'card' || change.entityType === 'list') {
+          const actionMap: Record<string, string> = {
+            create: 'created',
+            update: 'updated',
+            delete: 'deleted',
+          };
+          const action = actionMap[change.operation] || change.operation;
+
+          // Build details based on operation
+          const details: Record<string, unknown> = {};
+          if (change.operation === 'update' && change.data) {
+            details.fields = Object.keys(change.data);
+            // Track move operations
+            if (change.entityType === 'card' && change.data.listId) {
+              details.movedToList = change.data.listId;
+            }
+          }
+
+          try {
+            await logActivity({
+              entityType: change.entityType,
+              entityId: change.entityId,
+              userId,
+              action: action as 'created' | 'updated' | 'deleted',
+              details: Object.keys(details).length > 0 ? details : undefined,
+            });
+          } catch (logError) {
+            // Don't fail the sync if logging fails
+            console.error('Failed to log activity:', logError);
+          }
+        }
       } catch (error) {
         console.error('Failed to apply change:', change, error);
         failedChanges.push({

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import { logActivity } from '@/lib/db/activityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,14 @@ export async function POST(
       'UPDATE cards SET is_archived = :isArchived, updated_at = :updatedAt WHERE id = :cardId',
       { isArchived: archive ? 1 : 0, updatedAt: now, cardId }
     );
+
+    // Log activity
+    await logActivity({
+      entityType: 'card',
+      entityId: cardId,
+      userId: payload.userId,
+      action: archive ? 'archived' : 'restored',
+    });
 
     return NextResponse.json({
       success: true,

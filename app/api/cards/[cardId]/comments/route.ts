@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { query, execute } from '@/lib/db/turso';
 import { getBoardRoleByCardId, canView, canComment } from '@/lib/auth/permissions';
+import { logActivity } from '@/lib/db/activityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,6 +130,15 @@ export async function POST(
       content: content.trim(),
       createdAt: now,
       updatedAt: now,
+    });
+
+    // Log activity
+    await logActivity({
+      entityType: 'card',
+      entityId: cardId,
+      userId: payload.userId,
+      action: 'commented',
+      details: { commentId: id },
     });
 
     return NextResponse.json({
