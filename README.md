@@ -35,6 +35,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
   - Responsible person assignment
   - Due dates and meeting dates
 - **Card Comments**: Add comments to cards with author and timestamp
+- **Activity Log**: Track all card changes with timestamps (who did what and when)
 - **Checklists**: Add subtasks with progress tracking
 - **Card Thumbnails**: Add images to cards with upload and lightbox preview
 - **File Attachments**: Upload files to cards (PDF, documents, images, max 10MB)
