@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
-import { query, queryOne, execute } from '@/lib/db/turso';
+import { query, execute } from '@/lib/db/turso';
+import { getBoardRoleByCardId, canView, canComment } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,18 +17,16 @@ interface CommentRow {
   user_name: string | null;
 }
 
-// Helper to verify user has access to a card (owner or shared)
-async function verifyCardAccess(cardId: string, userId: string): Promise<boolean> {
-  const access = await queryOne<{ id: string }>(`
-    SELECT c.id FROM cards c
-    JOIN lists l ON l.id = c.list_id
-    JOIN boards b ON b.id = l.board_id
-    JOIN workspaces w ON w.id = b.workspace_id
-    LEFT JOIN board_shares bs ON bs.board_id = b.id AND bs.user_id = :userId
-    WHERE c.id = :cardId
-      AND (w.user_id = :userId OR bs.user_id IS NOT NULL)
-  `, { cardId, userId });
-  return access !== null;
+// Helper to verify user has view access to a card
+async function verifyCardViewAccess(cardId: string, userId: string): Promise<boolean> {
+  const role = await getBoardRoleByCardId(userId, cardId);
+  return canView(role);
+}
+
+// Helper to verify user can comment on a card
+async function verifyCardCommentAccess(cardId: string, userId: string): Promise<boolean> {
+  const role = await getBoardRoleByCardId(userId, cardId);
+  return canComment(role);
 }
 
 // GET /api/cards/[cardId]/comments - Get all comments for a card
@@ -48,8 +47,8 @@ export async function GET(
 
     const { cardId } = await params;
 
-    // Verify user has access to this card
-    const hasAccess = await verifyCardAccess(cardId, payload.userId);
+    // Verify user has view access to this card
+    const hasAccess = await verifyCardViewAccess(cardId, payload.userId);
     if (!hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
@@ -100,10 +99,10 @@ export async function POST(
 
     const { cardId } = await params;
 
-    // Verify user has access to this card
-    const hasAccess = await verifyCardAccess(cardId, payload.userId);
+    // Verify user has comment access to this card
+    const hasAccess = await verifyCardCommentAccess(cardId, payload.userId);
     if (!hasAccess) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      return NextResponse.json({ error: 'Access denied. You need commenter or higher role to add comments.' }, { status: 403 });
     }
 
     const { content } = await request.json();

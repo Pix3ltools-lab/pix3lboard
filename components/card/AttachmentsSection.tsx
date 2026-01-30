@@ -17,6 +17,7 @@ interface Attachment {
 
 interface AttachmentsSectionProps {
   cardId: string;
+  disabled?: boolean;
 }
 
 function formatFileSize(bytes: number): string {
@@ -36,7 +37,7 @@ function isImageFile(mimeType: string | null): boolean {
   return mimeType?.startsWith('image/') || false;
 }
 
-export function AttachmentsSection({ cardId }: AttachmentsSectionProps) {
+export function AttachmentsSection({ cardId, disabled = false }: AttachmentsSectionProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -124,20 +125,22 @@ export function AttachmentsSection({ cardId }: AttachmentsSectionProps) {
             <span className="text-text-secondary">({attachments.length})</span>
           )}
         </label>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="flex items-center gap-1"
-        >
-          {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Upload className="h-4 w-4" />
-          )}
-          Add
-        </Button>
+        {!disabled && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex items-center gap-1"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            Add
+          </Button>
+        )}
       </div>
 
       <input
@@ -216,13 +219,15 @@ export function AttachmentsSection({ cardId }: AttachmentsSectionProps) {
                   >
                     <Download className="h-4 w-4" />
                   </a>
-                  <button
-                    onClick={() => handleDelete(attachment.id)}
-                    className="p-1.5 rounded hover:bg-bg-primary text-text-secondary hover:text-accent-danger transition-colors"
-                    title="Delete"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  {!disabled && (
+                    <button
+                      onClick={() => handleDelete(attachment.id)}
+                      className="p-1.5 rounded hover:bg-bg-primary text-text-secondary hover:text-accent-danger transition-colors"
+                      title="Delete"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );

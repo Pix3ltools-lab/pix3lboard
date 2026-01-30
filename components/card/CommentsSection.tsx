@@ -23,9 +23,10 @@ interface Comment {
 interface CommentsSectionProps {
   cardId: string;
   onCommentCountChange?: (count: number) => void;
+  canComment?: boolean; // Whether the user can add comments
 }
 
-export function CommentsSection({ cardId, onCommentCountChange }: CommentsSectionProps) {
+export function CommentsSection({ cardId, onCommentCountChange, canComment = true }: CommentsSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -170,26 +171,32 @@ export function CommentsSection({ cardId, onCommentCountChange }: CommentsSectio
         </div>
       )}
 
-      {/* Add comment form */}
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Write a comment..."
-          rows={2}
-        />
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!newComment.trim() || submitting}
-            className="flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            {submitting ? 'Sending...' : 'Send'}
-          </Button>
-        </div>
-      </form>
+      {/* Add comment form - only show if user can comment */}
+      {canComment ? (
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Write a comment..."
+            rows={2}
+          />
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!newComment.trim() || submitting}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {submitting ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <p className="text-sm text-text-secondary italic">
+          You don&apos;t have permission to add comments
+        </p>
+      )}
     </div>
   );
 }

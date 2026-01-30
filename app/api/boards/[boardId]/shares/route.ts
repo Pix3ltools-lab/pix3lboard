@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';
+import { BoardRole } from '@/types/board';
 
 export const dynamic = 'force-dynamic';
+
+const VALID_ROLES: BoardRole[] = ['owner', 'editor', 'commenter', 'viewer'];
 
 interface BoardShare {
   id: string;
   board_id: string;
   user_id: string;
-  role: 'owner' | 'viewer';
+  role: BoardRole;
   created_at: string;
   user_email?: string;
   user_name?: string;
@@ -89,8 +92,8 @@ export async function POST(
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    if (role !== 'owner' && role !== 'viewer') {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    if (!VALID_ROLES.includes(role)) {
+      return NextResponse.json({ error: 'Invalid role. Must be one of: owner, editor, commenter, viewer' }, { status: 400 });
     }
 
     // Check if user is the owner of the board

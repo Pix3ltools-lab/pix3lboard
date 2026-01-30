@@ -4,18 +4,26 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Users, Trash2, Loader2, Crown, Eye } from 'lucide-react';
+import { Users, Trash2, Loader2, Crown, Eye, Pencil, MessageSquare } from 'lucide-react';
 import { debounce } from '@/lib/utils/debounce';
+import { BoardRole } from '@/types/board';
 
 interface BoardShare {
   id: string;
   board_id: string;
   user_id: string;
-  role: 'owner' | 'viewer';
+  role: BoardRole;
   created_at: string;
   user_email?: string;
   user_name?: string;
 }
+
+const ROLE_CONFIG: Record<BoardRole, { icon: typeof Crown; label: string; color: string }> = {
+  owner: { icon: Crown, label: 'Owner', color: 'bg-accent-warning/20 text-accent-warning' },
+  editor: { icon: Pencil, label: 'Editor', color: 'bg-accent-primary/20 text-accent-primary' },
+  commenter: { icon: MessageSquare, label: 'Commenter', color: 'bg-accent-success/20 text-accent-success' },
+  viewer: { icon: Eye, label: 'Viewer', color: 'bg-bg-tertiary text-text-secondary' },
+};
 
 interface UserSuggestion {
   id: string;
@@ -34,7 +42,7 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
   const [shares, setShares] = useState<BoardShare[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'owner' | 'viewer'>('viewer');
+  const [role, setRole] = useState<BoardRole>('viewer');
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -238,11 +246,13 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
             </div>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as 'owner' | 'viewer')}
+              onChange={(e) => setRole(e.target.value as BoardRole)}
               className="px-3 py-2 bg-bg-secondary border border-bg-tertiary rounded-lg text-text-primary text-sm"
               disabled={isAdding}
             >
               <option value="viewer">Viewer</option>
+              <option value="commenter">Commenter</option>
+              <option value="editor">Editor</option>
               <option value="owner">Owner</option>
             </select>
             <Button type="submit" disabled={isAdding || !email.trim()}>
@@ -288,20 +298,16 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                        share.role === 'owner'
-                          ? 'bg-accent-warning/20 text-accent-warning'
-                          : 'bg-bg-tertiary text-text-secondary'
-                      }`}
-                    >
-                      {share.role === 'owner' ? (
-                        <Crown className="h-3 w-3" />
-                      ) : (
-                        <Eye className="h-3 w-3" />
-                      )}
-                      {share.role === 'owner' ? 'Owner' : 'Viewer'}
-                    </span>
+                    {(() => {
+                      const config = ROLE_CONFIG[share.role] || ROLE_CONFIG.viewer;
+                      const Icon = config.icon;
+                      return (
+                        <span className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${config.color}`}>
+                          <Icon className="h-3 w-3" />
+                          {config.label}
+                        </span>
+                      );
+                    })()}
                     <button
                       onClick={() => handleRemoveShare(share.user_id)}
                       className="p-1.5 rounded hover:bg-bg-tertiary text-text-secondary hover:text-accent-danger transition-colors"
@@ -318,10 +324,11 @@ export function ShareBoardModal({ isOpen, onClose, boardId, boardName }: ShareBo
 
         {/* Info */}
         <div className="border-t border-bg-tertiary pt-4">
-          <p className="text-xs text-text-secondary">
-            <strong>Viewer:</strong> Can view the board but cannot make changes.
-            <br />
-            <strong>Owner:</strong> Can view and edit the board.
+          <p className="text-xs text-text-secondary space-y-1">
+            <span className="block"><strong>Viewer:</strong> Read-only access</span>
+            <span className="block"><strong>Commenter:</strong> Can view and add comments</span>
+            <span className="block"><strong>Editor:</strong> Can edit lists and cards, add comments</span>
+            <span className="block"><strong>Owner:</strong> Full access including board settings and sharing</span>
           </p>
         </div>
       </div>

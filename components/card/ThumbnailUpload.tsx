@@ -9,6 +9,7 @@ interface ThumbnailUploadProps {
   value?: string;
   onChange: (url: string | undefined) => void;
   onViewFullSize?: () => void;
+  disabled?: boolean;
 }
 
 // Compress image client-side before upload
@@ -56,7 +57,7 @@ async function compressImage(file: File, maxWidth = 800, maxHeight = 600, qualit
   });
 }
 
-export function ThumbnailUpload({ cardId, value, onChange, onViewFullSize }: ThumbnailUploadProps) {
+export function ThumbnailUpload({ cardId, value, onChange, onViewFullSize, disabled = false }: ThumbnailUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,26 +161,28 @@ export function ThumbnailUpload({ cardId, value, onChange, onViewFullSize }: Thu
                 <ZoomIn className="h-5 w-5" />
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              className="text-white hover:text-white hover:bg-white/20"
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <X className="h-5 w-5" />
-              )}
-            </Button>
+            {!disabled && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                className="text-white hover:text-white hover:bg-white/20"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <X className="h-5 w-5" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
       ) : (
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={disabled || isUploading}
           className="w-full h-32 border-2 border-dashed border-bg-tertiary rounded-lg flex flex-col items-center justify-center gap-2 hover:border-accent-primary hover:bg-bg-secondary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isUploading ? (

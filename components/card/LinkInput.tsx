@@ -7,9 +7,10 @@ import { MAX_LINKS_PER_CARD } from '@/lib/constants';
 interface LinkInputProps {
   value?: string[];
   onChange: (links: string[]) => void;
+  disabled?: boolean;
 }
 
-export function LinkInput({ value = [], onChange }: LinkInputProps) {
+export function LinkInput({ value = [], onChange, disabled = false }: LinkInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState('');
 
@@ -77,20 +78,22 @@ export function LinkInput({ value = [], onChange }: LinkInputProps) {
               >
                 {link}
               </a>
-              <button
-                type="button"
-                onClick={() => handleRemoveLink(link)}
-                className="flex-shrink-0 p-1 hover:bg-bg-tertiary rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-4 w-4 text-text-secondary" />
-              </button>
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveLink(link)}
+                  className="flex-shrink-0 p-1 hover:bg-bg-tertiary rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-4 w-4 text-text-secondary" />
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Input for new link */}
-      {value.length < MAX_LINKS_PER_CARD && (
+      {!disabled && value.length < MAX_LINKS_PER_CARD && (
         <div>
           <div className="flex gap-2">
             <input

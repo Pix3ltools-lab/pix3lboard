@@ -6,9 +6,10 @@ interface DatePickerProps {
   value?: string; // ISO date string
   onChange: (date: string | undefined) => void;
   label?: string;
+  disabled?: boolean;
 }
 
-export function DatePicker({ value, onChange, label = 'Due Date' }: DatePickerProps) {
+export function DatePicker({ value, onChange, label = 'Due Date', disabled = false }: DatePickerProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dateValue = e.target.value;
     if (dateValue) {
@@ -40,9 +41,10 @@ export function DatePicker({ value, onChange, label = 'Due Date' }: DatePickerPr
           lang="en"
           value={inputValue}
           onChange={handleChange}
-          className="flex-1 px-3 py-2 bg-bg-primary border border-bg-tertiary rounded text-sm text-text-primary outline-none focus:border-accent-primary"
+          disabled={disabled}
+          className="flex-1 px-3 py-2 bg-bg-primary border border-bg-tertiary rounded text-sm text-text-primary outline-none focus:border-accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
         />
-        {value && (
+        {value && !disabled && (
           <button
             type="button"
             onClick={handleClear}

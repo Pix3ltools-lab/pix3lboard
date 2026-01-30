@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Kanban } from 'lucide-react';
 
 interface EmptyBoardProps {
-  onCreateList: () => void;
+  onCreateList?: () => void;
 }
 
 export function EmptyBoard({ onCreateList }: EmptyBoardProps) {
@@ -18,11 +18,15 @@ export function EmptyBoard({ onCreateList }: EmptyBoardProps) {
           No Lists Yet
         </h3>
         <p className="text-text-secondary mb-6">
-          Get started by creating your first list to organize your tasks and ideas.
+          {onCreateList
+            ? 'Get started by creating your first list to organize your tasks and ideas.'
+            : 'This board has no lists yet.'}
         </p>
-        <Button onClick={onCreateList}>
-          Create Your First List
-        </Button>
+        {onCreateList && (
+          <Button onClick={onCreateList}>
+            Create Your First List
+          </Button>
+        )}
       </div>
     </div>
   );

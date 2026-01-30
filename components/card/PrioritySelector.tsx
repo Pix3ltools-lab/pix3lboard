@@ -7,6 +7,7 @@ interface PrioritySelectorProps {
   effort?: Effort;
   onPriorityChange: (priority: Priority | undefined) => void;
   onEffortChange: (effort: Effort | undefined) => void;
+  disabled?: boolean;
 }
 
 const PRIORITIES = [
@@ -21,7 +22,7 @@ const EFFORTS = [
   { value: 'large' as const, label: 'Large', badge: 'L' },
 ];
 
-export function PrioritySelector({ priority, effort, onPriorityChange, onEffortChange }: PrioritySelectorProps) {
+export function PrioritySelector({ priority, effort, onPriorityChange, onEffortChange, disabled = false }: PrioritySelectorProps) {
   return (
     <div className="space-y-4">
       {/* Priority */}
@@ -35,7 +36,8 @@ export function PrioritySelector({ priority, effort, onPriorityChange, onEffortC
               key={p.value}
               type="button"
               onClick={() => onPriorityChange(priority === p.value ? undefined : p.value)}
-              className={`p-3 rounded-lg border-2 transition-all text-center ${
+              disabled={disabled}
+              className={`p-3 rounded-lg border-2 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed ${
                 priority === p.value
                   ? 'border-accent-primary bg-accent-primary/10'
                   : 'border-bg-tertiary hover:border-bg-tertiary hover:bg-bg-secondary'
@@ -59,7 +61,8 @@ export function PrioritySelector({ priority, effort, onPriorityChange, onEffortC
               key={e.value}
               type="button"
               onClick={() => onEffortChange(effort === e.value ? undefined : e.value)}
-              className={`p-3 rounded-lg border-2 transition-all text-center ${
+              disabled={disabled}
+              className={`p-3 rounded-lg border-2 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed ${
                 effort === e.value
                   ? 'border-accent-primary bg-accent-primary/10'
                   : 'border-bg-tertiary hover:border-bg-tertiary hover:bg-bg-secondary'

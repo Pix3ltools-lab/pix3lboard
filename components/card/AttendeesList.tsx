@@ -6,11 +6,12 @@ import { X, Plus } from 'lucide-react';
 interface AttendeesListProps {
   value: string[];
   onChange: (attendees: string[]) => void;
+  disabled?: boolean;
 }
 
 const MAX_ATTENDEES = 5;
 
-export function AttendeesList({ value, onChange }: AttendeesListProps) {
+export function AttendeesList({ value, onChange, disabled = false }: AttendeesListProps) {
   const [newAttendee, setNewAttendee] = useState('');
 
   const handleAdd = () => {
@@ -46,20 +47,22 @@ export function AttendeesList({ value, onChange }: AttendeesListProps) {
               className="flex items-center justify-between gap-2 p-2 bg-bg-secondary rounded border border-bg-tertiary"
             >
               <span className="text-sm text-text-primary">{attendee}</span>
-              <button
-                type="button"
-                onClick={() => handleRemove(index)}
-                className="text-text-secondary hover:text-accent-danger transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(index)}
+                  className="text-text-secondary hover:text-accent-danger transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Add new attendee */}
-      {value.length < MAX_ATTENDEES && (
+      {!disabled && value.length < MAX_ATTENDEES && (
         <div className="flex gap-2">
           <input
             type="text"

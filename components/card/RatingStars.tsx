@@ -5,9 +5,10 @@ import { Star } from 'lucide-react';
 interface RatingStarsProps {
   value?: 1 | 2 | 3 | 4 | 5;
   onChange: (rating: 1 | 2 | 3 | 4 | 5 | undefined) => void;
+  disabled?: boolean;
 }
 
-export function RatingStars({ value, onChange }: RatingStarsProps) {
+export function RatingStars({ value, onChange, disabled = false }: RatingStarsProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-text-primary mb-2">
@@ -19,7 +20,8 @@ export function RatingStars({ value, onChange }: RatingStarsProps) {
             key={rating}
             type="button"
             onClick={() => onChange(rating as 1 | 2 | 3 | 4 | 5)}
-            className="p-1 hover:scale-110 transition-transform"
+            disabled={disabled}
+            className="p-1 hover:scale-110 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <Star
               className={`h-6 w-6 ${
@@ -30,7 +32,7 @@ export function RatingStars({ value, onChange }: RatingStarsProps) {
             />
           </button>
         ))}
-        {value && (
+        {value && !disabled && (
           <button
             type="button"
             onClick={() => onChange(undefined)}

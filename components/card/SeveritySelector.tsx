@@ -5,6 +5,7 @@ import { BugSeverity } from '@/types';
 interface SeveritySelectorProps {
   value?: BugSeverity;
   onChange: (severity: BugSeverity | undefined) => void;
+  disabled?: boolean;
 }
 
 const SEVERITIES = [
@@ -14,7 +15,7 @@ const SEVERITIES = [
   { value: 'critical' as const, label: 'Critical', color: '#dc2626' },
 ];
 
-export function SeveritySelector({ value, onChange }: SeveritySelectorProps) {
+export function SeveritySelector({ value, onChange, disabled = false }: SeveritySelectorProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-text-primary mb-2">
@@ -26,7 +27,8 @@ export function SeveritySelector({ value, onChange }: SeveritySelectorProps) {
             key={severity.value}
             type="button"
             onClick={() => onChange(value === severity.value ? undefined : severity.value)}
-            className={`p-3 rounded-lg border-2 transition-all text-left ${
+            disabled={disabled}
+            className={`p-3 rounded-lg border-2 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed ${
               value === severity.value
                 ? 'border-accent-primary bg-accent-primary/10'
                 : 'border-bg-tertiary hover:border-bg-tertiary hover:bg-bg-secondary'

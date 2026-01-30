@@ -17,6 +17,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from '@/types';
+import { getBoardPermissions } from '@/lib/utils/boardPermissions';
 
 export default function BoardPage() {
   const params = useParams();
@@ -335,6 +336,7 @@ export default function BoardPage() {
           onClose={() => setSelectedCardId(null)}
           card={selectedCard}
           allowedCardTypes={board.allowedCardTypes}
+          permissions={getBoardPermissions(board.shareRole)}
           onUpdate={handleUpdateCard}
           onDelete={handleDeleteCard}
           onDuplicate={handleDuplicateCard}

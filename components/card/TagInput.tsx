@@ -7,9 +7,10 @@ import { MAX_TAGS_PER_CARD } from '@/lib/constants';
 interface TagInputProps {
   value?: string[];
   onChange: (tags: string[]) => void;
+  disabled?: boolean;
 }
 
-export function TagInput({ value = [], onChange }: TagInputProps) {
+export function TagInput({ value = [], onChange, disabled = false }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
 
   const handleAddTag = () => {
@@ -48,20 +49,22 @@ export function TagInput({ value = [], onChange }: TagInputProps) {
               className="inline-flex items-center gap-1 px-2 py-1 bg-accent-primary/10 text-accent-primary rounded text-sm"
             >
               <span>{tag}</span>
-              <button
-                type="button"
-                onClick={() => handleRemoveTag(tag)}
-                className="hover:bg-accent-primary/20 rounded p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="hover:bg-accent-primary/20 rounded p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Input for new tag */}
-      {value.length < MAX_TAGS_PER_CARD && (
+      {!disabled && value.length < MAX_TAGS_PER_CARD && (
         <div className="flex gap-2">
           <input
             type="text"

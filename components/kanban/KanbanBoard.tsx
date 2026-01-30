@@ -19,6 +19,7 @@ import { Card } from './Card';
 import { AddList } from './AddList';
 import { EmptyBoard } from './EmptyBoard';
 import { useSearch } from '@/lib/context/SearchContext';
+import { getBoardPermissions } from '@/lib/utils/boardPermissions';
 
 interface KanbanBoardProps {
   board: Board;
@@ -47,10 +48,14 @@ export function KanbanBoard({
   const [activeList, setActiveList] = useState<ListType | null>(null);
   const { filterCards } = useSearch();
 
+  // Get permissions based on share role
+  const permissions = useMemo(() => getBoardPermissions(board.shareRole), [board.shareRole]);
+
+  // Only enable drag sensors if user has edit permissions
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px movement required before drag starts
+        distance: permissions.canEditCards ? 8 : Infinity, // Disable drag if no edit permission
       },
     })
   );
@@ -70,11 +75,11 @@ export function KanbanBoard({
   if (board.lists.length === 0) {
     return (
       <EmptyBoard
-        onCreateList={() => {
+        onCreateList={permissions.canManageLists ? () => {
           if (onAddList) {
             onAddList('To Do');
           }
-        }}
+        } : undefined}
       />
     );
   }
@@ -199,16 +204,16 @@ export function KanbanBoard({
                 key={list.id}
                 list={list}
                 onCardClick={onCardClick}
-                onAddCard={onAddCard}
-                onRenameList={onRenameList}
-                onDeleteList={onDeleteList}
-                onUpdateListColor={onUpdateListColor}
+                onAddCard={permissions.canEditCards ? onAddCard : undefined}
+                onRenameList={permissions.canManageLists ? onRenameList : undefined}
+                onDeleteList={permissions.canManageLists ? onDeleteList : undefined}
+                onUpdateListColor={permissions.canManageLists ? onUpdateListColor : undefined}
               />
             ))}
           </SortableContext>
 
-          {/* Add List button */}
-          {onAddList && <AddList onAdd={onAddList} />}
+          {/* Add List button - only show if user can manage lists */}
+          {onAddList && permissions.canManageLists && <AddList onAdd={onAddList} />}
         </div>
       </div>
 

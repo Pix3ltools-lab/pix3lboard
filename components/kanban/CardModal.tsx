@@ -19,9 +19,10 @@ import { ChecklistSection } from '@/components/card/ChecklistSection';
 import { AttachmentsSection } from '@/components/card/AttachmentsSection';
 import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
 import { Lightbox } from '@/components/ui/Lightbox';
-import { Copy, Trash2, Archive, Loader2, X, UserCheck } from 'lucide-react';
+import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye } from 'lucide-react';
 import { debounce } from '@/lib/utils/debounce';
 import { useAuth } from '@/lib/context/AuthContext';
+import { BoardPermissions } from '@/lib/utils/boardPermissions';
 
 interface UserSuggestion {
   id: string;
@@ -34,6 +35,7 @@ interface CardModalProps {
   onClose: () => void;
   card: Card;
   allowedCardTypes?: CardType[]; // Filter available card types
+  permissions?: BoardPermissions; // User's permissions for this board
   onUpdate: (cardId: string, data: Partial<Card>) => void;
   onDelete: (cardId: string) => void;
   onDuplicate: (cardId: string) => void;
@@ -45,12 +47,17 @@ export function CardModal({
   onClose,
   card,
   allowedCardTypes,
+  permissions,
   onUpdate,
   onDelete,
   onDuplicate,
   onArchive,
 }: CardModalProps) {
   const { user: currentUser } = useAuth();
+
+  // Default to full permissions if not provided (for backwards compatibility)
+  const canEdit = permissions?.canEditCards ?? true;
+  const canComment = permissions?.canComment ?? true;
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
   const [type, setType] = useState(card.type);
@@ -291,6 +298,7 @@ export function CardModal({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Card title..."
           autoFocus
+          disabled={!canEdit}
         />
 
         {/* Job Number */}
@@ -300,6 +308,7 @@ export function CardModal({
             value={jobNumber}
             onChange={(e) => handleJobNumberChange(e.target.value)}
             placeholder="e.g., A-26-0001"
+            disabled={!canEdit}
           />
           {jobNumberError && (
             <p className="mt-1 text-xs text-accent-danger">{jobNumberError}</p>
@@ -313,6 +322,7 @@ export function CardModal({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Add a more detailed description..."
           rows={5}
+          disabled={!canEdit}
         />
 
         {/* Thumbnail */}
@@ -321,6 +331,7 @@ export function CardModal({
           value={thumbnail}
           onChange={handleThumbnailChange}
           onViewFullSize={() => setLightboxOpen(true)}
+          disabled={!canEdit}
         />
 
         {/* Type Selector */}
@@ -328,6 +339,7 @@ export function CardModal({
           value={type}
           onChange={(newType) => setType(newType)}
           allowedCardTypes={allowedCardTypes}
+          disabled={!canEdit}
         />
 
         {/* Type-specific fields */}
@@ -335,6 +347,7 @@ export function CardModal({
           <SeveritySelector
             value={severity}
             onChange={setSeverity}
+            disabled={!canEdit}
           />
         )}
 
@@ -344,6 +357,7 @@ export function CardModal({
             effort={effort}
             onPriorityChange={setPriority}
             onEffortChange={setEffort}
+            disabled={!canEdit}
           />
         )}
 
@@ -352,11 +366,13 @@ export function CardModal({
             <AttendeesList
               value={attendees}
               onChange={setAttendees}
+              disabled={!canEdit}
             />
             <DatePicker
               value={meetingDate}
               onChange={setMeetingDate}
               label="Meeting Date"
+              disabled={!canEdit}
             />
           </>
         )}
@@ -368,12 +384,14 @@ export function CardModal({
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Enter the prompt used to generate this content..."
           rows={4}
+          disabled={!canEdit}
         />
 
         {/* Rating */}
         <RatingStars
           value={rating}
           onChange={setRating}
+          disabled={!canEdit}
         />
 
         {/* AI Tool */}
@@ -382,6 +400,7 @@ export function CardModal({
           value={aiTool}
           onChange={(e) => setAiTool(e.target.value)}
           placeholder="e.g., Suno, Runway, Midjourney, Claude..."
+          disabled={!canEdit}
         />
 
         {/* Responsible - with user autocomplete */}
@@ -390,7 +409,7 @@ export function CardModal({
             <label className="text-sm font-medium text-text-primary">
               Responsible
             </label>
-            {currentUser && (
+            {currentUser && canEdit && (
               <button
                 type="button"
                 onClick={handleAssignToMe}
@@ -409,6 +428,7 @@ export function CardModal({
               onFocus={() => responsibleDisplay.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
               placeholder="Search for a user..."
               autoComplete="off"
+              disabled={!canEdit}
             />
             {responsibleDisplay && (
               <button
@@ -466,68 +486,79 @@ export function CardModal({
         </div>
 
         {/* Tags */}
-        <TagInput value={tags} onChange={setTags} />
+        <TagInput value={tags} onChange={setTags} disabled={!canEdit} />
 
         {/* Due Date */}
-        <DatePicker value={dueDate} onChange={setDueDate} />
+        <DatePicker value={dueDate} onChange={setDueDate} disabled={!canEdit} />
 
         {/* Links */}
-        <LinkInput value={links} onChange={setLinks} />
+        <LinkInput value={links} onChange={setLinks} disabled={!canEdit} />
 
         {/* Checklist */}
         <div className="pt-4 border-t border-bg-tertiary">
-          <ChecklistSection value={checklist} onChange={setChecklist} />
+          <ChecklistSection value={checklist} onChange={setChecklist} disabled={!canEdit} />
         </div>
 
         {/* Attachments */}
         <div className="pt-4 border-t border-bg-tertiary">
-          <AttachmentsSection cardId={card.id} />
+          <AttachmentsSection cardId={card.id} disabled={!canEdit} />
         </div>
 
         {/* Comments */}
         <div className="pt-4 border-t border-bg-tertiary">
-          <CommentsSection cardId={card.id} />
+          <CommentsSection cardId={card.id} canComment={canComment} />
         </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-bg-tertiary">
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDuplicate}
-              className="flex items-center gap-2"
-            >
-              <Copy className="h-4 w-4" />
-              Duplicate
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleArchive}
-              className="flex items-center gap-2"
-            >
-              <Archive className="h-4 w-4" />
-              Archive
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleDelete}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
+            {canEdit ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDuplicate}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicate
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleArchive}
+                  className="flex items-center gap-2"
+                >
+                  <Archive className="h-4 w-4" />
+                  Archive
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </>
+            ) : (
+              <span className="flex items-center gap-2 text-sm text-text-secondary">
+                <Eye className="h-4 w-4" />
+                {canComment ? 'View only (can comment)' : 'View only'}
+              </span>
+            )}
           </div>
 
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose}>
-              Cancel
+              {canEdit ? 'Cancel' : 'Close'}
             </Button>
-            <Button onClick={handleSave} disabled={!title.trim()}>
-              Save Changes
-            </Button>
+            {canEdit && (
+              <Button onClick={handleSave} disabled={!title.trim()}>
+                Save Changes
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -31,7 +31,7 @@ interface BoardRow {
 }
 
 interface SharedBoardRow extends BoardRow {
-  share_role: 'owner' | 'viewer';
+  share_role: 'owner' | 'editor' | 'commenter' | 'viewer';
   workspace_name: string;
   owner_name: string | null;
 }
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Helper to map board rows to Board objects
-    const mapBoard = (b: BoardRow | SharedBoardRow, shareRole?: 'owner' | 'viewer'): Board => ({
+    const mapBoard = (b: BoardRow | SharedBoardRow, shareRole?: 'owner' | 'editor' | 'commenter' | 'viewer'): Board => ({
       id: b.id,
       workspaceId: b.workspace_id,
       name: b.name,

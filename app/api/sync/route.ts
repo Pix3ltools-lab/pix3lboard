@@ -3,6 +3,8 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, execute, queryOne } from '@/lib/db/turso';
 import { SyncPayloadSchema } from '@/lib/validation/schemas';
 import type { SyncChange, SyncResult, SyncConflict, Workspace, Board, List, Card } from '@/types';
+import type { BoardRole } from '@/types/board';
+import { canManageBoard, canManageLists, canEditCards } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,36 +24,80 @@ async function verifyWorkspaceOwnership(userId: string, workspaceId: string): Pr
   return !!result;
 }
 
-// Verify user can modify board (owned or shared with owner role)
-async function verifyBoardAccess(userId: string, boardId: string): Promise<boolean> {
-  const result = await queryOne<{ id: string }>(
+// Get user's role for a board (owned or shared)
+async function getBoardRole(userId: string, boardId: string): Promise<BoardRole | null> {
+  // Check if user owns the workspace
+  const ownerCheck = await queryOne<{ id: string }>(
     `SELECT b.id FROM boards b
-     LEFT JOIN workspaces w ON w.id = b.workspace_id
-     LEFT JOIN board_shares bs ON bs.board_id = b.id AND bs.user_id = :userId AND bs.role = 'owner'
-     WHERE b.id = :boardId AND (w.user_id = :userId OR bs.user_id IS NOT NULL)`,
+     JOIN workspaces w ON w.id = b.workspace_id
+     WHERE b.id = :boardId AND w.user_id = :userId`,
     { boardId, userId }
   );
-  return !!result;
+  if (ownerCheck) return 'owner';
+
+  // Check board_shares
+  const share = await queryOne<{ role: string }>(
+    `SELECT role FROM board_shares
+     WHERE board_id = :boardId AND user_id = :userId`,
+    { boardId, userId }
+  );
+  if (share) {
+    const validRoles: BoardRole[] = ['owner', 'editor', 'commenter', 'viewer'];
+    if (validRoles.includes(share.role as BoardRole)) {
+      return share.role as BoardRole;
+    }
+  }
+  return null;
 }
 
-// Verify user can modify list
+// Verify user can modify board (owned or shared with owner role)
+async function verifyBoardAccess(userId: string, boardId: string): Promise<boolean> {
+  const role = await getBoardRole(userId, boardId);
+  return canManageBoard(role);
+}
+
+// Verify user can edit cards/lists on board
+async function verifyBoardEditAccess(userId: string, boardId: string): Promise<boolean> {
+  const role = await getBoardRole(userId, boardId);
+  return canEditCards(role);
+}
+
+// Verify user can manage lists on board
+async function verifyBoardListAccess(userId: string, boardId: string): Promise<boolean> {
+  const role = await getBoardRole(userId, boardId);
+  return canManageLists(role);
+}
+
+// Verify user can modify list (requires manageLists permission)
 async function verifyListAccess(userId: string, listId: string): Promise<boolean> {
   const result = await queryOne<{ board_id: string }>(
     'SELECT board_id FROM lists WHERE id = :listId',
     { listId }
   );
   if (!result) return false;
-  return verifyBoardAccess(userId, result.board_id);
+  return verifyBoardListAccess(userId, result.board_id);
 }
 
-// Verify user can modify card
+// Verify user can create/edit cards in a list (requires editCards permission)
+async function verifyListEditAccess(userId: string, listId: string): Promise<boolean> {
+  const result = await queryOne<{ board_id: string }>(
+    'SELECT board_id FROM lists WHERE id = :listId',
+    { listId }
+  );
+  if (!result) return false;
+  return verifyBoardEditAccess(userId, result.board_id);
+}
+
+// Verify user can modify card (requires editCards permission)
 async function verifyCardAccess(userId: string, cardId: string): Promise<boolean> {
-  const result = await queryOne<{ list_id: string }>(
-    'SELECT list_id FROM cards WHERE id = :cardId',
+  const result = await queryOne<{ board_id: string }>(
+    `SELECT l.board_id FROM cards c
+     JOIN lists l ON l.id = c.list_id
+     WHERE c.id = :cardId`,
     { cardId }
   );
   if (!result) return false;
-  return verifyListAccess(userId, result.list_id);
+  return verifyBoardEditAccess(userId, result.board_id);
 }
 
 // Get entity for conflict check
@@ -315,7 +361,7 @@ async function applyListChange(
   switch (operation) {
     case 'create':
       if (!data || !parentId) throw new Error('Data and parentId required for create');
-      if (!(await verifyBoardAccess(userId, parentId))) {
+      if (!(await verifyBoardListAccess(userId, parentId))) {
         throw new Error('Board not found or access denied');
       }
       await execute(
@@ -383,7 +429,7 @@ async function applyCardChange(
   switch (operation) {
     case 'create':
       if (!data || !parentId) throw new Error('Data and parentId required for create');
-      if (!(await verifyListAccess(userId, parentId))) {
+      if (!(await verifyListEditAccess(userId, parentId))) {
         throw new Error('List not found or access denied');
       }
       await execute(
@@ -429,7 +475,7 @@ async function applyCardChange(
 
       // Handle listId change (move card)
       if (data.listId !== undefined) {
-        if (!(await verifyListAccess(userId, data.listId))) {
+        if (!(await verifyListEditAccess(userId, data.listId))) {
           throw new Error('Target list not found or access denied');
         }
         updateFields.push('list_id = :listId');

@@ -41,7 +41,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Card Archiving**: Archive completed cards without deleting them
 - **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
-- **Board Sharing**: Share boards with specific users (Owner or Viewer role)
+- **Board Sharing**: Share boards with specific users (4 granular roles: Owner, Editor, Commenter, Viewer)
 - **Search & Filter**: Search cards by title, filter by tags, job number and responsible
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
@@ -280,10 +280,23 @@ pix3lboard/
 2. Click the "Share" button in the toolbar
 3. Enter the email of a registered user
 4. Select role:
-   - **Viewer**: Can view but not edit
-   - **Owner**: Can view and edit (changes sync to original)
+   - **Owner**: Full access - can edit board settings, manage lists, edit cards, comment
+   - **Editor**: Can manage lists, edit cards, and comment (cannot change board settings)
+   - **Commenter**: Can view and add comments (cannot edit cards or lists)
+   - **Viewer**: Read-only access (cannot edit or comment)
 5. Click "Add" to share
 6. Shared users see the board in "Shared with me" workspace
+
+**Permission Matrix:**
+
+| Permission | Owner | Editor | Commenter | Viewer |
+|------------|-------|--------|-----------|--------|
+| Manage board settings | ✓ | ✗ | ✗ | ✗ |
+| Add/edit/delete lists | ✓ | ✓ | ✗ | ✗ |
+| Add/edit/delete cards | ✓ | ✓ | ✗ | ✗ |
+| Drag & drop | ✓ | ✓ | ✗ | ✗ |
+| Add comments | ✓ | ✓ | ✓ | ✗ |
+| View board | ✓ | ✓ | ✓ | ✓ |
 
 ### Public Boards
 
@@ -312,7 +325,7 @@ Pix3lBoard implements multiple layers of security:
 - **File Uploads**: MIME type whitelist validation (max 10MB)
 - **Security Headers**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 - **SQL Injection Prevention**: Parameterized queries throughout
-- **Authorization**: Access control on all resources (comments, attachments, boards)
+- **Authorization**: Granular role-based access control (Owner, Editor, Commenter, Viewer)
 - **Error Handling**: Sanitized error messages (no internal details exposed)
 
 ## Storage
