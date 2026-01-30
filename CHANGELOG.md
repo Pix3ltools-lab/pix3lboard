@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.6] - 2025-01-30
+
+### Added
+- **Granular Board Permissions**: 4 role levels for shared boards
+  - **Owner**: Full access (manage board, lists, cards, comments)
+  - **Editor**: Can manage lists, edit cards, add comments
+  - **Commenter**: Can view and add comments only
+  - **Viewer**: Read-only access (no editing or commenting)
+- Permission matrix enforced on both backend and frontend
+- Visual "View only" indicator for restricted users
+- Drag & drop disabled for viewers
+- All form controls disabled based on user role
+
+### Changed
+- ShareBoardModal now shows all 4 role options with descriptions
+- README updated with permission matrix documentation
+
+---
+
 ## [2.4.5] - 2025-01-27
 
 ### Added
