@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2 } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2 } from 'lucide-react';
 import { useSearch } from '@/lib/context/SearchContext';
 import { useUI } from '@/lib/context/UIContext';
 
@@ -37,7 +37,7 @@ interface BoardToolbarProps {
 }
 
 export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, onShare, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
-  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, clearFilters, hasActiveFilters } = useSearch();
+  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, clearFilters, hasActiveFilters, setBoardId, commentMatchCardIds, isSearching } = useSearch();
   const { compactMode, toggleCompactMode } = useUI();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
@@ -45,6 +45,12 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
   const [copied, setCopied] = useState(false);
 
   const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/public/${boardId}` : '';
+
+  // Set boardId in SearchContext for server-side comment search
+  useEffect(() => {
+    setBoardId(boardId);
+    return () => setBoardId(null);
+  }, [boardId, setBoardId]);
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(publicUrl);
@@ -69,12 +75,24 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
     <div className={`bg-bg-secondary border-b border-bg-tertiary ${compactMode ? 'p-2' : 'p-3 md:p-4'}`}>
       <div className={`flex flex-col sm:flex-row items-stretch sm:items-center ${compactMode ? 'gap-1.5' : 'gap-2 md:gap-3'}`}>
         {/* Search */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative">
           <SearchBar
             value={query}
             onChange={setQuery}
             placeholder="Search cards..."
           />
+          {/* Comment search indicator */}
+          {isSearching && query.length >= 2 && (
+            <div className="absolute right-12 top-1/2 -translate-y-1/2">
+              <Loader2 className="h-4 w-4 text-text-secondary animate-spin" />
+            </div>
+          )}
+          {!isSearching && commentMatchCardIds.size > 0 && (
+            <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-accent-primary" title={`${commentMatchCardIds.size} card(s) found in comments`}>
+              <MessageSquare className="h-3 w-3" />
+              <span>{commentMatchCardIds.size}</span>
+            </div>
+          )}
         </div>
 
         {/* Job Number Filter */}

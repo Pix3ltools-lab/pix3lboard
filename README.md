@@ -43,7 +43,8 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Calendar View**: View cards with due dates and meetings in a calendar
 - **Public Boards**: Share boards publicly with a read-only link
 - **Board Sharing**: Share boards with specific users (4 granular roles: Owner, Editor, Commenter, Viewer)
-- **Search & Filter**: Search cards by title, filter by tags, job number and responsible
+- **Full-Text Search**: Search cards by title, description, and comments (FTS5-powered)
+- **Filters**: Filter by tags, job number, and responsible person
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 

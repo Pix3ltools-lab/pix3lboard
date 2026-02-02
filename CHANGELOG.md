@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.7] - 2025-02-02
+
+### Added
+- **Full-Text Search**: Search cards by title, description, and comments
+  - FTS5-powered search for fast and accurate results
+  - Server-side search for comments with 300ms debounce
+  - Visual indicator showing number of cards matched in comments
+  - Fallback to LIKE queries if FTS5 not available
+- New API endpoint: `GET /api/boards/[boardId]/search?q=query`
+- Database migration for FTS5 tables: `lib/db/migrations/add-fulltext-search.ts`
+
+### Changed
+- SearchContext now supports both client-side (title/description) and server-side (comments) search
+- BoardToolbar shows search loading indicator and comment match count
+
+---
+
 ## [2.4.6] - 2025-01-30
 
 ### Added
