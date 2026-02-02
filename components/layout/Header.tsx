@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/lib/context/AuthContext';
 
 const APP_VERSION = '2.4.7';
@@ -25,6 +26,7 @@ export function Header() {
         {/* Right side */}
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          {isAuthenticated && <NotificationBell />}
           {isAuthenticated && <UserMenu />}
         </div>
       </div>

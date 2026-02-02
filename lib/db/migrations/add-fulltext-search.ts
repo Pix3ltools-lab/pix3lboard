@@ -94,91 +94,17 @@ async function migrate() {
   }
   console.log(`  ✓ Indexed ${commentCount} comments`);
 
-  // Step 3: Create triggers to keep FTS in sync
-  console.log('\nCreating triggers for automatic sync...');
-
-  // Card triggers
-  const cardTriggers = [
-    {
-      name: 'cards_fts_insert',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS cards_fts_insert AFTER INSERT ON cards BEGIN
-          INSERT INTO cards_fts (card_id, title, description)
-          VALUES (NEW.id, NEW.title, COALESCE(NEW.description, ''));
-        END
-      `
-    },
-    {
-      name: 'cards_fts_update',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS cards_fts_update AFTER UPDATE ON cards BEGIN
-          DELETE FROM cards_fts WHERE card_id = OLD.id;
-          INSERT INTO cards_fts (card_id, title, description)
-          VALUES (NEW.id, NEW.title, COALESCE(NEW.description, ''));
-        END
-      `
-    },
-    {
-      name: 'cards_fts_delete',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS cards_fts_delete AFTER DELETE ON cards BEGIN
-          DELETE FROM cards_fts WHERE card_id = OLD.id;
-        END
-      `
-    }
-  ];
-
-  for (const trigger of cardTriggers) {
-    try {
-      await client.execute(trigger.sql);
-      console.log(`  ✓ Created: ${trigger.name}`);
-    } catch (error) {
-      console.error(`  ✗ Error creating ${trigger.name}:`, error);
-    }
-  }
-
-  // Comment triggers
-  const commentTriggers = [
-    {
-      name: 'comments_fts_insert',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS comments_fts_insert AFTER INSERT ON comments BEGIN
-          INSERT INTO comments_fts (comment_id, card_id, content)
-          VALUES (NEW.id, NEW.card_id, COALESCE(NEW.content, ''));
-        END
-      `
-    },
-    {
-      name: 'comments_fts_update',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS comments_fts_update AFTER UPDATE ON comments BEGIN
-          DELETE FROM comments_fts WHERE comment_id = OLD.id;
-          INSERT INTO comments_fts (comment_id, card_id, content)
-          VALUES (NEW.id, NEW.card_id, COALESCE(NEW.content, ''));
-        END
-      `
-    },
-    {
-      name: 'comments_fts_delete',
-      sql: `
-        CREATE TRIGGER IF NOT EXISTS comments_fts_delete AFTER DELETE ON comments BEGIN
-          DELETE FROM comments_fts WHERE comment_id = OLD.id;
-        END
-      `
-    }
-  ];
-
-  for (const trigger of commentTriggers) {
-    try {
-      await client.execute(trigger.sql);
-      console.log(`  ✓ Created: ${trigger.name}`);
-    } catch (error) {
-      console.error(`  ✗ Error creating ${trigger.name}:`, error);
-    }
-  }
+  // NOTE: FTS triggers are NOT created because they cause issues with Turso/libSQL.
+  // The error "no such column: T.card_id" occurs when triggers fire during UPDATE.
+  // Instead, FTS tables should be re-synced periodically or on-demand.
+  //
+  // To manually re-sync FTS tables, run:
+  // - DELETE FROM cards_fts; INSERT INTO cards_fts SELECT id, title, COALESCE(description, '') FROM cards WHERE is_archived = 0;
+  // - DELETE FROM comments_fts; INSERT INTO comments_fts SELECT id, card_id, COALESCE(content, '') FROM comments;
 
   console.log('\n✓ Migration complete!');
-  console.log('\nNote: FTS5 tables will automatically stay in sync via triggers.');
+  console.log('\nNote: FTS triggers are disabled due to Turso compatibility issues.');
+  console.log('FTS tables can be re-synced manually if search results become stale.');
 }
 
 migrate().catch(console.error);

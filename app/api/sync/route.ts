@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth/auth';
+import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { execute, queryOne } from '@/lib/db/turso';
 import { SyncPayloadSchema } from '@/lib/validation/schemas';
 import type { SyncChange, SyncResult, SyncConflict, Workspace, Board, List, Card } from '@/types';
 import type { BoardRole } from '@/types/board';
 import { canManageBoard, canManageLists, canEditCards } from '@/lib/auth/permissions';
 import { logActivity } from '@/lib/db/activityLog';
+import { notifyAssignment } from '@/lib/db/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -466,11 +467,24 @@ async function applyCardChange(
       );
       break;
 
-    case 'update':
+    case 'update': {
       if (!data) throw new Error('Data required for update');
       if (!(await verifyCardAccess(userId, entityId))) {
         throw new Error('Card not found or access denied');
       }
+
+      // Get current card data for notification comparison
+      const currentCard = await queryOne<{
+        responsible_user_id: string | null;
+        title: string;
+        board_id: string;
+      }>(`
+        SELECT c.responsible_user_id, c.title, l.board_id
+        FROM cards c
+        JOIN lists l ON l.id = c.list_id
+        WHERE c.id = :id
+      `, { id: entityId });
+
       const updateFields: string[] = [];
       const updateParams: Record<string, unknown> = { id: entityId };
 
@@ -574,7 +588,31 @@ async function applyCardChange(
         `UPDATE cards SET ${updateFields.join(', ')} WHERE id = :id`,
         updateParams
       );
+
+      // Send notification if responsibleUserId changed to a new user
+      if (
+        data.responsibleUserId !== undefined &&
+        data.responsibleUserId &&
+        data.responsibleUserId !== userId && // Don't notify if assigning to yourself
+        currentCard &&
+        data.responsibleUserId !== currentCard.responsible_user_id
+      ) {
+        try {
+          const assigner = await getUserById(userId);
+          await notifyAssignment({
+            assignedUserId: data.responsibleUserId,
+            cardId: entityId,
+            cardTitle: data.title || currentCard.title,
+            boardId: currentCard.board_id,
+            assignerName: assigner?.name || assigner?.email || 'Someone',
+          });
+        } catch (notifyError) {
+          console.error('Failed to send assignment notification:', notifyError);
+          // Don't fail the sync if notification fails
+        }
+      }
       break;
+    }
 
     case 'delete':
       if (!(await verifyCardAccess(userId, entityId))) {

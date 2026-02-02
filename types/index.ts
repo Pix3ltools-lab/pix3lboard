@@ -13,6 +13,9 @@ export type { EntityType, SyncOperation, SyncChange, SyncPayload, SyncConflict, 
 // UI types
 export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from './ui';
 
+// Notification types
+export type { Notification, NotificationType } from './notification';
+
 // Import for use in interface
 import type { Workspace } from './workspace';
 

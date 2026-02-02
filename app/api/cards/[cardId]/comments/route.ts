@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
-import { query, execute } from '@/lib/db/turso';
+import { query, execute, queryOne } from '@/lib/db/turso';
 import { getBoardRoleByCardId, canView, canComment } from '@/lib/auth/permissions';
 import { logActivity } from '@/lib/db/activityLog';
+import { notifyComment } from '@/lib/db/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,6 +141,38 @@ export async function POST(
       action: 'commented',
       details: { commentId: id },
     });
+
+    // Notify responsible user if exists and is not the commenter
+    try {
+      const cardInfo = await queryOne<{
+        responsible_user_id: string | null;
+        title: string;
+        board_id: string;
+      }>(`
+        SELECT c.responsible_user_id, c.title, l.board_id
+        FROM cards c
+        JOIN lists l ON l.id = c.list_id
+        WHERE c.id = :cardId
+      `, { cardId });
+
+      if (
+        cardInfo &&
+        cardInfo.responsible_user_id &&
+        cardInfo.responsible_user_id !== payload.userId
+      ) {
+        await notifyComment({
+          responsibleUserId: cardInfo.responsible_user_id,
+          cardId,
+          cardTitle: cardInfo.title,
+          boardId: cardInfo.board_id,
+          commenterName: user.name || user.email,
+          commentSnippet: content.trim(),
+        });
+      }
+    } catch (notifyError) {
+      console.error('Failed to send comment notification:', notifyError);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       comment: {
