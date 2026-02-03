@@ -13,6 +13,9 @@ export interface SearchResult {
   snippet: string;
 }
 
+// Quick filter types
+export type QuickFilterType = 'myCards' | 'dueSoon' | 'overdue' | 'noResponsible' | 'highPriority';
+
 interface SearchContextType {
   query: string;
   setQuery: (query: string) => void;
@@ -22,6 +25,13 @@ interface SearchContextType {
   setJobNumberFilter: (jobNumber: string) => void;
   responsibleFilter: string;
   setResponsibleFilter: (responsible: string) => void;
+  // Quick filters
+  quickFilters: Set<QuickFilterType>;
+  toggleQuickFilter: (filter: QuickFilterType) => void;
+  clearQuickFilters: () => void;
+  currentUserId: string | null;
+  setCurrentUserId: (userId: string | null) => void;
+  // Filter function
   filterCards: (cards: Card[]) => Card[];
   clearFilters: () => void;
   hasActiveFilters: boolean;
@@ -40,10 +50,28 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [jobNumberFilter, setJobNumberFilter] = useState('');
   const [responsibleFilter, setResponsibleFilter] = useState('');
+  const [quickFilters, setQuickFilters] = useState<Set<QuickFilterType>>(new Set());
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [boardId, setBoardId] = useState<string | null>(null);
   const [serverSearchResults, setServerSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const toggleQuickFilter = useCallback((filter: QuickFilterType) => {
+    setQuickFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(filter)) {
+        next.delete(filter);
+      } else {
+        next.add(filter);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearQuickFilters = useCallback(() => {
+    setQuickFilters(new Set());
+  }, []);
 
   // Server-side search for comments (with debounce)
   useEffect(() => {
@@ -97,11 +125,20 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   }, [serverSearchResults]);
 
   /**
-   * Filter cards based on search query, selected tag, and job number
+   * Filter cards based on search query, selected tag, job number, and quick filters
    * Searches in title, description, and comments (via server search)
    */
   const filterCards = useCallback(
     (cards: Card[]): Card[] => {
+      // Get today's date for due date comparisons
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
       return cards.filter((card) => {
         // Filter by search query (title + description + comments)
         const lowerQuery = query.toLowerCase();
@@ -133,10 +170,37 @@ export function SearchProvider({ children }: { children: ReactNode }) {
              card.responsibleUserEmail?.toLowerCase().includes(responsibleFilter.toLowerCase())) ?? false
           : true;
 
-        return matchesQuery && matchesTag && matchesJobNumber && matchesResponsible;
+        // Quick filters (if any active, card must match at least one)
+        let matchesQuickFilters = true;
+        if (quickFilters.size > 0) {
+          const cardDueDate = card.dueDate?.split('T')[0];
+
+          const checks: boolean[] = [];
+
+          if (quickFilters.has('myCards')) {
+            checks.push(card.responsibleUserId === currentUserId);
+          }
+          if (quickFilters.has('dueSoon')) {
+            checks.push(cardDueDate === todayStr || cardDueDate === tomorrowStr);
+          }
+          if (quickFilters.has('overdue')) {
+            checks.push(!!cardDueDate && cardDueDate < todayStr);
+          }
+          if (quickFilters.has('noResponsible')) {
+            checks.push(!card.responsibleUserId && !card.responsible);
+          }
+          if (quickFilters.has('highPriority')) {
+            checks.push(card.priority === 'high');
+          }
+
+          // Card must match ALL selected quick filters (AND logic)
+          matchesQuickFilters = checks.length === 0 || checks.every(Boolean);
+        }
+
+        return matchesQuery && matchesTag && matchesJobNumber && matchesResponsible && matchesQuickFilters;
       });
     },
-    [query, selectedTag, jobNumberFilter, responsibleFilter, commentMatchCardIds]
+    [query, selectedTag, jobNumberFilter, responsibleFilter, commentMatchCardIds, quickFilters, currentUserId]
   );
 
   const clearFilters = useCallback(() => {
@@ -144,12 +208,13 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     setSelectedTag(null);
     setJobNumberFilter('');
     setResponsibleFilter('');
+    setQuickFilters(new Set());
     setServerSearchResults([]);
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return query.length > 0 || selectedTag !== null || jobNumberFilter.length > 0 || responsibleFilter.length > 0;
-  }, [query, selectedTag, jobNumberFilter, responsibleFilter]);
+    return query.length > 0 || selectedTag !== null || jobNumberFilter.length > 0 || responsibleFilter.length > 0 || quickFilters.size > 0;
+  }, [query, selectedTag, jobNumberFilter, responsibleFilter, quickFilters]);
 
   const value: SearchContextType = {
     query,
@@ -160,6 +225,11 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     setJobNumberFilter,
     responsibleFilter,
     setResponsibleFilter,
+    quickFilters,
+    toggleQuickFilter,
+    clearQuickFilters,
+    currentUserId,
+    setCurrentUserId,
     filterCards,
     clearFilters,
     hasActiveFilters,

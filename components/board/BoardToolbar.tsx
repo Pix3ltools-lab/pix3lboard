@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2 } from 'lucide-react';
-import { useSearch } from '@/lib/context/SearchContext';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2, User, Clock, AlertTriangle, UserX, Flame } from 'lucide-react';
+import { useSearch, QuickFilterType } from '@/lib/context/SearchContext';
 import { useUI } from '@/lib/context/UIContext';
+import { useAuth } from '@/lib/context/AuthContext';
 
 // Preset background colors for boards
 const BOARD_BACKGROUNDS = [
@@ -36,9 +37,19 @@ interface BoardToolbarProps {
   onViewTypeChange?: (viewType: ViewType) => void;
 }
 
+// Quick filter definitions
+const QUICK_FILTERS: { id: QuickFilterType; label: string; icon: React.ReactNode }[] = [
+  { id: 'myCards', label: 'My cards', icon: <User className="h-3.5 w-3.5" /> },
+  { id: 'dueSoon', label: 'Due soon', icon: <Clock className="h-3.5 w-3.5" /> },
+  { id: 'overdue', label: 'Overdue', icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  { id: 'noResponsible', label: 'Unassigned', icon: <UserX className="h-3.5 w-3.5" /> },
+  { id: 'highPriority', label: 'High priority', icon: <Flame className="h-3.5 w-3.5" /> },
+];
+
 export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive, onShare, boardId, isPublic, onTogglePublic, background, onBackgroundChange, viewType = 'kanban', onViewTypeChange }: BoardToolbarProps) {
-  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, clearFilters, hasActiveFilters, setBoardId, commentMatchCardIds, isSearching } = useSearch();
+  const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, quickFilters, toggleQuickFilter, clearFilters, hasActiveFilters, setBoardId, setCurrentUserId, commentMatchCardIds, isSearching } = useSearch();
   const { compactMode, toggleCompactMode } = useUI();
+  const { user } = useAuth();
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
   const [showPublicMenu, setShowPublicMenu] = useState(false);
@@ -46,11 +57,15 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
 
   const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/public/${boardId}` : '';
 
-  // Set boardId in SearchContext for server-side comment search
+  // Set boardId and currentUserId in SearchContext
   useEffect(() => {
     setBoardId(boardId);
     return () => setBoardId(null);
   }, [boardId, setBoardId]);
+
+  useEffect(() => {
+    setCurrentUserId(user?.id || null);
+  }, [user?.id, setCurrentUserId]);
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(publicUrl);
@@ -116,46 +131,87 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
         {/* Actions row on mobile, inline on desktop */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
 
-        {/* Tag Filter Button */}
+        {/* Filters Button */}
         <div className="relative">
           <Button
-            variant={selectedTag ? 'primary' : 'secondary'}
+            variant={(selectedTag || quickFilters.size > 0) ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => setShowTagFilter(!showTagFilter)}
             className="flex items-center gap-2"
           >
             <Filter className="h-4 w-4" />
-            {selectedTag ? `Tag: ${selectedTag}` : 'Filter by Tag'}
+            <span className="hidden sm:inline">Filters</span>
+            {(selectedTag || quickFilters.size > 0) && (
+              <span className="bg-white/20 text-xs px-1.5 py-0.5 rounded-full">
+                {(selectedTag ? 1 : 0) + quickFilters.size}
+              </span>
+            )}
           </Button>
 
-          {/* Tag Filter Dropdown */}
+          {/* Filters Dropdown Panel */}
           {showTagFilter && (
             <>
               <div
                 className="fixed inset-0 z-40"
                 onClick={() => setShowTagFilter(false)}
               />
-              <div className="absolute top-full mt-2 right-0 bg-bg-primary border border-bg-tertiary rounded-lg shadow-lg p-2 z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
-                {availableTags.length > 0 ? (
-                  availableTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        setSelectedTag(tag === selectedTag ? null : tag);
-                        setShowTagFilter(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded hover:bg-bg-secondary transition-colors text-sm ${
-                        tag === selectedTag ? 'bg-accent-primary/20 text-accent-primary' : 'text-text-primary'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-2 text-sm text-text-secondary">
-                    No tags available
+              <div className="absolute top-full mt-2 right-0 bg-bg-primary border border-bg-tertiary rounded-lg shadow-lg p-3 z-50 min-w-[280px]">
+                {/* Quick Filters */}
+                <div className="mb-3">
+                  <div className="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1">
+                    <Flame className="h-3 w-3" />
+                    Quick filters
                   </div>
-                )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_FILTERS.map((filter) => (
+                      <button
+                        key={filter.id}
+                        onClick={() => toggleQuickFilter(filter.id)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          quickFilters.has(filter.id)
+                            ? 'bg-accent-primary text-white'
+                            : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary hover:text-text-primary'
+                        }`}
+                      >
+                        {filter.icon}
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-bg-tertiary my-3" />
+
+                {/* Tags */}
+                <div>
+                  <div className="text-xs font-medium text-text-secondary mb-2">
+                    Tag
+                  </div>
+                  {availableTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 max-h-[150px] overflow-y-auto">
+                      {availableTags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            setSelectedTag(tag === selectedTag ? null : tag);
+                          }}
+                          className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            tag === selectedTag
+                              ? 'bg-accent-primary text-white'
+                              : 'bg-bg-secondary text-text-secondary hover:bg-bg-tertiary hover:text-text-primary'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-text-secondary">
+                      No tags available
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
