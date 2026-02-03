@@ -55,7 +55,7 @@ export async function notifyAssignment(params: {
     type: 'assignment',
     title: `${assignerName} ti ha assegnato a una card`,
     message: cardTitle,
-    link: `/workspace/__current__/board/${boardId}?card=${cardId}`,
+    link: `/board/${boardId}?card=${cardId}`,
   });
 }
 
@@ -78,7 +78,7 @@ export async function notifyComment(params: {
     type: 'comment',
     title: `${commenterName} ha commentato`,
     message: `"${commentSnippet.substring(0, 100)}${commentSnippet.length > 100 ? '...' : ''}" su ${cardTitle}`,
-    link: `/workspace/__current__/board/${boardId}?card=${cardId}`,
+    link: `/board/${boardId}?card=${cardId}`,
   });
 }
 
@@ -100,7 +100,7 @@ export async function notifyDueDate(params: {
     type: isPassed ? 'due_date_passed' : 'due_date',
     title: isPassed ? 'Card scaduta' : 'Card in scadenza',
     message: `"${cardTitle}" ${isPassed ? 'era in scadenza il' : 'scade il'} ${new Date(dueDate).toLocaleDateString('it-IT')}`,
-    link: `/workspace/__current__/board/${boardId}?card=${cardId}`,
+    link: `/board/${boardId}?card=${cardId}`,
   });
 }
 
@@ -122,7 +122,7 @@ export async function notifyMention(params: {
     type: 'mention',
     title: `${mentionerName} ti ha menzionato`,
     message: `"${commentSnippet.substring(0, 100)}${commentSnippet.length > 100 ? '...' : ''}" in ${cardTitle}`,
-    link: `/workspace/__current__/board/${boardId}?card=${cardId}`,
+    link: `/board/${boardId}?card=${cardId}`,
   });
 }
 

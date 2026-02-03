@@ -7,6 +7,7 @@ import type { BoardRole } from '@/types/board';
 import { canManageBoard, canManageLists, canEditCards } from '@/lib/auth/permissions';
 import { logActivity } from '@/lib/db/activityLog';
 import { notifyAssignment } from '@/lib/db/notifications';
+import { syncCardToFts, removeCardFromFts } from '@/lib/db/fts';
 
 export const dynamic = 'force-dynamic';
 
@@ -465,6 +466,11 @@ async function applyCardChange(
           updatedAt: data.updatedAt || new Date().toISOString(),
         }
       );
+
+      // Sync to FTS index (only if not archived)
+      if (!data.isArchived) {
+        await syncCardToFts(entityId, data.title || 'Untitled Card', data.description || null);
+      }
       break;
 
     case 'update': {
@@ -611,6 +617,17 @@ async function applyCardChange(
           // Don't fail the sync if notification fails
         }
       }
+
+      // Sync to FTS index if title or description changed
+      if (data.title !== undefined || data.description !== undefined) {
+        const updatedCard = await queryOne<{ title: string; description: string | null; is_archived: number }>(
+          'SELECT title, description, is_archived FROM cards WHERE id = :id',
+          { id: entityId }
+        );
+        if (updatedCard && !updatedCard.is_archived) {
+          await syncCardToFts(entityId, updatedCard.title, updatedCard.description);
+        }
+      }
       break;
     }
 
@@ -618,6 +635,8 @@ async function applyCardChange(
       if (!(await verifyCardAccess(userId, entityId))) {
         throw new Error('Card not found or access denied');
       }
+      // Remove from FTS index before deleting
+      await removeCardFromFts(entityId);
       await execute('DELETE FROM comments WHERE card_id = :id', { id: entityId });
       await execute('DELETE FROM cards WHERE id = :id', { id: entityId });
       break;

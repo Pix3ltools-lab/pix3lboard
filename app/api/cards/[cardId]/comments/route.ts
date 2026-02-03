@@ -5,6 +5,7 @@ import { query, execute, queryOne } from '@/lib/db/turso';
 import { getBoardRoleByCardId, canView, canComment } from '@/lib/auth/permissions';
 import { logActivity } from '@/lib/db/activityLog';
 import { notifyComment } from '@/lib/db/notifications';
+import { syncCommentToFts } from '@/lib/db/fts';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +133,9 @@ export async function POST(
       createdAt: now,
       updatedAt: now,
     });
+
+    // Sync to FTS index
+    await syncCommentToFts(id, cardId, content.trim());
 
     // Log activity
     await logActivity({
