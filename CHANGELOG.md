@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.8] - 2025-02-03
+
+### Added
+- **In-App Notifications**: Bell icon with unread count and notification center
+  - Notifications for card assignments (when assigned as responsible)
+  - Notifications for comments on cards you're responsible for
+  - Mark as read/unread, delete individual notifications
+  - Mark all as read functionality
+  - Polling every 30 seconds for new notifications
+- **Due Date Notifications**: Automatic alerts for approaching deadlines
+  - Notifications for cards due today or tomorrow
+  - Notifications for overdue cards
+  - Deduplication: no duplicate alerts within 24 hours
+- **Quick Filters**: One-click filters in unified filter panel
+  - "My cards" - cards where you're responsible
+  - "Due soon" - cards due today or tomorrow
+  - "Overdue" - cards past due date
+  - "Unassigned" - cards without a responsible person
+  - "High priority" - high priority cards
+  - Filters are combinable (AND logic)
+  - Badge shows active filter count
+- **FTS Sync via API**: Full-text search now stays synchronized
+  - Manual sync on card create/update/delete
+  - Sync on archive/restore operations
+  - Sync on new comments
+  - Replaces problematic database triggers
+
+### Changed
+- Filter dropdown now combines Quick Filters and Tags in unified panel
+- Notification links use `/board/{id}` format with automatic workspace resolution
+
+### Fixed
+- FTS tables recreated as standalone (fixes Turso/libSQL compatibility)
+- Notification links now work correctly for shared boards
+
+---
+
 ## [2.4.7] - 2025-02-02
 
 ### Added

@@ -6,7 +6,7 @@ import { UserMenu } from './UserMenu';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/lib/context/AuthContext';
 
-const APP_VERSION = '2.4.7';
+const APP_VERSION = '2.4.8';
 
 export function Header() {
   const { isAuthenticated } = useAuth();
