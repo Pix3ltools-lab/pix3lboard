@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
+import { checkDueDates } from '@/lib/db/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,14 @@ export async function GET(request: NextRequest) {
     // Get limit from query params (default 50)
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
+
+    // Check for due date notifications (runs on each fetch, deduped internally)
+    try {
+      await checkDueDates(payload.userId);
+    } catch (error) {
+      console.error('Error checking due dates:', error);
+      // Don't fail the request if due date check fails
+    }
 
     const notifications = await query<NotificationRow>(`
       SELECT * FROM notifications

@@ -3,7 +3,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import { execute, queryOne } from './turso';
+import { execute, queryOne, query } from './turso';
 import type { NotificationType } from '@/types';
 
 interface CreateNotificationParams {
@@ -142,4 +142,83 @@ export async function getCardForNotification(cardId: string): Promise<CardWithRe
     JOIN lists l ON l.id = c.list_id
     WHERE c.id = :cardId
   `, { cardId });
+}
+
+interface CardDueDate {
+  id: string;
+  title: string;
+  due_date: string;
+  board_id: string;
+}
+
+/**
+ * Check for cards with approaching or passed due dates and create notifications
+ * Called during notification fetch to avoid needing a separate cron job
+ */
+export async function checkDueDates(userId: string): Promise<number> {
+  // Get today and tomorrow dates (date only, no time)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  // Find cards where user is responsible with due_date today or tomorrow (or past)
+  // Only non-archived cards
+  const cardsWithDueDate = await query<CardDueDate>(`
+    SELECT c.id, c.title, c.due_date, l.board_id
+    FROM cards c
+    JOIN lists l ON l.id = c.list_id
+    WHERE c.responsible_user_id = :userId
+      AND c.due_date IS NOT NULL
+      AND c.due_date != ''
+      AND (c.is_archived = 0 OR c.is_archived IS NULL)
+      AND date(c.due_date) <= date(:tomorrow)
+  `, { userId, tomorrow: tomorrowStr });
+
+  let notificationsCreated = 0;
+
+  for (const card of cardsWithDueDate) {
+    const cardDueDate = card.due_date.split('T')[0];
+    const isPassed = cardDueDate < todayStr;
+    const isToday = cardDueDate === todayStr;
+    const isTomorrow = cardDueDate === tomorrowStr;
+
+    // Determine notification type
+    const notifType = isPassed ? 'due_date_passed' : 'due_date';
+
+    // Check if we already sent this notification recently (within 24h)
+    const existingNotif = await queryOne<{ id: string }>(`
+      SELECT id FROM notifications
+      WHERE user_id = :userId
+        AND type = :type
+        AND link LIKE :linkPattern
+        AND created_at > datetime('now', '-24 hours')
+    `, {
+      userId,
+      type: notifType,
+      linkPattern: `%card=${card.id}%`,
+    });
+
+    if (existingNotif) {
+      continue; // Already notified
+    }
+
+    // Only notify for: passed, today, or tomorrow
+    if (isPassed || isToday || isTomorrow) {
+      await notifyDueDate({
+        userId,
+        cardId: card.id,
+        cardTitle: card.title,
+        boardId: card.board_id,
+        dueDate: card.due_date,
+        isPassed,
+      });
+      notificationsCreated++;
+    }
+  }
+
+  return notificationsCreated;
 }
