@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-02-06
+
+### Added
+- **Analytics Dashboard**: Board-level metrics with interactive charts
+  - Summary KPIs: total cards, completed in period, average lead time, overdue count
+  - Cards per list bar chart with color coding
+  - Cards per type donut chart
+  - Throughput chart: created vs completed cards per week
+  - Lead time chart: days from creation to archive per card
+  - Configurable date range with presets (7d, 30d, 90d, 1y) and custom picker
+  - "Analytics" button in board toolbar
+- New API endpoint: `GET /api/boards/[boardId]/analytics?from=&to=`
+- New components: `MetricCard`, `CardsByListChart`, `CardsByTypeChart`, `ThroughputChart`, `LeadTimeChart`, `DateRangeSelector`
+
+### Changed
+- Activity log now records `fromListId`, `fromListName`, and `toListName` on card moves for better analytics tracking
+- Added `recharts` dependency for chart rendering
+
+---
+
 ## [2.4.8] - 2025-02-03
 
 ### Added

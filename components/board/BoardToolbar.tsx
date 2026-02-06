@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2, User, Clock, AlertTriangle, UserX, Flame } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2, User, Clock, AlertTriangle, UserX, Flame, BarChart3 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useSearch, QuickFilterType } from '@/lib/context/SearchContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -50,6 +51,9 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
   const { query, setQuery, selectedTag, setSelectedTag, jobNumberFilter, setJobNumberFilter, responsibleFilter, setResponsibleFilter, quickFilters, toggleQuickFilter, clearFilters, hasActiveFilters, setBoardId, setCurrentUserId, commentMatchCardIds, isSearching } = useSearch();
   const { compactMode, toggleCompactMode } = useUI();
   const { user } = useAuth();
+  const params = useParams();
+  const router = useRouter();
+  const workspaceId = params.id as string;
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showBackgroundMenu, setShowBackgroundMenu] = useState(false);
   const [showPublicMenu, setShowPublicMenu] = useState(false);
@@ -396,6 +400,17 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
         >
           {compactMode ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           <span className="hidden sm:inline">{compactMode ? 'Normal' : 'Compact'}</span>
+        </Button>
+
+        {/* Analytics */}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => router.push(`/workspace/${workspaceId}/board/${boardId}/analytics`)}
+          className="flex items-center gap-2"
+        >
+          <BarChart3 className="h-4 w-4" />
+          <span className="hidden sm:inline">Analytics</span>
         </Button>
 
         {/* Archive */}

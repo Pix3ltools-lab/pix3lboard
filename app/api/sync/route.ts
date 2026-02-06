@@ -695,9 +695,31 @@ export async function PATCH(request: NextRequest) {
           const details: Record<string, unknown> = {};
           if (change.operation === 'update' && change.data) {
             details.fields = Object.keys(change.data);
-            // Track move operations
+            // Track move operations with list names for analytics
             if (change.entityType === 'card' && change.data.listId) {
               details.movedToList = change.data.listId;
+              try {
+                // Get the card's current list (before move) and the target list name
+                const [fromList, toList] = await Promise.all([
+                  queryOne<{ list_id: string; name: string }>(
+                    `SELECT l.id as list_id, l.name FROM cards c JOIN lists l ON c.list_id = l.id WHERE c.id = :cardId`,
+                    { cardId: change.entityId }
+                  ),
+                  queryOne<{ name: string }>(
+                    `SELECT name FROM lists WHERE id = :listId`,
+                    { listId: change.data.listId }
+                  ),
+                ]);
+                if (fromList) {
+                  details.fromListId = fromList.list_id;
+                  details.fromListName = fromList.name;
+                }
+                if (toList) {
+                  details.toListName = toList.name;
+                }
+              } catch {
+                // Don't fail sync if list name lookup fails
+              }
             }
           }
 

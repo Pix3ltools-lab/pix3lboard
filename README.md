@@ -46,6 +46,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Full-Text Search**: Search cards by title, description, and comments (FTS5-powered)
 - **In-App Notifications**: Bell icon with unread count, notifications for assignments, comments, and due dates
 - **Filters**: Filter by tags, job number, responsible person, and quick filters (My cards, Due soon, Overdue, Unassigned, High priority)
+- **Analytics Dashboard**: Board-level metrics with interactive charts (cards per list/type, throughput, lead time, overdue tracking) and configurable date ranges
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
@@ -94,6 +95,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Styling**: Tailwind CSS with custom CSS variables
 - **Drag & Drop**: @dnd-kit
 - **Icons**: Lucide React
+- **Charts**: Recharts
 - **Date Handling**: date-fns
 - **ID Generation**: nanoid
 
@@ -201,11 +203,12 @@ pix3lboard/
 │   ├── admin/                    # Admin panel page
 │   ├── login/                    # Login/Register page
 │   ├── workspace/[id]/           # Workspace detail
-│   │   └── board/[boardId]/      # Board view
+│   │   └── board/[boardId]/      # Board view + analytics
 │   ├── page.tsx                  # Home page (workspaces)
 │   ├── layout.tsx                # Root layout
 │   └── globals.css               # Global styles
 ├── components/
+│   ├── analytics/                # Dashboard charts and metrics
 │   ├── board/                    # Board-related components
 │   ├── card/                     # Card field components
 │   ├── kanban/                   # Kanban board components
