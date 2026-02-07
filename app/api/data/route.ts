@@ -72,6 +72,7 @@ interface CardRow {
   checklist: string | null;
   is_archived: number | null;
   thumbnail: string | null;
+  wiki_page_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -212,6 +213,7 @@ export async function GET(request: NextRequest) {
               checklist: c.checklist ? JSON.parse(c.checklist) : undefined,
               isArchived: Boolean(c.is_archived),
               thumbnail: c.thumbnail || undefined,
+              wikiPageId: c.wiki_page_id || undefined,
               createdAt: c.created_at,
               updatedAt: c.updated_at,
               commentCount: commentCounts.get(c.id) || 0,
@@ -372,8 +374,8 @@ export async function POST(request: NextRequest) {
 
           for (const card of list.cards) {
             await execute(
-              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
-               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
+              `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, wiki_page_id, created_at, updated_at)
+               VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :wikiPageId, :createdAt, :updatedAt)`,
               {
                 id: card.id,
                 listId: card.listId,
@@ -397,6 +399,7 @@ export async function POST(request: NextRequest) {
                 checklist: card.checklist ? JSON.stringify(card.checklist) : null,
                 isArchived: card.isArchived ? 1 : 0,
                 thumbnail: card.thumbnail || null,
+                wikiPageId: card.wikiPageId || null,
                 createdAt: card.createdAt,
                 updatedAt: card.updatedAt,
               }
@@ -427,8 +430,8 @@ export async function POST(request: NextRequest) {
       if (newListIds.includes(card.list_id) && !clientCardIds.has(card.id)) {
         try {
           await execute(
-            `INSERT OR IGNORE INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
-             VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
+            `INSERT OR IGNORE INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, wiki_page_id, created_at, updated_at)
+             VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :wikiPageId, :createdAt, :updatedAt)`,
             {
               id: card.id,
               listId: card.list_id,
@@ -452,6 +455,7 @@ export async function POST(request: NextRequest) {
               checklist: card.checklist,
               isArchived: 1,
               thumbnail: card.thumbnail,
+              wikiPageId: card.wiki_page_id || null,
               createdAt: card.created_at,
               updatedAt: card.updated_at,
             }
@@ -538,8 +542,8 @@ export async function POST(request: NextRequest) {
 
         for (const card of list.cards) {
           await execute(
-            `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
-             VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
+            `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, wiki_page_id, created_at, updated_at)
+             VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :wikiPageId, :createdAt, :updatedAt)`,
             {
               id: card.id,
               listId: card.listId,
@@ -563,6 +567,7 @@ export async function POST(request: NextRequest) {
               checklist: card.checklist ? JSON.stringify(card.checklist) : null,
               isArchived: card.isArchived ? 1 : 0,
               thumbnail: card.thumbnail || null,
+              wikiPageId: card.wikiPageId || null,
               createdAt: card.createdAt,
               updatedAt: card.updatedAt,
             }

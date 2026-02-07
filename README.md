@@ -50,6 +50,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **In-App Notifications**: Bell icon with unread count, notifications for assignments, comments, and due dates
 - **Filters**: Filter by tags, job number, responsible person, and quick filters (My cards, Due soon, Overdue, Unassigned, High priority)
 - **Analytics Dashboard**: Board-level metrics with interactive charts (cards per list/type, throughput, lead time, overdue tracking) and configurable date ranges
+- **Pix3lWiki Integration**: Link cards to wiki pages, wiki badge on linked cards, header navigation to companion wiki app
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 

@@ -436,8 +436,8 @@ async function applyCardChange(
         throw new Error('List not found or access denied');
       }
       await execute(
-        `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, responsible_user_id, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, created_at, updated_at)
-         VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :responsibleUserId, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :createdAt, :updatedAt)`,
+        `INSERT INTO cards (id, list_id, title, description, position, type, prompt, rating, ai_tool, tags, due_date, links, responsible, responsible_user_id, job_number, severity, priority, effort, attendees, meeting_date, checklist, is_archived, thumbnail, wiki_page_id, created_at, updated_at)
+         VALUES (:id, :listId, :title, :description, :position, :type, :prompt, :rating, :aiTool, :tags, :dueDate, :links, :responsible, :responsibleUserId, :jobNumber, :severity, :priority, :effort, :attendees, :meetingDate, :checklist, :isArchived, :thumbnail, :wikiPageId, :createdAt, :updatedAt)`,
         {
           id: entityId,
           listId: parentId,
@@ -462,6 +462,7 @@ async function applyCardChange(
           checklist: data.checklist ? JSON.stringify(data.checklist) : null,
           isArchived: data.isArchived ? 1 : 0,
           thumbnail: data.thumbnail || null,
+          wikiPageId: data.wikiPageId || null,
           createdAt: data.createdAt || new Date().toISOString(),
           updatedAt: data.updatedAt || new Date().toISOString(),
         }
@@ -586,6 +587,10 @@ async function applyCardChange(
       if (data.thumbnail !== undefined) {
         updateFields.push('thumbnail = :thumbnail');
         updateParams.thumbnail = data.thumbnail || null;
+      }
+      if (data.wikiPageId !== undefined) {
+        updateFields.push('wiki_page_id = :wikiPageId');
+        updateParams.wikiPageId = data.wikiPageId || null;
       }
       updateFields.push('updated_at = :updatedAt');
       updateParams.updatedAt = new Date().toISOString();

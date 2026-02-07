@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType } from '@/types';
 import { formatRelative } from '@/lib/utils/date';
-import { Clock, Tag, Star, User, Users, AlertCircle, CheckSquare } from 'lucide-react';
+import { Clock, Tag, Star, User, Users, AlertCircle, CheckSquare, BookOpen } from 'lucide-react';
 import { CARD_TYPES } from '@/lib/constants';
 import { useUI } from '@/lib/context/UIContext';
 import { clsx } from 'clsx';
@@ -188,6 +188,14 @@ export function Card({ card, onClick }: CardProps) {
           <div className={`flex items-center gap-1 ${isOverdue ? 'text-accent-danger' : ''}`}>
             <Clock className="h-3 w-3" />
             <span>{formatRelative(card.dueDate)}</span>
+          </div>
+        )}
+
+        {/* Wiki page */}
+        {card.wikiPageId && (
+          <div className="flex items-center gap-1 text-accent-primary">
+            <BookOpen className="h-3 w-3" />
+            {!compactMode && <span>Wiki</span>}
           </div>
         )}
       </div>

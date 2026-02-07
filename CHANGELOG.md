@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-02-07
+
+### Added
+- **Pix3lWiki Integration**: Full integration with companion wiki application
+  - "Pix3lWiki" link in header navigation (opens in new tab)
+  - "Wiki" button in card modal to create/open linked wiki pages
+  - Wiki badge (BookOpen icon) on cards that have a linked wiki page
+  - New `wiki_page_id` column on cards table for wiki page linking
+  - Data sync and delta sync support for `wikiPageId` field
+  - Migration script: `lib/db/migrate-wiki-page-id.ts`
+
+---
+
 ## [2.5.0] - 2025-02-06
 
 ### Added

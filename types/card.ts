@@ -49,6 +49,9 @@ export interface Card {
   // Thumbnail image
   thumbnail?: string; // URL from Vercel Blob
 
+  // Wiki integration
+  wikiPageId?: string; // Linked Pix3lWiki page ID
+
   createdAt: string;
   updatedAt: string;
 
