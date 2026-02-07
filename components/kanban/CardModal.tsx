@@ -20,9 +20,10 @@ import { AttachmentsSection } from '@/components/card/AttachmentsSection';
 import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
 import { ActivityTimeline } from '@/components/card/ActivityTimeline';
 import { Lightbox } from '@/components/ui/Lightbox';
-import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye } from 'lucide-react';
+import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye, BookOpen } from 'lucide-react';
 import { debounce } from '@/lib/utils/debounce';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useParams } from 'next/navigation';
 import { BoardPermissions } from '@/lib/utils/boardPermissions';
 
 interface UserSuggestion {
@@ -55,6 +56,8 @@ export function CardModal({
   onArchive,
 }: CardModalProps) {
   const { user: currentUser } = useAuth();
+  const params = useParams();
+  const boardId = params?.boardId as string | undefined;
 
   // Default to full permissions if not provided (for backwards compatibility)
   const canEdit = permissions?.canEditCards ?? true;
@@ -520,6 +523,15 @@ export function CardModal({
           <div className="flex gap-2">
             {canEdit ? (
               <>
+                <a
+                  href={`https://wiki.pix3ltools.com/wiki/new${boardId ? `?board=${boardId}&card=${card.id}` : `?card=${card.id}`}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Wiki
+                </a>
                 <Button
                   variant="ghost"
                   size="sm"

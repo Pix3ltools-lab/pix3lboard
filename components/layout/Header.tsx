@@ -5,6 +5,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/lib/context/AuthContext';
+import { ExternalLink } from 'lucide-react';
 
 const APP_VERSION = '2.5.0';
 
@@ -25,6 +26,15 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-4">
+          <a
+            href="https://wiki.pix3ltools.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Pix3lWiki
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
           <ThemeToggle />
           {isAuthenticated && <NotificationBell />}
           {isAuthenticated && <UserMenu />}
