@@ -30,11 +30,11 @@ function formatTimeAgo(dateString: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'ora';
-  if (diffMins < 60) return `${diffMins} min fa`;
-  if (diffHours < 24) return `${diffHours} ore fa`;
-  if (diffDays < 7) return `${diffDays} giorni fa`;
-  return date.toLocaleDateString('it-IT');
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US');
 }
 
 export function NotificationBell() {
@@ -75,7 +75,7 @@ export function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-md hover:bg-bg-secondary transition-colors"
-        aria-label="Notifiche"
+        aria-label="Notifications"
       >
         <Bell className="h-5 w-5 text-text-secondary" />
         {unreadCount > 0 && (
@@ -91,7 +91,7 @@ export function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-bg-tertiary">
             <span className="text-sm font-medium text-text-primary">
-              Notifiche {unreadCount > 0 && `(${unreadCount})`}
+              Notifications {unreadCount > 0 && `(${unreadCount})`}
             </span>
             {unreadCount > 0 && (
               <button
@@ -99,7 +99,7 @@ export function NotificationBell() {
                 className="flex items-center gap-1 text-xs text-accent-primary hover:text-accent-primary/80 transition-colors"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
-                Segna tutte lette
+                Mark all as read
               </button>
             )}
           </div>
@@ -108,7 +108,7 @@ export function NotificationBell() {
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-text-secondary text-sm">
-                Nessuna notifica
+                No notifications
               </div>
             ) : (
               <div className="py-1">

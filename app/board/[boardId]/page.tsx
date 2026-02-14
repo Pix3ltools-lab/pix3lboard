@@ -65,7 +65,7 @@ export default function BoardRedirectPage() {
       router.replace(fullUrl);
     } else {
       // Board not found or no access
-      setError('Board non trovata o accesso negato');
+      setError('Board not found or access denied');
     }
   }, [authLoading, isAuthenticated, isInitialized, workspaces, boardId, searchParams, router]);
 
@@ -75,7 +75,7 @@ export default function BoardRedirectPage() {
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-4 text-text-secondary">Caricamento...</p>
+          <p className="mt-4 text-text-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -91,13 +91,13 @@ export default function BoardRedirectPage() {
             {error}
           </h1>
           <p className="text-text-secondary mb-6">
-            La board potrebbe essere stata eliminata o non hai i permessi per accedervi.
+            The board may have been deleted or you don&apos;t have permission to access it.
           </p>
           <button
             onClick={() => router.push('/')}
             className="px-4 py-2 bg-accent-primary text-white rounded-md hover:bg-accent-primary/90 transition-colors"
           >
-            Torna alla home
+            Back to home
           </button>
         </div>
       </div>
