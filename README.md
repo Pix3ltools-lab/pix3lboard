@@ -20,6 +20,9 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 ### Analytics Dashboard
 ![Analytics Dashboard](Analytics.jpg)
 
+### REST API Documentation
+![REST API Documentation](API.jpg)
+
 ## Features
 
 ### Core Functionality
