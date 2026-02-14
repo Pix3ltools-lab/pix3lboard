@@ -1,6 +1,6 @@
 {
   "name": "pix3lboard",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "Privacy-first project management tool with cloud storage",
   "private": true,
   "scripts": {

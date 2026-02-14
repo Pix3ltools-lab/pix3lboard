@@ -51,6 +51,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Filters**: Filter by tags, job number, responsible person, and quick filters (My cards, Due soon, Overdue, Unassigned, High priority)
 - **Analytics Dashboard**: Board-level metrics with interactive charts (cards per list/type, throughput, lead time, overdue tracking) and configurable date ranges
 - **Pix3lWiki Integration**: Link cards to wiki pages, wiki badge on linked cards, header navigation to companion wiki app
+- **REST API v1**: Public API with Bearer token auth for external applications — full CRUD for boards, lists, cards with Swagger UI at `/docs`
 - **Export/Import**: Backup and restore your data as JSON
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
@@ -203,8 +204,11 @@ pix3lboard/
 │   │   ├── lists/                # List endpoints
 │   │   ├── cards/                # Card endpoints
 │   │   ├── sync/                 # Delta sync endpoint
-│   │   └── data/                 # Legacy data endpoint
+│   │   ├── data/                 # Legacy data endpoint
+│   │   ├── v1/                   # REST API v1 (boards, lists, cards)
+│   │   └── docs/                 # OpenAPI spec endpoint
 │   ├── admin/                    # Admin panel page
+│   ├── docs/                     # Swagger UI page
 │   ├── login/                    # Login/Register page
 │   ├── workspace/[id]/           # Workspace detail
 │   │   └── board/[boardId]/      # Board view + analytics

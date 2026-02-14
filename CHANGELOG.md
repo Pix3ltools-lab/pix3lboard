@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-02-14
+
+### Added
+- **Public REST API v1**: Full CRUD API for external applications (web, desktop, mobile)
+  - Bearer token authentication via `POST /api/auth/token`
+  - Board endpoints: list, create, get detail (with nested lists/cards), update, delete
+  - List endpoints: list, create, update, delete (cascade)
+  - Card endpoints: create (all 25 fields), get detail (with comments/attachments), update, delete
+  - Move card between lists with automatic position recalculation
+  - Archive/unarchive cards via API
+  - Paginated card listing with filters (list, archived, responsible, page/limit)
+  - Zod validation with snake_case field names (REST convention)
+  - Permission checks reuse existing role system (owner/editor/commenter/viewer)
+  - Side effects: FTS sync, assignment notifications
+- **Swagger UI**: Interactive API documentation at `/docs`
+  - OpenAPI 3.0 spec served at `GET /api/docs`
+  - Swagger UI loaded from CDN (zero bundle impact)
+- **API Documentation**: Complete `api.md` with endpoints, examples, and curl commands
+
+### Changed
+- Removed `api.md` from `.gitignore` (now project documentation, not personal notes)
+
+---
+
 ## [2.6.1] - 2026-02-08
 
 ### Added
