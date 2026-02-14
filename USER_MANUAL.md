@@ -15,6 +15,8 @@
 11. [Import & Export](#import--export)
 12. [Keyboard Shortcuts](#keyboard-shortcuts)
 13. [Troubleshooting](#troubleshooting)
+14. [REST API v1](#rest-api-v1)
+15. [E2E Testing](#e2e-testing)
 
 ## Introduction
 
@@ -437,6 +439,148 @@ If you encounter issues not covered in this manual:
 3. Clear browser cache and cookies
 4. Contact your system administrator
 5. Report bugs through the appropriate channels
+
+## REST API v1
+
+Pix3lBoard provides a RESTful API for programmatic access to boards, lists, and cards. The API is available at `/api/v1/` and interactive documentation is accessible via Swagger UI at `/api/docs`.
+
+### Authentication
+
+All API endpoints require a Bearer JWT token. Obtain a token by exchanging your credentials:
+
+```bash
+POST /api/auth/token
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "your-password"
+}
+```
+
+Response:
+
+```json
+{
+  "token": "eyJhbGc...",
+  "expires_in": "7d",
+  "user": { "id": "...", "email": "...", "name": "..." }
+}
+```
+
+Use the token in all subsequent requests:
+
+```
+Authorization: Bearer <token>
+```
+
+### Board Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/boards` | List all boards (owned and shared) |
+| POST | `/api/v1/boards` | Create a new board |
+| GET | `/api/v1/boards/:boardId` | Get board detail with nested lists and cards |
+| PATCH | `/api/v1/boards/:boardId` | Update a board |
+| DELETE | `/api/v1/boards/:boardId` | Delete a board (owner only, cascades) |
+
+**Create board** requires `workspace_id` and `name`. Optional fields: `description`, `background`, `allowed_card_types`, `is_public`.
+
+### List Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/boards/:boardId/lists` | List all lists for a board |
+| POST | `/api/v1/boards/:boardId/lists` | Create a new list |
+| PATCH | `/api/v1/lists/:listId` | Update a list |
+| DELETE | `/api/v1/lists/:listId` | Delete a list (cascades to cards) |
+
+**Create list** requires `name`. Optional fields: `position`, `color`.
+
+### Card Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/boards/:boardId/cards` | List cards with filters and pagination |
+| POST | `/api/v1/cards` | Create a new card |
+| GET | `/api/v1/cards/:cardId` | Get card detail with comments and attachments |
+| PATCH | `/api/v1/cards/:cardId` | Update a card |
+| DELETE | `/api/v1/cards/:cardId` | Delete a card (cascades to comments) |
+| PATCH | `/api/v1/cards/:cardId/move` | Move a card to a different list/position |
+| POST | `/api/v1/cards/:cardId/archive?action=archive` | Archive a card |
+| POST | `/api/v1/cards/:cardId/archive?action=unarchive` | Restore an archived card |
+
+**Create card** requires `list_id` and `title`. Optional fields include `description`, `type`, `tags`, `due_date`, `priority`, `severity`, `effort`, `prompt`, `ai_tool`, `rating`, `links`, `responsible_user_id`, `job_number`, `checklist`, `attendees`, `meeting_date`.
+
+**List cards** supports query parameters: `list_id`, `is_archived`, `responsible_user_id`, `page` (default: 1), `limit` (default: 50, max: 200).
+
+### Field Constraints
+
+| Field | Constraint |
+|-------|-----------|
+| Board name | 1–200 characters |
+| Board description | 0–2000 characters |
+| List name | 1–200 characters |
+| Card title | 1–500 characters |
+| Card description | 0–10000 characters |
+| Tags | Max 20 items, each 0–50 characters |
+| Links | Max 20 valid URLs |
+| Checklist | Max 100 items |
+
+### Error Responses
+
+The API returns standard HTTP status codes:
+
+- **400** — Invalid request body or missing required fields
+- **401** — Missing or invalid Bearer token
+- **403** — Insufficient permissions (e.g., only owners can delete boards)
+- **404** — Resource not found or not accessible
+- **429** — Rate limited (auth endpoint: 5 attempts, 15-minute lockout)
+- **500** — Internal server error
+
+### Swagger Documentation
+
+Interactive API documentation is available at `/api/docs`. The Swagger UI allows you to explore endpoints, view request/response schemas, and test API calls directly from your browser.
+
+---
+
+## E2E Testing
+
+Pix3lBoard includes a comprehensive end-to-end test suite built with [Playwright](https://playwright.dev/), covering authentication, workspace/board/list/card CRUD, and REST API v1 endpoints.
+
+### Prerequisites
+
+Set E2E credentials in `.env.local`:
+
+```
+E2E_USER_EMAIL="your-email"
+E2E_USER_PASSWORD="your-password"
+```
+
+### Running Tests
+
+```bash
+# Headless (default)
+npm run test:e2e
+
+# With visible browser
+npm run test:e2e:headed
+
+# Playwright interactive UI
+npm run test:e2e:ui
+```
+
+The dev server must be running (`npm run dev`) or Playwright will start it automatically.
+
+### Test Suites
+
+| Suite | Tests | Description |
+|-------|-------|-------------|
+| Auth | 4 | Login, wrong password, unauthenticated access, logout |
+| Workspace | 3 | Create, rename, delete workspace |
+| Board + Lists | 7 | Create/delete board, create/rename/delete list, empty board state |
+| Card + Modal | 7 | Create, open modal, edit, add tag, set due date, archive, delete |
+| REST API v1 | 12 | Auth token, CRUD for boards/lists/cards, validation, error handling |
 
 ---
 
