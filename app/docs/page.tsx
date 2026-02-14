@@ -1,14 +1,7 @@
-'use client';
+import SwaggerClient from './SwaggerClient';
 
-import dynamic from 'next/dynamic';
-import 'swagger-ui-react/swagger-ui.css';
-
-const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false });
+export const dynamic = 'force-dynamic';
 
 export default function DocsPage() {
-  return (
-    <div style={{ background: '#fff', minHeight: '100vh' }}>
-      <SwaggerUI url="/api/docs" />
-    </div>
-  );
+  return <SwaggerClient />;
 }
