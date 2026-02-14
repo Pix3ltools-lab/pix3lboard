@@ -29,6 +29,9 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    launchOptions: {
+      slowMo: parseInt(process.env.SLOW_MO || '0', 10),
+    },
   },
 
   projects: [
