@@ -1,5 +1,14 @@
 # Pix3lBoard
 
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg?style=flat&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Turso](https://img.shields.io/badge/Turso-SQLite-4FF8D2.svg?style=flat&logo=turso)](https://turso.tech/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-2.7.0-orange.svg?style=flat)](#)
+[![REST API](https://img.shields.io/badge/REST_API-v1-blue.svg?style=flat&logo=swagger&logoColor=white)](/docs)
+[![Platform](https://img.shields.io/badge/Platform-Vercel-black.svg?style=flat&logo=vercel)](https://vercel.com/)
+
 [![AI Creators Kanban](https://img.shields.io/badge/✨-Built_for_AI_Creators-blueviolet?style=for-the-badge&logo=midjourney&logoColor=white)](https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql)
 [![Demo Video](https://img.shields.io/badge/▶️-Watch_Demo-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=1yUgNO1Q6Nc)
 
