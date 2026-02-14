@@ -36,10 +36,10 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com",
+              "style-src 'self' 'unsafe-inline' https://unpkg.com",
               "img-src 'self' data: blob: https:",
-              "font-src 'self'",
+              "font-src 'self' https://unpkg.com",
               "connect-src 'self' https://*.turso.io https://*.vercel-storage.com",
               "frame-ancestors 'none'",
             ].join('; '),
