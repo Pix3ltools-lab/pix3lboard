@@ -53,7 +53,7 @@ export async function notifyAssignment(params: {
   await createNotification({
     userId: assignedUserId,
     type: 'assignment',
-    title: `${assignerName} ti ha assegnato a una card`,
+    title: `${assignerName} assigned you to a card`,
     message: cardTitle,
     link: `/board/${boardId}?card=${cardId}`,
   });
@@ -76,8 +76,8 @@ export async function notifyComment(params: {
   await createNotification({
     userId: responsibleUserId,
     type: 'comment',
-    title: `${commenterName} ha commentato`,
-    message: `"${commentSnippet.substring(0, 100)}${commentSnippet.length > 100 ? '...' : ''}" su ${cardTitle}`,
+    title: `${commenterName} commented`,
+    message: `"${commentSnippet.substring(0, 100)}${commentSnippet.length > 100 ? '...' : ''}" on ${cardTitle}`,
     link: `/board/${boardId}?card=${cardId}`,
   });
 }
@@ -98,8 +98,8 @@ export async function notifyDueDate(params: {
   await createNotification({
     userId,
     type: isPassed ? 'due_date_passed' : 'due_date',
-    title: isPassed ? 'Card scaduta' : 'Card in scadenza',
-    message: `"${cardTitle}" ${isPassed ? 'era in scadenza il' : 'scade il'} ${new Date(dueDate).toLocaleDateString('it-IT')}`,
+    title: isPassed ? 'Card overdue' : 'Card due soon',
+    message: `"${cardTitle}" ${isPassed ? 'was due on' : 'is due on'} ${new Date(dueDate).toLocaleDateString('en-US')}`,
     link: `/board/${boardId}?card=${cardId}`,
   });
 }
@@ -120,7 +120,7 @@ export async function notifyMention(params: {
   await createNotification({
     userId: mentionedUserId,
     type: 'mention',
-    title: `${mentionerName} ti ha menzionato`,
+    title: `${mentionerName} mentioned you`,
     message: `"${commentSnippet.substring(0, 100)}${commentSnippet.length > 100 ? '...' : ''}" in ${cardTitle}`,
     link: `/board/${boardId}?card=${cardId}`,
   });
