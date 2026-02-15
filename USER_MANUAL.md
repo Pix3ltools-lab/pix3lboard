@@ -17,6 +17,7 @@
 13. [Troubleshooting](#troubleshooting)
 14. [REST API v1](#rest-api-v1)
 15. [E2E Testing](#e2e-testing)
+16. [CI/CD Pipeline](#cicd-pipeline)
 
 ## Introduction
 
@@ -595,6 +596,55 @@ Without `SLOW_MO` (or with `SLOW_MO=0`) tests run at normal speed.
 | Board + Lists | 7 | Create/delete board, create/rename/delete list, empty board state |
 | Card + Modal | 7 | Create, open modal, edit, add tag, set due date, archive, delete |
 | REST API v1 | 12 | Auth token, CRUD for boards/lists/cards, validation, error handling |
+
+---
+
+## CI/CD Pipeline
+
+Pix3lBoard uses GitHub Actions for continuous integration. Every push and pull request to `main` triggers an automated pipeline.
+
+### Pipeline Jobs
+
+The CI workflow (`.github/workflows/ci.yml`) runs two jobs in sequence:
+
+**Job 1: Lint & Type-check** (~1 minute)
+- Runs `npm run lint` (ESLint)
+- Runs `npm run type-check` (TypeScript strict mode)
+
+**Job 2: E2E Tests** (~3–5 minutes, depends on Job 1)
+- Spins up a [libsql-server](https://github.com/tursodatabase/libsql) service container
+- Builds the production app (`npm run build`)
+- Initialises the database with all migrations via `scripts/db-init.sh`
+- Creates a test user
+- Starts the production server and runs the full Playwright E2E suite
+
+### Database Init Script
+
+The `scripts/db-init.sh` helper automates the full database setup for CI and local testing:
+
+```bash
+# Run manually (requires TURSO_DATABASE_URL and TURSO_AUTH_TOKEN)
+bash scripts/db-init.sh
+```
+
+It runs `lib/db/setup.ts`, all 13 `migrate-*.ts` files, all 3 `migrations/*.ts` files, and optionally creates a test user from `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` environment variables.
+
+### Playwright Report
+
+On test failure (or any non-cancelled run), the Playwright HTML report is uploaded as a GitHub Actions artifact. Download it from the workflow run page to inspect failures with screenshots and traces.
+
+### Environment
+
+All CI environment variables are hardcoded in the workflow — no GitHub secrets are required:
+
+| Variable | Value |
+|----------|-------|
+| `TURSO_DATABASE_URL` | `http://localhost:8080` |
+| `TURSO_AUTH_TOKEN` | `dummy` |
+| `JWT_SECRET` | CI-only test secret |
+| `STORAGE_PROVIDER` | `local` |
+| `E2E_USER_EMAIL` | `test@ci.local` |
+| `E2E_USER_PASSWORD` | `TestPassword123!` |
 
 ---
 
