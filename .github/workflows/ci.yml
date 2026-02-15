@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    services:
+      sqld:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        ports:
+          - 8080:8080
+
+    env:
+      TURSO_DATABASE_URL: http://localhost:8080
+      TURSO_AUTH_TOKEN: dummy
+      JWT_SECRET: ci-test-secret-minimum-32-characters-long!!
+      STORAGE_PROVIDER: local
+      E2E_USER_EMAIL: test@ci.local
+      E2E_USER_PASSWORD: TestPassword123!
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        run: npm run build
+
+      - name: Initialise database
+        run: bash scripts/db-init.sh
+
+      - name: Run E2E tests
+        run: |
+          npm start &
+          echo "Waiting for server..."
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 > /dev/null 2>&1 && break
+            sleep 1
+          done
+          npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
