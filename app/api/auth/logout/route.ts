@@ -10,7 +10,7 @@ export async function POST() {
     sameSite: 'lax',
     maxAge: 0,
     path: '/',
-    ...(process.env.NODE_ENV === 'production' && { domain: '.pix3ltools.com' }),
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
   });
 
   return response;

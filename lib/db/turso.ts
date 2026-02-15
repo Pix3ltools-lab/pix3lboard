@@ -1,4 +1,5 @@
 import { createClient, type InStatement } from '@libsql/client';
+import { validateEnv } from '@/lib/env';
 
 // Singleton client instance
 let client: ReturnType<typeof createClient> | null = null;
@@ -6,16 +7,18 @@ let client: ReturnType<typeof createClient> | null = null;
 export function getTursoClient() {
   if (client) return client;
 
+  validateEnv();
+
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
 
-  if (!url || !authToken) {
-    throw new Error('Missing Turso environment variables: TURSO_DATABASE_URL and TURSO_AUTH_TOKEN');
+  if (!url) {
+    throw new Error('Missing TURSO_DATABASE_URL');
   }
 
   client = createClient({
     url,
-    authToken,
+    ...(authToken ? { authToken } : {}),
   });
 
   return client;

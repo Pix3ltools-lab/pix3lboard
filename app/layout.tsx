@@ -33,8 +33,8 @@ export default function RootLayout({
           <ToastContainer />
           <ConfirmDialog />
         </AppProvider>
-        <Analytics />
-        <SpeedInsights />
+        {process.env.VERCEL && <Analytics />}
+        {process.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   );

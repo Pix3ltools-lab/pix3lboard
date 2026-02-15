@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { put } from '@/lib/storage/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';

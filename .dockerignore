@@ -1,0 +1,14 @@
+node_modules
+.next
+.env
+.env.local
+.env*.local
+.git
+.gitignore
+.claude
+CLAUDE.md
+*.md
+e2e
+playwright-report
+test-results
+backups

@@ -524,7 +524,7 @@ export function CardModal({
             {canEdit ? (
               <>
                 <a
-                  href={`https://wiki.pix3ltools.com/wiki/new${boardId ? `?board=${boardId}&card=${card.id}` : `?card=${card.id}`}`}
+                  href={`${process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'https://wiki.pix3ltools.com'}/wiki/new${boardId ? `?board=${boardId}&card=${card.id}` : `?card=${card.id}`}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"

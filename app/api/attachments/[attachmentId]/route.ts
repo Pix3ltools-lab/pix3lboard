@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { del } from '@vercel/blob';
+import { del } from '@/lib/storage/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
 

@@ -27,7 +27,7 @@ export function Header() {
         {/* Right side */}
         <div className="flex items-center gap-4">
           <a
-            href="https://wiki.pix3ltools.com"
+            href={process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'https://wiki.pix3ltools.com'}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"

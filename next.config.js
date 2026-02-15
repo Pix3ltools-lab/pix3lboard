@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+const connectSrc = [
+  "'self'",
+  process.env.TURSO_DATABASE_URL?.startsWith('libsql://') ? 'https://*.turso.io' : '',
+  process.env.STORAGE_PROVIDER !== 'local' ? 'https://*.vercel-storage.com' : '',
+].filter(Boolean).join(' ');
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -40,7 +46,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://unpkg.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://unpkg.com",
-              "connect-src 'self' https://*.turso.io https://*.vercel-storage.com",
+              `connect-src ${connectSrc}`,
               "frame-ancestors 'none'",
             ].join('; '),
           },

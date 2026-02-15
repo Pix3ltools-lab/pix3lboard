@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
-      ...(process.env.NODE_ENV === 'production' && { domain: '.pix3ltools.com' }),
+      ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
     });
 
     return response;
