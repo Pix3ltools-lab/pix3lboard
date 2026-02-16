@@ -344,35 +344,37 @@ Filter cards within the current board:
 - **Download**: Use the download button to save files
 - **Delete**: Remove attachments with the delete button
 
-## Import & Export
+## Database Backup & Restore
 
-### Export (Backup)
+Admin-only feature available in the Admin Panel.
 
-Create a JSON backup of your workspace data:
+### Download Backup
 
-1. Go to workspace settings
-2. Click "Export Data"
-3. Choose what to export (workspaces, boards, cards)
-4. Download the JSON file
+1. Go to **Admin Panel** (admin users only)
+2. In the **Database Backup** section, click **Download Backup**
+3. A JSON file is downloaded containing all database tables: users, workspaces, boards, lists, cards, comments, attachments metadata, activity log, and notifications
 
-### Import (Restore)
+### Restore from Backup
 
-Restore data from a JSON backup:
+1. Go to **Admin Panel**
+2. In the **Database Backup** section, click **Restore**
+3. Select a previously exported JSON backup file
+4. A confirmation dialog warns that **all existing data will be replaced**
+5. Click **Restore** to confirm — the operation is atomic (all-or-nothing)
+6. A success toast shows the number of restored rows per table
 
-1. Go to workspace settings
-2. Click "Import Data"
-3. Select your JSON backup file
-4. Choose import options:
-   - **Merge**: Add to existing data
-   - **Replace**: Clear and replace existing data
-5. Confirm the import operation
+### Export Archived Cards
 
-### Import Best Practices
+1. Go to **Admin Panel**
+2. In the **Archived Cards Export** section, click **Export Archived Cards**
+3. A JSON file is downloaded with all archived cards, including comments and author information
 
-- Always export current data before importing
-- Test imports with a small dataset first
-- Keep backup files in a safe location
-- Verify data after import completion
+### Backup Best Practices
+
+- Download a backup before restoring, in case you need to revert
+- Keep backup files in a safe, separate location
+- Backup files include password hashes — treat them as sensitive data
+- Restore replaces ALL data including user accounts
 
 ## Keyboard Shortcuts
 
