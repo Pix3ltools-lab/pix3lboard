@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useUI } from '@/lib/context/UIContext';
@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw, Download, Database, Archive } from 'lucide-react';
+import { Shield, Users, Key, ArrowLeft, Trash2, UserPlus, UserCheck, Clock, HardDrive, RefreshCw, Download, Upload, Database, Archive } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserWithStats {
@@ -43,7 +43,7 @@ interface BlobCleanupResult {
 export default function AdminPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { showToast } = useUI();
+  const { showToast, showConfirmDialog } = useUI();
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
@@ -64,6 +64,8 @@ export default function AdminPage() {
   const [blobCleaning, setBlobCleaning] = useState(false);
   const [blobResult, setBlobResult] = useState<BlobCleanupResult | null>(null);
   const [backingUp, setBackingUp] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
   const [exportingArchived, setExportingArchived] = useState(false);
 
   useEffect(() => {
@@ -320,6 +322,57 @@ export default function AdminPage() {
     }
   };
 
+  const handleRestoreFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    let data: unknown;
+    try {
+      const text = await file.text();
+      data = JSON.parse(text);
+    } catch {
+      showToast('Invalid JSON file', 'error');
+      return;
+    }
+
+    showConfirmDialog({
+      title: 'Restore from Backup',
+      message: 'This will replace ALL data (users, workspaces, boards, lists, cards, comments, attachments metadata). This action cannot be undone.',
+      variant: 'danger',
+      confirmText: 'Restore',
+      onConfirm: () => doRestore(data),
+    });
+  };
+
+  const doRestore = async (data: unknown) => {
+    setRestoring(true);
+    try {
+      const res = await fetch('/api/admin/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        showToast(result.error || 'Restore failed', 'error');
+        return;
+      }
+
+      const entries = Object.entries(result.counts as Record<string, number>)
+        .map(([table, count]) => `${count} ${table}`)
+        .join(', ');
+      showToast(`Restored: ${entries}`, 'success');
+      fetchUsers();
+    } catch {
+      showToast('Restore failed', 'error');
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   const handleExportArchived = async () => {
     setExportingArchived(true);
 
@@ -441,20 +494,34 @@ export default function AdminPage() {
               <Database className="h-5 w-5 text-accent-primary" />
               <h2 className="text-lg font-semibold text-text-primary">Database Backup</h2>
             </div>
-            <Button
-              onClick={handleBackup}
-              disabled={backingUp}
-            >
-              <Download className={`h-4 w-4 mr-2 ${backingUp ? 'animate-pulse' : ''}`} />
-              {backingUp ? 'Creating backup...' : 'Download Backup'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleBackup}
+                disabled={backingUp}
+              >
+                <Download className={`h-4 w-4 mr-2 ${backingUp ? 'animate-pulse' : ''}`} />
+                {backingUp ? 'Creating backup...' : 'Download Backup'}
+              </Button>
+              <input
+                ref={restoreInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleRestoreFileSelected}
+                className="hidden"
+              />
+              <Button
+                variant="danger"
+                onClick={() => restoreInputRef.current?.click()}
+                disabled={restoring}
+              >
+                <Upload className={`h-4 w-4 mr-2 ${restoring ? 'animate-pulse' : ''}`} />
+                {restoring ? 'Restoring...' : 'Restore'}
+              </Button>
+            </div>
           </div>
           <div className="p-4">
             <p className="text-sm text-text-secondary">
-              Download a complete backup of the database as a JSON file. This includes all users, workspaces, boards, lists, cards, comments, and attachments metadata.
-            </p>
-            <p className="text-xs text-text-secondary mt-2">
-              Note: To restore a backup, use the command line script: <code className="bg-bg-tertiary px-1 rounded">npx tsx lib/db/restore.ts</code>
+              Download a complete backup of the database as a JSON file, or restore from a previously exported backup. This includes all users, workspaces, boards, lists, cards, comments, and attachments metadata.
             </p>
           </div>
         </div>
