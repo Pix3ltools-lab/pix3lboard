@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-02-17
+
+### Added
+- **Structured Logging**: Pino JSON logging across all 47 API route files
+  - Configurable log level via `LOG_LEVEL` environment variable (defaults to `info`)
+  - Works on Vercel (Function Logs dashboard) and Docker (`docker compose logs`)
+  - `pino-pretty` devDependency for human-readable dev output (`npm run dev:pretty`)
+- **CI/CD Pipeline**: GitHub Actions workflow for automated lint, type-check, and E2E tests
+- **Database Backup & Restore**: Admin panel JSON export/import with atomic batch replace
+
+### Changed
+- All `console.error` / `console.log` calls in API routes replaced with `logger.error` / `logger.info`
+
+---
+
 ## [2.7.0] - 2026-02-14
 
 ### Added
