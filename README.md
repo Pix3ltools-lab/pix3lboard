@@ -371,10 +371,14 @@ All API routes use [Pino](https://getpino.io/) for structured JSON logging. Log 
 ```bash
 # Enable debug logging
 LOG_LEVEL=debug npm run start
+
+# Pretty-printed logs in development
+npm run dev:pretty
 ```
 
 - **Vercel**: JSON logs appear in the Function Logs dashboard
 - **Docker**: `docker compose logs -f pix3lboard`
+- **Local dev**: `npm run dev:pretty` for human-readable colored output
 
 ## Known Limitations
 

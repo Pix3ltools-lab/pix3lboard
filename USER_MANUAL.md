@@ -627,6 +627,7 @@ LOG_LEVEL=debug npm run start
 
 - **Vercel**: Logs appear in the Vercel Function Logs dashboard (Settings > Logs). JSON format is parsed automatically.
 - **Docker**: `docker compose logs -f pix3lboard` streams live logs to the terminal.
+- **Local dev**: `npm run dev:pretty` starts the dev server with human-readable colored log output.
 
 ---
 
