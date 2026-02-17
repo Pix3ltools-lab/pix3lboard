@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import logger from '../../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete share error:', error);
+    logger.error({ err: error }, 'Delete share error');
     return NextResponse.json({ error: 'Failed to delete share' }, { status: 500 });
   }
 }

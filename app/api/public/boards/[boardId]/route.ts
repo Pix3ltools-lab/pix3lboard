@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db/turso';
 import type { Board, List, Card } from '@/types';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -159,7 +160,7 @@ export async function GET(
 
     return NextResponse.json({ board });
   } catch (error) {
-    console.error('Load public board error:', error);
+    logger.error({ err: error }, 'Load public board error');
     return NextResponse.json({ error: 'Failed to load board' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';
 import { BoardRole } from '@/types/board';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,7 @@ export async function GET(
 
     return NextResponse.json({ shares });
   } catch (error) {
-    console.error('Get shares error:', error);
+    logger.error({ err: error }, 'Get shares error');
     return NextResponse.json({ error: 'Failed to get shares' }, { status: 500 });
   }
 }
@@ -177,7 +178,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Add share error:', error);
+    logger.error({ err: error }, 'Add share error');
     return NextResponse.json({ error: 'Failed to add share' }, { status: 500 });
   }
 }

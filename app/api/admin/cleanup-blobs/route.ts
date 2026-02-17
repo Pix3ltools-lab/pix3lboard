@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { list, del } from '@/lib/storage/blob';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       orphanedBlobs: result.orphaned,
     });
   } catch (error) {
-    console.error('Cleanup blobs error:', error);
+    logger.error({ err: error }, 'Cleanup blobs error');
     return NextResponse.json({ error: 'Failed to analyze blobs' }, { status: 500 });
   }
 }
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       failed: failed.length > 0 ? failed : undefined,
     });
   } catch (error) {
-    console.error('Cleanup blobs error:', error);
+    logger.error({ err: error }, 'Cleanup blobs error');
     return NextResponse.json({ error: 'Failed to cleanup blobs' }, { status: 500 });
   }
 }

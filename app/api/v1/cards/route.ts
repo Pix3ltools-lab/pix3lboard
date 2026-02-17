@@ -8,6 +8,7 @@ import { CreateCardSchema } from '@/lib/validation/apiSchemas';
 import { generateId } from '@/lib/utils/id';
 import { syncCardToFts } from '@/lib/db/fts';
 import { notifyAssignment } from '@/lib/db/notifications';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
           });
         }
       } catch (notifyError) {
-        console.error('Failed to send assignment notification:', notifyError);
+        logger.error({ err: notifyError }, 'Failed to send assignment notification');
       }
     }
 
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
       },
     }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/v1/cards error:', error);
+    logger.error({ err: error }, 'POST /api/v1/cards error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

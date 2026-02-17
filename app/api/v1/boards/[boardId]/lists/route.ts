@@ -5,6 +5,7 @@ import { getBoardRole } from '@/lib/auth/permissions';
 import { canView, canManageLists } from '@/lib/auth/permissions';
 import { CreateListSchema } from '@/lib/validation/apiSchemas';
 import { generateId } from '@/lib/utils/id';
+import logger from '../../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -107,7 +108,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('GET /api/v1/boards/[boardId]/lists error:', error);
+    logger.error({ err: error }, 'GET /api/v1/boards/[boardId]/lists error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -178,7 +179,7 @@ export async function POST(
       },
     }, { status: 201 });
   } catch (error) {
-    console.error('POST /api/v1/boards/[boardId]/lists error:', error);
+    logger.error({ err: error }, 'POST /api/v1/boards/[boardId]/lists error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

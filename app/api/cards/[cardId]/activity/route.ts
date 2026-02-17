@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import { getBoardRoleByCardId, canView } from '@/lib/auth/permissions';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -67,7 +68,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('Get activity error:', error);
+    logger.error({ err: error }, 'Get activity error');
     return NextResponse.json({ error: 'Failed to get activity' }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { queryOne, execute } from '@/lib/db/turso';
 import { getBoardRoleByCardId } from '@/lib/auth/permissions';
 import { canEditCards } from '@/lib/auth/permissions';
 import { syncCardToFts, removeCardFromFts } from '@/lib/db/fts';
+import logger from '../../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -93,7 +94,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('POST /api/v1/cards/[cardId]/archive error:', error);
+    logger.error({ err: error }, 'POST /api/v1/cards/[cardId]/archive error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

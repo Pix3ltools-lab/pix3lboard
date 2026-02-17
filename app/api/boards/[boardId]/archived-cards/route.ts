@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +64,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('Get archived cards error:', error);
+    logger.error({ err: error }, 'Get archived cards error');
     return NextResponse.json({ error: 'Failed to get archived cards' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute, getTursoClient } from '@/lib/db/turso';
 import { DataPayloadSchema } from '@/lib/validation/schemas';
 import type { Workspace, Board, List, Card } from '@/types';
+import logger from '../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -253,7 +254,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ workspaces });
   } catch (error) {
-    console.error('Load data error:', error);
+    logger.error({ err: error }, 'Load data error');
     return NextResponse.json({ error: 'Failed to load data' }, { status: 500 });
   }
 }
@@ -271,7 +272,7 @@ export async function POST(request: NextRequest) {
     const validation = DataPayloadSchema.safeParse(body);
 
     if (!validation.success) {
-      console.error('Validation error:', validation.error.issues);
+      logger.error({ err: validation.error.issues }, 'Validation error');
       return NextResponse.json(
         { error: 'Invalid data format' },
         { status: 400 }
@@ -461,7 +462,7 @@ export async function POST(request: NextRequest) {
             }
           );
         } catch (err) {
-          console.error(`Failed to restore archived card ${card.id}:`, err);
+          logger.error({ err, cardId: card.id }, 'Failed to restore archived card');
         }
       }
     }
@@ -586,7 +587,7 @@ export async function POST(request: NextRequest) {
       throw innerError;
     }
   } catch (error) {
-    console.error('Save data error:', error);
+    logger.error({ err: error }, 'Save data error');
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
   }
 }

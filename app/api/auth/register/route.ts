@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { register } from '@/lib/auth/auth';
 import { validateEmail, validatePassword, sanitizeInput } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       message: result.message
     });
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error({ err: error }, 'Register error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

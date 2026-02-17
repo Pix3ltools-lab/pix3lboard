@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import { getBoardRole, canView } from '@/lib/auth/permissions';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -235,7 +236,7 @@ export async function GET(
       query: searchQuery,
     });
   } catch (error) {
-    console.error('Search error:', error);
+    logger.error({ err: error }, 'Search error');
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 }

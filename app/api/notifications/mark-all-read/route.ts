@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { execute } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       updated: result.rowsAffected,
     });
   } catch (error) {
-    console.error('Mark all read error:', error);
+    logger.error({ err: error }, 'Mark all read error');
     return NextResponse.json({ error: 'Failed to mark notifications as read' }, { status: 500 });
   }
 }

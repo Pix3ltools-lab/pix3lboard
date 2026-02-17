@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById, approveUser } from '@/lib/auth/auth';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Approve user error:', error);
+    logger.error({ err: error }, 'Approve user error');
     return NextResponse.json({ error: 'Failed to approve user' }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { del } from '@/lib/storage/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export async function DELETE(
     try {
       await del(attachment.file_url);
     } catch (err) {
-      console.error('Failed to delete file from blob:', err);
+      logger.error({ err: err }, 'Failed to delete file from blob');
       // Continue anyway to clean up database
     }
 
@@ -58,7 +59,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete attachment error:', error);
+    logger.error({ err: error }, 'Delete attachment error');
     return NextResponse.json({ error: 'Failed to delete attachment' }, { status: 500 });
   }
 }

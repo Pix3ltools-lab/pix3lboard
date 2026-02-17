@@ -6,6 +6,7 @@ import { getBoardRoleByCardId, canView, canComment } from '@/lib/auth/permission
 import { logActivity } from '@/lib/db/activityLog';
 import { notifyComment } from '@/lib/db/notifications';
 import { syncCommentToFts } from '@/lib/db/fts';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -79,7 +80,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('Get comments error:', error);
+    logger.error({ err: error }, 'Get comments error');
     return NextResponse.json({ error: 'Failed to get comments' }, { status: 500 });
   }
 }
@@ -174,7 +175,7 @@ export async function POST(
         });
       }
     } catch (notifyError) {
-      console.error('Failed to send comment notification:', notifyError);
+      logger.error({ err: notifyError }, 'Failed to send comment notification');
       // Don't fail the request if notification fails
     }
 
@@ -193,7 +194,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Add comment error:', error);
+    logger.error({ err: error }, 'Add comment error');
     return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
   }
 }

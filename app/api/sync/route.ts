@@ -8,6 +8,7 @@ import { canManageBoard, canManageLists, canEditCards } from '@/lib/auth/permiss
 import { logActivity } from '@/lib/db/activityLog';
 import { notifyAssignment } from '@/lib/db/notifications';
 import { syncCardToFts, removeCardFromFts } from '@/lib/db/fts';
+import logger from '../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -618,7 +619,7 @@ async function applyCardChange(
             assignerName: assigner?.name || assigner?.email || 'Someone',
           });
         } catch (notifyError) {
-          console.error('Failed to send assignment notification:', notifyError);
+          logger.error({ err: notifyError }, 'Failed to send assignment notification');
           // Don't fail the sync if notification fails
         }
       }
@@ -660,7 +661,7 @@ export async function PATCH(request: NextRequest) {
     const validation = SyncPayloadSchema.safeParse(body);
 
     if (!validation.success) {
-      console.error('Sync validation error:', validation.error.issues);
+      logger.error({ err: validation.error.issues }, 'Sync validation error');
       return NextResponse.json(
         { error: 'Invalid sync payload', details: validation.error.issues },
         { status: 400 }
@@ -738,11 +739,11 @@ export async function PATCH(request: NextRequest) {
             });
           } catch (logError) {
             // Don't fail the sync if logging fails
-            console.error('Failed to log activity:', logError);
+            logger.error({ err: logError }, 'Failed to log activity');
           }
         }
       } catch (error) {
-        console.error('Failed to apply change:', change, error);
+        logger.error({ err: error, change }, 'Failed to apply change');
         failedChanges.push({
           change,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -760,7 +761,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Sync error:', error);
+    logger.error({ err: error }, 'Sync error');
     return NextResponse.json({ error: 'Failed to sync changes' }, { status: 500 });
   }
 }

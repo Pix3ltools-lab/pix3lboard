@@ -3,6 +3,7 @@ import { authenticateRequest } from '@/lib/auth/apiAuth';
 import { query } from '@/lib/db/turso';
 import { getBoardRole } from '@/lib/auth/permissions';
 import { canView } from '@/lib/auth/permissions';
+import logger from '../../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -191,7 +192,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('GET /api/v1/boards/[boardId]/cards error:', error);
+    logger.error({ err: error }, 'GET /api/v1/boards/[boardId]/cards error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

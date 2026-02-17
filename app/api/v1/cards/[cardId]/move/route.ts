@@ -4,6 +4,7 @@ import { queryOne, execute } from '@/lib/db/turso';
 import { getBoardRoleByCardId, getBoardRoleByListId } from '@/lib/auth/permissions';
 import { canEditCards } from '@/lib/auth/permissions';
 import { MoveCardSchema } from '@/lib/validation/apiSchemas';
+import logger from '../../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -143,7 +144,7 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    console.error('PATCH /api/v1/cards/[cardId]/move error:', error);
+    logger.error({ err: error }, 'PATCH /api/v1/cards/[cardId]/move error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

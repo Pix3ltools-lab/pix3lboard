@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import type { WorkspaceSummary } from '@/types';
+import logger from '../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: workspaces });
   } catch (error) {
-    console.error('Load workspaces error:', error);
+    logger.error({ err: error }, 'Load workspaces error');
     return NextResponse.json({ error: 'Failed to load workspaces' }, { status: 500 });
   }
 }

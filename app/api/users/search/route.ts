@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ users });
   } catch (error) {
-    console.error('User search error:', error);
+    logger.error({ err: error }, 'User search error');
     return NextResponse.json({ error: 'Failed to search users' }, { status: 500 });
   }
 }

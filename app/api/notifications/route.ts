@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import { checkDueDates } from '@/lib/db/notifications';
+import logger from '../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     try {
       await checkDueDates(payload.userId);
     } catch (error) {
-      console.error('Error checking due dates:', error);
+      logger.error({ err: error }, 'Error checking due dates');
       // Don't fail the request if due date check fails
     }
 
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Get notifications error:', error);
+    logger.error({ err: error }, 'Get notifications error');
     return NextResponse.json({ error: 'Failed to get notifications' }, { status: 500 });
   }
 }

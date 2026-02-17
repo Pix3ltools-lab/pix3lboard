@@ -4,6 +4,7 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';
 import { logActivity } from '@/lib/db/activityLog';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +84,7 @@ export async function GET(
 
     return NextResponse.json({ attachments });
   } catch (error) {
-    console.error('Get attachments error:', error);
+    logger.error({ err: error }, 'Get attachments error');
     return NextResponse.json({ error: 'Failed to get attachments' }, { status: 500 });
   }
 }
@@ -187,7 +188,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Upload attachment error:', error);
+    logger.error({ err: error }, 'Upload attachment error');
     return NextResponse.json({ error: 'Failed to upload attachment' }, { status: 500 });
   }
 }

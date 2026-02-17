@@ -4,6 +4,7 @@ import { queryOne, execute } from '@/lib/db/turso';
 import { getBoardRoleByListId } from '@/lib/auth/permissions';
 import { canManageLists } from '@/lib/auth/permissions';
 import { UpdateListSchema } from '@/lib/validation/apiSchemas';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +149,7 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    console.error('PATCH /api/v1/lists/[listId] error:', error);
+    logger.error({ err: error }, 'PATCH /api/v1/lists/[listId] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -176,7 +177,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/v1/lists/[listId] error:', error);
+    logger.error({ err: error }, 'DELETE /api/v1/lists/[listId] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

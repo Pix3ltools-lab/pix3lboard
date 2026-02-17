@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put, del } from '@/lib/storage/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,7 @@ export async function POST(
       try {
         await del(card.thumbnail);
       } catch (err) {
-        console.error('Failed to delete old thumbnail:', err);
+        logger.error({ err: err }, 'Failed to delete old thumbnail');
       }
     }
 
@@ -82,7 +83,7 @@ export async function POST(
       thumbnail: blob.url,
     });
   } catch (error) {
-    console.error('Upload thumbnail error:', error);
+    logger.error({ err: error }, 'Upload thumbnail error');
     return NextResponse.json({ error: 'Failed to upload thumbnail' }, { status: 500 });
   }
 }
@@ -124,7 +125,7 @@ export async function DELETE(
       try {
         await del(card.thumbnail);
       } catch (err) {
-        console.error('Failed to delete thumbnail from blob:', err);
+        logger.error({ err: err }, 'Failed to delete thumbnail from blob');
       }
     }
 
@@ -137,7 +138,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete thumbnail error:', error);
+    logger.error({ err: error }, 'Delete thumbnail error');
     return NextResponse.json({ error: 'Failed to delete thumbnail' }, { status: 500 });
   }
 }

@@ -601,6 +601,35 @@ Without `SLOW_MO` (or with `SLOW_MO=0`) tests run at normal speed.
 
 ---
 
+## Structured Logging
+
+Pix3lBoard uses [Pino](https://getpino.io/) for structured JSON logging across all API routes. Logs include timestamps, log levels, and error context for easier debugging and monitoring.
+
+### Log Level Configuration
+
+Set the `LOG_LEVEL` environment variable to control verbosity:
+
+| Level | What it logs |
+|-------|-------------|
+| `fatal` | Only fatal errors |
+| `error` | Errors (default minimum in production) |
+| `warn` | Warnings + above |
+| `info` | General info + above **(default)** |
+| `debug` | Debug details + above |
+| `trace` | Everything |
+
+```bash
+# Example: enable debug logging
+LOG_LEVEL=debug npm run start
+```
+
+### Viewing Logs
+
+- **Vercel**: Logs appear in the Vercel Function Logs dashboard (Settings > Logs). JSON format is parsed automatically.
+- **Docker**: `docker compose logs -f pix3lboard` streams live logs to the terminal.
+
+---
+
 ## CI/CD Pipeline
 
 Pix3lBoard uses GitHub Actions for continuous integration. Every push and pull request to `main` triggers an automated pipeline.

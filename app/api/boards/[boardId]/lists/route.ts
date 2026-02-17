@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import type { ListSummary } from '@/types';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +88,7 @@ export async function GET(
 
     return NextResponse.json({ data: lists });
   } catch (error) {
-    console.error('Load lists error:', error);
+    logger.error({ err: error }, 'Load lists error');
     return NextResponse.json({ error: 'Failed to load lists' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById, adminResetPassword } from '@/lib/auth/auth';
 import { validatePassword } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error({ err: error }, 'Reset password error');
     return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
   }
 }

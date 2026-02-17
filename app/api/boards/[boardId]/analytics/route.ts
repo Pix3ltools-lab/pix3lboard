@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import { getBoardRole, canView } from '@/lib/auth/permissions';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -180,7 +181,7 @@ export async function GET(
       leadTime: leadTimeData,
     });
   } catch (error) {
-    console.error('Analytics error:', error);
+    logger.error({ err: error }, 'Analytics error');
     return NextResponse.json(
       { error: 'Failed to load analytics' },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query, execute } from '@/lib/db/turso';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, isPublic });
   } catch (error) {
-    console.error('Toggle public error:', error);
+    logger.error({ err: error }, 'Toggle public error');
     return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
   }
 }

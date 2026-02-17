@@ -6,6 +6,7 @@ import {
   recordFailedAttempt,
   clearFailedAttempts,
 } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Token endpoint error:', error);
+    logger.error({ err: error }, 'Token endpoint error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

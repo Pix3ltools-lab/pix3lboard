@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import type { Card, PaginatedResponse } from '@/types';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +149,7 @@ export async function GET(
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Load cards error:', error);
+    logger.error({ err: error }, 'Load cards error');
     return NextResponse.json({ error: 'Failed to load cards' }, { status: 500 });
   }
 }

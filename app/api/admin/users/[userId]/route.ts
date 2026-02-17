@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById, deleteUser } from '@/lib/auth/auth';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete user error:', error);
+    logger.error({ err: error }, 'Delete user error');
     return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
   }
 }

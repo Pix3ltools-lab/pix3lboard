@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete comment error:', error);
+    logger.error({ err: error }, 'Delete comment error');
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }

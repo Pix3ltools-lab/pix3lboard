@@ -7,6 +7,7 @@ import { canView, canEditCards } from '@/lib/auth/permissions';
 import { UpdateCardSchema } from '@/lib/validation/apiSchemas';
 import { syncCardToFts, removeCardFromFts } from '@/lib/db/fts';
 import { notifyAssignment } from '@/lib/db/notifications';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -266,7 +267,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('GET /api/v1/cards/[cardId] error:', error);
+    logger.error({ err: error }, 'GET /api/v1/cards/[cardId] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -430,7 +431,7 @@ export async function PATCH(
           assignerName: assigner?.name || assigner?.email || 'Someone',
         });
       } catch (notifyError) {
-        console.error('Failed to send assignment notification:', notifyError);
+        logger.error({ err: notifyError }, 'Failed to send assignment notification');
       }
     }
 
@@ -456,7 +457,7 @@ export async function PATCH(
 
     return NextResponse.json({ data: formatCard(updated!) });
   } catch (error) {
-    console.error('PATCH /api/v1/cards/[cardId] error:', error);
+    logger.error({ err: error }, 'PATCH /api/v1/cards/[cardId] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -483,7 +484,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/v1/cards/[cardId] error:', error);
+    logger.error({ err: error }, 'DELETE /api/v1/cards/[cardId] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import {
   clearFailedAttempts,
   sanitizeInput,
 } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error({ err: error }, 'Login error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
 import { logActivity } from '@/lib/db/activityLog';
 import { syncCardToFts, removeCardFromFts } from '@/lib/db/fts';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +73,7 @@ export async function POST(
       isArchived: archive,
     });
   } catch (error) {
-    console.error('Archive card error:', error);
+    logger.error({ err: error }, 'Archive card error');
     return NextResponse.json({ error: 'Failed to archive card' }, { status: 500 });
   }
 }

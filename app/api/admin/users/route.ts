@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById, getAllUsers, adminCreateUser } from '@/lib/auth/auth';
 import { validateEmail, validatePassword } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     const users = await getAllUsers();
     return NextResponse.json({ users });
   } catch (error) {
-    console.error('Get users error:', error);
+    logger.error({ err: error }, 'Get users error');
     return NextResponse.json({ error: 'Failed to get users' }, { status: 500 });
   }
 }
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user: result.user });
   } catch (error) {
-    console.error('Create user error:', error);
+    logger.error({ err: error }, 'Create user error');
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { execute, queryOne } from '@/lib/db/turso';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Update notification error:', error);
+    logger.error({ err: error }, 'Update notification error');
     return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 });
   }
 }
@@ -90,7 +91,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete notification error:', error);
+    logger.error({ err: error }, 'Delete notification error');
     return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { getTursoClient } from '@/lib/db/turso';
 import type { InStatement } from '@libsql/client';
+import logger from '../../../../lib/logger'
 
 // FK-safe insert order — parents before children
 const TABLE_ORDER = [
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       totalStatements: statements.length,
     });
   } catch (err) {
-    console.error('Restore error:', err);
+    logger.error({ err: err }, 'Restore error');
     return NextResponse.json(
       { error: 'Restore failed', details: err instanceof Error ? err.message : String(err) },
       { status: 500 }

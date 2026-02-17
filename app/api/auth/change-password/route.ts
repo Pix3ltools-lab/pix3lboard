@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, changePassword } from '@/lib/auth/auth';
 import { validatePassword } from '@/lib/auth/validation';
+import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Change password error:', error);
+    logger.error({ err: error }, 'Change password error');
     return NextResponse.json({ error: 'Failed to change password' }, { status: 500 });
   }
 }

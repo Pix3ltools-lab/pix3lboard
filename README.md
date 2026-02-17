@@ -364,6 +364,18 @@ Pix3lBoard implements multiple layers of security:
 - **Export**: Download data as JSON backup anytime
 - **Cleanup**: Admin can analyze and delete orphaned blob files
 
+## Logging
+
+All API routes use [Pino](https://getpino.io/) for structured JSON logging. Log level is configurable via the `LOG_LEVEL` environment variable (defaults to `info`). Supported levels: `fatal`, `error`, `warn`, `info`, `debug`, `trace`.
+
+```bash
+# Enable debug logging
+LOG_LEVEL=debug npm run start
+```
+
+- **Vercel**: JSON logs appear in the Function Logs dashboard
+- **Docker**: `docker compose logs -f pix3lboard`
+
 ## Known Limitations
 
 - No undo/redo functionality

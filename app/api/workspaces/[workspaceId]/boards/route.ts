@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
 import type { BoardSummary } from '@/types';
+import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
 
@@ -128,7 +129,7 @@ export async function GET(
 
     return NextResponse.json({ data: boards });
   } catch (error) {
-    console.error('Load boards error:', error);
+    logger.error({ err: error }, 'Load boards error');
     return NextResponse.json({ error: 'Failed to load boards' }, { status: 500 });
   }
 }
