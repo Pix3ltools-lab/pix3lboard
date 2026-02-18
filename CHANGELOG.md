@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2026-02-18
+
+### Fixed
+- **FTS5 Search**: `cards_fts` table now always created in standalone mode, fixing
+  `no such column: T.card_id` errors on Docker/sqld. The `content='cards'` option
+  caused FTS5 to look for a column `card_id` in the source table, which only has `id`.
+
+---
+
 ## [2.8.0] - 2026-02-17
 
 ### Added

@@ -66,7 +66,7 @@ export default function LoginPage() {
       }}>
         <div style={{ marginBottom: '24px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
-            Welcome to Pix3lBoard v2.8.0
+            Welcome to Pix3lBoard v2.8.1
           </h1>
           <p style={{ color: '#666', fontSize: '14px' }}>
             Sign in to access your cloud workspaces

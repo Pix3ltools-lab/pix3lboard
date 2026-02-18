@@ -7,7 +7,7 @@ import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ExternalLink } from 'lucide-react';
 
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 
 export function Header() {
   const { isAuthenticated } = useAuth();
