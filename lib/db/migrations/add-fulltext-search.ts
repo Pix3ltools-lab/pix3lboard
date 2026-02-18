@@ -21,30 +21,18 @@ async function migrate() {
   // Step 1: Create FTS5 virtual tables
   console.log('Creating FTS5 virtual tables...');
 
-  try {
-    // Cards FTS table
-    await client.execute(`
-      CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts5(
-        card_id UNINDEXED,
-        title,
-        description,
-        content='cards',
-        content_rowid='rowid'
-      )
-    `);
-    console.log('  ✓ Created: cards_fts');
-  } catch (error) {
-    // FTS5 might not support content= syntax in Turso, try alternative
-    console.log('  → Trying alternative FTS5 syntax...');
-    await client.execute(`
-      CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts5(
-        card_id UNINDEXED,
-        title,
-        description
-      )
-    `);
-    console.log('  ✓ Created: cards_fts (standalone)');
-  }
+  // Cards FTS table - standalone mode (no content= option) required for
+  // manual upsert pattern (DELETE WHERE card_id + INSERT). The content table
+  // mode causes "no such column: T.card_id" because FTS5 looks for a column
+  // named card_id in the source table (cards), which only has id.
+  await client.execute(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS cards_fts USING fts5(
+      card_id UNINDEXED,
+      title,
+      description
+    )
+  `);
+  console.log('  ✓ Created: cards_fts');
 
   try {
     // Comments FTS table
@@ -94,9 +82,8 @@ async function migrate() {
   }
   console.log(`  ✓ Indexed ${commentCount} comments`);
 
-  // NOTE: FTS triggers are NOT created because they cause issues with Turso/libSQL.
-  // The error "no such column: T.card_id" occurs when triggers fire during UPDATE.
-  // Instead, FTS tables should be re-synced periodically or on-demand.
+  // NOTE: FTS triggers are NOT created. They would cause the same
+  // "no such column: T.card_id" error. Manual sync via fts.ts is used instead.
   //
   // To manually re-sync FTS tables, run:
   // - DELETE FROM cards_fts; INSERT INTO cards_fts SELECT id, title, COALESCE(description, '') FROM cards WHERE is_archived = 0;
