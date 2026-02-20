@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pix3lConfig = {
-    pix3lwikiUrl: process.env.PIX3LWIKI_URL || 'http://localhost:3001',
+    pix3lwikiUrl: process.env.PIX3LWIKI_URL || process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'http://localhost:3001',
   };
 
   return (
