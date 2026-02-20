@@ -25,9 +25,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pix3lConfig = {
+    pix3lwikiUrl: process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'http://localhost:3001',
+  };
+
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__PIX3L_CONFIG__ = ${JSON.stringify(pix3lConfig)};`,
+          }}
+        />
         <AppProvider>
           {children}
           <ToastContainer />

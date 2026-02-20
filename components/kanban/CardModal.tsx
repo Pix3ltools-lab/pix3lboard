@@ -24,6 +24,7 @@ import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye, BookOpen } from 'luc
 import { debounce } from '@/lib/utils/debounce';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useParams } from 'next/navigation';
+import { usePix3lConfig } from '@/lib/hooks/usePix3lConfig';
 import { BoardPermissions } from '@/lib/utils/boardPermissions';
 
 interface UserSuggestion {
@@ -56,6 +57,7 @@ export function CardModal({
   onArchive,
 }: CardModalProps) {
   const { user: currentUser } = useAuth();
+  const { pix3lwikiUrl } = usePix3lConfig();
   const params = useParams();
   const boardId = params?.boardId as string | undefined;
 
@@ -524,7 +526,7 @@ export function CardModal({
             {canEdit ? (
               <>
                 <a
-                  href={`${process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'https://wiki.pix3ltools.com'}/wiki/new${boardId ? `?board=${boardId}&card=${card.id}` : `?card=${card.id}`}`}
+                  href={`${pix3lwikiUrl}/wiki/new${boardId ? `?board=${boardId}&card=${card.id}` : `?card=${card.id}`}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"

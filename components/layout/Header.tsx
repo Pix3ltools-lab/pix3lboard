@@ -6,11 +6,13 @@ import { UserMenu } from './UserMenu';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ExternalLink } from 'lucide-react';
+import { usePix3lConfig } from '@/lib/hooks/usePix3lConfig';
 
 const APP_VERSION = '2.8.1';
 
 export function Header() {
   const { isAuthenticated } = useAuth();
+  const { pix3lwikiUrl } = usePix3lConfig();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-bg-tertiary bg-bg-primary/95 backdrop-blur">
@@ -27,7 +29,7 @@ export function Header() {
         {/* Right side */}
         <div className="flex items-center gap-4">
           <a
-            href={process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'https://wiki.pix3ltools.com'}
+            href={pix3lwikiUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
