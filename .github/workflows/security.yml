@@ -1,0 +1,82 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Tutti i job sono non-bloccanti: i risultati sono visibili in Actions
+# ma un fallimento non impedisce il merge. Rimuovere continue-on-error
+# quando si vuole rendere i check obbligatori.
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit (npm audit)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate --json > npm-audit.json || true
+
+      - name: Summary
+        run: |
+          echo "### npm audit" >> $GITHUB_STEP_SUMMARY
+          high=$(cat npm-audit.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); const m=d.metadata?.vulnerabilities||{}; console.log('high: '+(m.high||0)+', critical: '+(m.critical||0)+', moderate: '+(m.moderate||0))" 2>/dev/null || echo "parse error")
+          echo "$high" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
+          retention-days: 30
+
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep --quiet
+
+      - name: Run Semgrep
+        run: |
+          semgrep scan \
+            --config=p/typescript \
+            --config=p/react \
+            --config=p/jwt \
+            --config=p/sql-injection \
+            --config=p/owasp-top-ten \
+            --json \
+            --output=semgrep-report.json \
+            . || true
+
+      - name: Summary
+        run: |
+          echo "### Semgrep" >> $GITHUB_STEP_SUMMARY
+          count=$(cat semgrep-report.json | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log('findings: '+(d.results?.length||0))" 2>/dev/null || echo "parse error")
+          echo "$count" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Semgrep report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-report
+          path: semgrep-report.json
+          retention-days: 30
