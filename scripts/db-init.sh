@@ -47,7 +47,7 @@ if [ -n "${E2E_USER_EMAIL:-}" ] && [ -n "${E2E_USER_PASSWORD:-}" ]; then
       const now = new Date().toISOString();
       await client.execute({
         sql: 'INSERT OR IGNORE INTO users (id, email, password_hash, name, is_admin, is_approved, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 1, ?, ?)',
-        args: [id, process.env.E2E_USER_EMAIL, hash, 'CI Test User', now, now],
+        args: [id, process.env.E2E_USER_EMAIL, hash, 'Admin', now, now],
       });
       console.log('  Test user created (or already exists).');
     })();
