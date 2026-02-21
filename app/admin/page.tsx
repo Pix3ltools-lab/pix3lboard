@@ -23,7 +23,13 @@ interface UserWithStats {
 }
 
 interface StorageInfo {
-  db: { pageCount: number; pageSize: number; sizeMB: string };
+  db: {
+    pageCount: number;
+    pageSize: number;
+    totalSizeMB: string;
+    pix3lboardSizeMB: string | null;
+    pix3lwikiSizeMB: string | null;
+  };
   blobs: { count: number; totalSize: number; totalSizeMB: string };
 }
 
@@ -587,22 +593,45 @@ export default function AdminPage() {
           </div>
           <div className="p-4">
             {storageLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
               </div>
             ) : storageInfo ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Pix3lboard DB */}
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
                   <Database className="h-6 w-6 text-accent-primary flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-text-secondary">Database</p>
-                    <p className="text-2xl font-bold text-text-primary">{storageInfo.db.sizeMB} MB</p>
-                    <p className="text-xs text-text-secondary">
-                      {storageInfo.db.pageCount} pages × {storageInfo.db.pageSize} bytes
+                    <p className="text-xs text-text-secondary">Pix3lboard DB</p>
+                    <p className="text-2xl font-bold text-text-primary">
+                      {storageInfo.db.pix3lboardSizeMB ?? '—'} MB
                     </p>
+                    {storageInfo.db.pix3lboardSizeMB === null && (
+                      <p className="text-xs text-text-secondary">
+                        Total shared: {storageInfo.db.totalSizeMB} MB
+                      </p>
+                    )}
+                    {storageInfo.db.pix3lboardSizeMB !== null && (
+                      <p className="text-xs text-text-secondary">
+                        {storageInfo.db.pageCount} pages × {storageInfo.db.pageSize} B
+                      </p>
+                    )}
                   </div>
                 </div>
+                {/* Pix3lwiki DB */}
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                  <Database className="h-6 w-6 text-text-secondary flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-text-secondary">Pix3lwiki DB</p>
+                    <p className="text-2xl font-bold text-text-primary">
+                      {storageInfo.db.pix3lwikiSizeMB ?? '—'} MB
+                    </p>
+                    <p className="text-xs text-text-secondary">shared database</p>
+                  </div>
+                </div>
+                {/* Blob Storage */}
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
                   <HardDrive className="h-6 w-6 text-accent-primary flex-shrink-0" />
                   <div>
