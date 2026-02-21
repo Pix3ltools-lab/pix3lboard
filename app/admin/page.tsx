@@ -593,54 +593,64 @@ export default function AdminPage() {
           </div>
           <div className="p-4">
             {storageLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
                 <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
               </div>
             ) : storageInfo ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Pix3lboard DB */}
-                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
-                  <Database className="h-6 w-6 text-accent-primary flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-text-secondary">Pix3lboard DB</p>
-                    <p className="text-2xl font-bold text-text-primary">
-                      {storageInfo.db.pix3lboardSizeMB ?? '—'} MB
-                    </p>
-                    {storageInfo.db.pix3lboardSizeMB === null && (
-                      <p className="text-xs text-text-secondary">
-                        Total shared: {storageInfo.db.totalSizeMB} MB
-                      </p>
-                    )}
-                    {storageInfo.db.pix3lboardSizeMB !== null && (
+              storageInfo.db.pix3lboardSizeMB !== null ? (
+                /* dbstat available: split by app */
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                    <Database className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-secondary">Pix3lboard DB</p>
+                      <p className="text-2xl font-bold text-text-primary">{storageInfo.db.pix3lboardSizeMB} MB</p>
                       <p className="text-xs text-text-secondary">
                         {storageInfo.db.pageCount} pages × {storageInfo.db.pageSize} B
                       </p>
-                    )}
+                    </div>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                    <Database className="h-6 w-6 text-text-secondary flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-secondary">Pix3lwiki DB</p>
+                      <p className="text-2xl font-bold text-text-primary">{storageInfo.db.pix3lwikiSizeMB} MB</p>
+                      <p className="text-xs text-text-secondary">shared database</p>
+                    </div>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                    <HardDrive className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-secondary">Blob Storage</p>
+                      <p className="text-2xl font-bold text-text-primary">{storageInfo.blobs.totalSizeMB} MB</p>
+                      <p className="text-xs text-text-secondary">{storageInfo.blobs.count} files</p>
+                    </div>
                   </div>
                 </div>
-                {/* Pix3lwiki DB */}
-                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
-                  <Database className="h-6 w-6 text-text-secondary flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-text-secondary">Pix3lwiki DB</p>
-                    <p className="text-2xl font-bold text-text-primary">
-                      {storageInfo.db.pix3lwikiSizeMB ?? '—'} MB
-                    </p>
-                    <p className="text-xs text-text-secondary">shared database</p>
+              ) : (
+                /* dbstat not available: single shared DB card */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                    <Database className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-secondary">Shared DB (pix3lboard + pix3lwiki)</p>
+                      <p className="text-2xl font-bold text-text-primary">{storageInfo.db.totalSizeMB} MB</p>
+                      <p className="text-xs text-text-secondary">
+                        {storageInfo.db.pageCount} pages × {storageInfo.db.pageSize} B
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                    <HardDrive className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-text-secondary">Blob Storage</p>
+                      <p className="text-2xl font-bold text-text-primary">{storageInfo.blobs.totalSizeMB} MB</p>
+                      <p className="text-xs text-text-secondary">{storageInfo.blobs.count} files</p>
+                    </div>
                   </div>
                 </div>
-                {/* Blob Storage */}
-                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
-                  <HardDrive className="h-6 w-6 text-accent-primary flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-text-secondary">Blob Storage</p>
-                    <p className="text-2xl font-bold text-text-primary">{storageInfo.blobs.totalSizeMB} MB</p>
-                    <p className="text-xs text-text-secondary">{storageInfo.blobs.count} files</p>
-                  </div>
-                </div>
-              </div>
+              )
             ) : (
               <p className="text-sm text-text-secondary">Storage info unavailable</p>
             )}
