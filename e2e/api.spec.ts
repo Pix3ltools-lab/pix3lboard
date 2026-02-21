@@ -183,6 +183,11 @@ test.describe('REST API v1', () => {
     expect(body.error).toBeTruthy();
   });
 
+  test('GET /api/admin/storage-info — 403 without admin cookie', async ({ request }) => {
+    const res = await request.get(`${BASE_URL}/api/admin/storage-info`);
+    expect(res.status()).toBe(403);
+  });
+
   test('POST /api/auth/token — 401 invalid credentials', async ({ request }) => {
     const res = await request.post(`${BASE_URL}/api/auth/token`, {
       data: { email: E2E_EMAIL, password: 'totally-wrong-password' },

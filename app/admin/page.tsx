@@ -22,6 +22,11 @@ interface UserWithStats {
   board_count: number;
 }
 
+interface StorageInfo {
+  db: { pageCount: number; pageSize: number; sizeMB: string };
+  blobs: { count: number; totalSize: number; totalSizeMB: string };
+}
+
 interface BlobCleanupResult {
   message: string;
   orphanedCount: number;
@@ -67,6 +72,8 @@ export default function AdminPage() {
   const [restoring, setRestoring] = useState(false);
   const restoreInputRef = useRef<HTMLInputElement>(null);
   const [exportingArchived, setExportingArchived] = useState(false);
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
+  const [storageLoading, setStorageLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -81,6 +88,7 @@ export default function AdminPage() {
 
     if (user?.is_admin) {
       fetchUsers();
+      fetchStorageInfo();
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -407,6 +415,19 @@ export default function AdminPage() {
     }
   };
 
+  const fetchStorageInfo = async () => {
+    setStorageLoading(true);
+    try {
+      const res = await fetch('/api/admin/storage-info');
+      if (!res.ok) throw new Error();
+      setStorageInfo(await res.json());
+    } catch {
+      showToast('Failed to load storage info', 'error');
+    } finally {
+      setStorageLoading(false);
+    }
+  };
+
   if (isLoading || !user?.is_admin) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -545,6 +566,55 @@ export default function AdminPage() {
             <p className="text-sm text-text-secondary">
               Export all archived cards as a JSON file. Includes card details, workspace/board/list names, tags, checklists, and all comments with author information.
             </p>
+          </div>
+        </div>
+
+        {/* Storage Usage Section */}
+        <div className="bg-bg-secondary rounded-lg border border-bg-tertiary overflow-hidden mb-8">
+          <div className="p-4 border-b border-bg-tertiary flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <HardDrive className="h-5 w-5 text-accent-primary" />
+              <h2 className="text-lg font-semibold text-text-primary">Storage Usage</h2>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={fetchStorageInfo}
+              disabled={storageLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${storageLoading ? 'animate-spin' : ''}`} />
+              {storageLoading ? 'Loading...' : 'Refresh'}
+            </Button>
+          </div>
+          <div className="p-4">
+            {storageLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 animate-pulse h-20" />
+              </div>
+            ) : storageInfo ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                  <Database className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-text-secondary">Database</p>
+                    <p className="text-2xl font-bold text-text-primary">{storageInfo.db.sizeMB} MB</p>
+                    <p className="text-xs text-text-secondary">
+                      {storageInfo.db.pageCount} pages × {storageInfo.db.pageSize} bytes
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-bg-tertiary/50 rounded-lg p-4 flex items-center gap-3">
+                  <HardDrive className="h-6 w-6 text-accent-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-text-secondary">Blob Storage</p>
+                    <p className="text-2xl font-bold text-text-primary">{storageInfo.blobs.totalSizeMB} MB</p>
+                    <p className="text-xs text-text-secondary">{storageInfo.blobs.count} files</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-text-secondary">Storage info unavailable</p>
+            )}
           </div>
         </div>
 
