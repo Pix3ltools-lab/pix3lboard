@@ -8,6 +8,7 @@
 [![Version](https://img.shields.io/badge/Version-2.7.0-orange.svg?style=flat)](#)
 [![REST API](https://img.shields.io/badge/REST_API-v1-blue.svg?style=flat&logo=swagger&logoColor=white)](/docs)
 [![Platform](https://img.shields.io/badge/Platform-Vercel-black.svg?style=flat&logo=vercel)](https://vercel.com/)
+[![Platform](https://img.shields.io/badge/Platform-Docker-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://github.com/Pix3ltools-lab/pix3ltools-deploy)
 
 [![AI Creators Kanban](https://img.shields.io/badge/✨-Built_for_AI_Creators-blueviolet?style=for-the-badge&logo=midjourney&logoColor=white)](https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql)
 [![Demo Video](https://img.shields.io/badge/▶️-Watch_Demo-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=1yUgNO1Q6Nc)
