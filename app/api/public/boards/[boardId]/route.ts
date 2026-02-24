@@ -42,7 +42,6 @@ interface CardRow {
   responsible: string | null;
   responsible_user_id: string | null;
   responsible_user_name: string | null;
-  responsible_user_email: string | null;
   job_number: string | null;
   severity: string | null;
   priority: string | null;
@@ -86,7 +85,7 @@ export async function GET(
     let cardRows: CardRow[] = [];
     if (listIds.length > 0) {
       cardRows = await query<CardRow>(
-        `SELECT c.*, u.name as responsible_user_name, u.email as responsible_user_email
+        `SELECT c.*, u.name as responsible_user_name
          FROM cards c
          LEFT JOIN users u ON u.id = c.responsible_user_id
          WHERE c.list_id IN (${listIds.map((_, i) => `:l${i}`).join(',')}) AND (c.is_archived = 0 OR c.is_archived IS NULL)
@@ -142,7 +141,6 @@ export async function GET(
             responsible: c.responsible || undefined,
             responsibleUserId: c.responsible_user_id || undefined,
             responsibleUserName: c.responsible_user_name || undefined,
-            responsibleUserEmail: c.responsible_user_email || undefined,
             jobNumber: c.job_number || undefined,
             severity: c.severity || undefined,
             priority: c.priority || undefined,
