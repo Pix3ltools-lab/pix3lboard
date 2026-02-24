@@ -5,7 +5,7 @@
 [![Turso](https://img.shields.io/badge/Turso-SQLite-4FF8D2.svg?style=flat&logo=turso)](https://turso.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.7.0-orange.svg?style=flat)](#)
+[![Version](https://img.shields.io/badge/Version-2.8.7-orange.svg?style=flat)](#)
 [![REST API](https://img.shields.io/badge/REST_API-v1-blue.svg?style=flat&logo=swagger&logoColor=white)](/docs)
 [![Platform](https://img.shields.io/badge/Platform-Vercel-black.svg?style=flat&logo=vercel)](https://vercel.com/)
 [![Platform](https://img.shields.io/badge/Platform-Docker-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://github.com/Pix3ltools-lab/pix3ltools-deploy)
