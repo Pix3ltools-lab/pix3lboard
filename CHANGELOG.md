@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.7] - 2026-02-24
+
+### Security
+- Reduce JWT expiry from 7 days to 2h (attack window for stolen tokens reduced from 7 days to max 2h)
+- Add `POST /api/auth/refresh` endpoint: reissues a fresh 2h JWT if the current token is still valid; cookie maxAge stays 7 days so the browser retains it across restarts
+- `AuthContext`: silent token refresh every 55 minutes via `setInterval` keeps active sessions alive indefinitely; `clearInterval` on unmount
+- Update `POST /api/auth/token` response: `expires_in` field updated from `7d` to `2h`
+
+---
+
 ## [2.8.6] - 2026-02-21
 
 ### Added
