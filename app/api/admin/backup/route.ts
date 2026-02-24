@@ -46,7 +46,12 @@ export async function GET(request: NextRequest) {
     for (const table of tables) {
       const tableName = table.name;
       const rows = await query<Record<string, unknown>>(`SELECT * FROM ${tableName}`);
-      backup[tableName] = rows;
+      // Exclude password_hash from users: hashes in a backup file are an offline attack vector
+      if (tableName === 'users') {
+        backup[tableName] = rows.map(({ password_hash: _, ...rest }) => rest);
+      } else {
+        backup[tableName] = rows;
+      }
     }
 
     // Generate filename with timestamp
