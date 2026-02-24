@@ -18,12 +18,11 @@ const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-powerpoint',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  // Images
+  // Images (SVG excluded: XSS risk when served inline)
   'image/jpeg',
   'image/png',
   'image/gif',
   'image/webp',
-  'image/svg+xml',
   // Text
   'text/plain',
   'text/csv',
@@ -137,7 +136,7 @@ export async function POST(
     // Validate MIME type (security whitelist)
     if (!file.type || !ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json({
-        error: 'File type not allowed. Allowed types: PDF, Word, Excel, PowerPoint, images (JPG, PNG, GIF, WebP, SVG), text files, and ZIP archives.'
+        error: 'File type not allowed. Allowed types: PDF, Word, Excel, PowerPoint, images (JPG, PNG, GIF, WebP), text files, and ZIP archives.'
       }, { status: 400 });
     }
 

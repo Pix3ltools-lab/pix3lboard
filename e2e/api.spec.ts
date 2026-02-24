@@ -19,7 +19,7 @@ test.describe('REST API v1', () => {
 
     const body = await res.json();
     expect(body.token).toBeTruthy();
-    expect(body.expires_in).toBe('7d');
+    expect(body.expires_in).toBe('2h');
     expect(body.user).toBeTruthy();
     expect(body.user.email).toBe(E2E_EMAIL);
 
