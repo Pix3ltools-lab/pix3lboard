@@ -49,12 +49,18 @@ export async function GET(
     const ext = path.extname(resolved).toLowerCase();
     const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
 
-    return new NextResponse(file, {
-      headers: {
-        'Content-Type': mimeType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
+    const headers: Record<string, string> = {
+      'Content-Type': mimeType,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    };
+
+    // Force download for SVG to prevent stored XSS via inline execution
+    if (ext === '.svg') {
+      headers['Content-Disposition'] = 'attachment';
+      headers['X-Content-Type-Options'] = 'nosniff';
+    }
+
+    return new NextResponse(file, { headers });
   } catch {
     return NextResponse.json({ error: 'File not found' }, { status: 404 });
   }
