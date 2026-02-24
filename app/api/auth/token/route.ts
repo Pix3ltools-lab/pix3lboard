@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       token: result.token,
-      expires_in: '7d',
+      expires_in: '2h',
       user: {
         id: result.user.id,
         email: result.user.email,

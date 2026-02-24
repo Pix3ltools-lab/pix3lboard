@@ -66,8 +66,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
+    // Refresh token every 55 minutes to maintain active sessions.
+    // If the JWT expires (user inactive >2h), refresh returns 401
+    // and the user will be redirected to login on next navigation.
+    const refreshInterval = setInterval(() => {
+      fetch('/api/auth/refresh', { method: 'POST' }).catch(() => {});
+    }, 55 * 60 * 1000);
+
     return () => {
       mounted = false;
+      clearInterval(refreshInterval);
     };
   }, []);
 
