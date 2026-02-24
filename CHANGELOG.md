@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.8] - 2026-02-24
+
+### Security
+- Remove `image/svg+xml` from upload whitelist — SVG files can contain inline scripts and cause stored XSS when served from the same origin (PR #4)
+- Prevent SQL injection in admin restore: restrict tables to hardcoded whitelist, validate column names with regex before SQL interpolation (PR #5)
+- Omit `responsibleUserEmail` from public board API response — PII was exposed to unauthenticated visitors (PR #6)
+- Exclude `password_hash` from admin backup export — bcrypt hashes are no longer present in downloaded backup JSON (PR #7)
+- Validate `pix3lwikiUrl` before injecting into `window.__PIX3L_CONFIG__` — internal Docker URLs (e.g. `http://pix3lwiki:3000`) now fall back to the public HTTPS default (PR #8)
+- Local storage (Docker): serve existing SVG files with `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff` as defense-in-depth
+
+---
+
 ## [2.8.7] - 2026-02-24
 
 ### Security
