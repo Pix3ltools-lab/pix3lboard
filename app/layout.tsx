@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { z } from 'zod';
 import './globals.css';
 import { AppProvider } from '@/components/providers/AppProvider';
 import { ToastContainer } from '@/components/ui/Toast';
@@ -27,9 +28,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pix3lConfig = {
-    pix3lwikiUrl: process.env.PIX3LWIKI_URL || process.env.NEXT_PUBLIC_PIX3LWIKI_URL || 'http://localhost:3001',
-  };
+  const rawWikiUrl = process.env.PIX3LWIKI_URL || process.env.NEXT_PUBLIC_PIX3LWIKI_URL || '';
+  const parsed = z.string().url().safeParse(rawWikiUrl);
+  const pix3lwikiUrl = (parsed.success && parsed.data.startsWith('https://'))
+    ? parsed.data
+    : 'https://wiki.pix3ltools.com';
+
+  const pix3lConfig = { pix3lwikiUrl };
 
   return (
     <html lang="en" className="dark">
