@@ -20,8 +20,10 @@ const TABLE_ORDER = [
   'notifications',
 ];
 
-// Tables to skip during restore
-const SKIP_TABLES = new Set(['_meta', 'cards_fts', 'cards_fts_data', 'cards_fts_idx', 'cards_fts_content', 'cards_fts_docsize', 'cards_fts_config']);
+// Validates that a name is a safe SQL identifier (alphanumeric + underscore, no spaces or special chars)
+function isValidIdentifier(name: string): boolean {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+}
 
 const backupSchema = z.record(z.string(), z.array(z.record(z.string(), z.unknown())));
 
@@ -64,19 +66,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing _meta in backup' }, { status: 400 });
     }
 
-    // Determine which tables to restore (from backup, in FK order)
+    // Determine which tables to restore (from backup, in FK order only — no extra tables)
     const tablesToRestore = TABLE_ORDER.filter(t => backup[t] && backup[t].length > 0);
-
-    // Also include any unknown tables from backup that aren't in our order or skip list
-    const knownTables = new Set([...TABLE_ORDER, ...SKIP_TABLES]);
-    const extraTables = Object.keys(backup).filter(t => !knownTables.has(t) && !t.startsWith('sqlite_'));
-    tablesToRestore.push(...extraTables);
 
     const statements: InStatement[] = [];
 
     // Delete in reverse FK order (children first)
     const deleteOrder = [...tablesToRestore].reverse();
     for (const table of deleteOrder) {
+      // table names come from TABLE_ORDER (hardcoded), safe to interpolate
       statements.push({ sql: `DELETE FROM ${table}`, args: [] });
     }
 
@@ -90,6 +88,16 @@ export async function POST(request: NextRequest) {
 
       for (const row of rows) {
         const columns = Object.keys(row);
+
+        // Validate every column name before interpolating into SQL
+        const invalidColumns = columns.filter(c => !isValidIdentifier(c));
+        if (invalidColumns.length > 0) {
+          return NextResponse.json(
+            { error: `Invalid column names in table "${table}": ${invalidColumns.join(', ')}` },
+            { status: 400 }
+          );
+        }
+
         const placeholders = columns.map(() => '?').join(', ');
         const values = columns.map(c => {
           const v = row[c];
