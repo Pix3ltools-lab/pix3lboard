@@ -5,10 +5,15 @@ import {
   checkRateLimit,
   recordFailedAttempt,
   clearFailedAttempts,
+  getClientIp,
+  IP_LOGIN_MAX_ATTEMPTS,
+  IP_LOGIN_LOCKOUT,
 } from '@/lib/auth/validation';
 import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
+
+const IP_CONFIG = { maxAttempts: IP_LOGIN_MAX_ATTEMPTS, lockoutDuration: IP_LOGIN_LOCKOUT };
 
 /**
  * @swagger
@@ -72,7 +77,23 @@ export async function POST(request: NextRequest) {
     const { email, password } = validation.data;
     const normalizedEmail = email.toLowerCase();
 
-    // Check rate limiting
+    // Check IP rate limit (credential stuffing protection).
+    // Skipped silently if IP cannot be determined (Docker without proxy).
+    const clientIp = getClientIp(request);
+    if (clientIp) {
+      const ipRateLimit = await checkRateLimit(clientIp, 'token-ip', IP_CONFIG);
+      if (!ipRateLimit.allowed) {
+        return NextResponse.json(
+          { error: ipRateLimit.error },
+          {
+            status: 429,
+            headers: ipRateLimit.retryAfter ? { 'Retry-After': String(ipRateLimit.retryAfter) } : {},
+          }
+        );
+      }
+    }
+
+    // Check per-email rate limit
     const rateLimit = await checkRateLimit(normalizedEmail, 'api-token');
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -88,10 +109,15 @@ export async function POST(request: NextRequest) {
 
     if ('error' in result) {
       await recordFailedAttempt(normalizedEmail, 'api-token');
+      // Record IP failure only; do not clear IP counter on success to prevent
+      // an attacker from resetting the counter by logging into their own account.
+      if (clientIp) {
+        await recordFailedAttempt(clientIp, 'token-ip', IP_CONFIG);
+      }
       return NextResponse.json({ error: result.error }, { status: 401 });
     }
 
-    // Clear failed attempts on success
+    // Clear per-email failed attempts on success
     await clearFailedAttempts(normalizedEmail, 'api-token');
 
     return NextResponse.json({
