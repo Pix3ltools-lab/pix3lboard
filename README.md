@@ -120,7 +120,7 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm or yarn
 - Turso account (free tier available)
 
