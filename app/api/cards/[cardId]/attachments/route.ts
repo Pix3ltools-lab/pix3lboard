@@ -4,33 +4,10 @@ import { verifyToken } from '@/lib/auth/auth';
 import { query, queryOne, execute } from '@/lib/db/turso';
 import { nanoid } from 'nanoid';
 import { logActivity } from '@/lib/db/activityLog';
+import { ALLOWED_ATTACHMENT_MIME_TYPES, verifyMagicBytes } from '@/lib/validation/mimeValidation';
 import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
-
-// Allowed MIME types for file uploads (security whitelist)
-const ALLOWED_MIME_TYPES = [
-  // Documents
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  // Images (SVG excluded: XSS risk when served inline)
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  // Text
-  'text/plain',
-  'text/csv',
-  'text/markdown',
-  // Archives (optional - can be removed if not needed)
-  'application/zip',
-  'application/x-zip-compressed',
-];
 
 interface Attachment {
   id: string;
@@ -133,10 +110,19 @@ export async function POST(
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
     }
 
-    // Validate MIME type (security whitelist)
-    if (!file.type || !ALLOWED_MIME_TYPES.includes(file.type)) {
+    // Validate declared MIME type against whitelist
+    if (!file.type || !(ALLOWED_ATTACHMENT_MIME_TYPES as readonly string[]).includes(file.type)) {
       return NextResponse.json({
         error: 'File type not allowed. Allowed types: PDF, Word, Excel, PowerPoint, images (JPG, PNG, GIF, WebP), text files, and ZIP archives.'
+      }, { status: 400 });
+    }
+
+    // Verify actual file content matches declared MIME type using magic bytes.
+    // Prevents a spoofed Content-Type bypass (e.g. .php renamed to .jpg).
+    const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    if (!verifyMagicBytes(header, file.type)) {
+      return NextResponse.json({
+        error: 'File content does not match the declared file type.'
       }, { status: 400 });
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put, del } from '@/lib/storage/blob';
 import { verifyToken } from '@/lib/auth/auth';
 import { queryOne, execute } from '@/lib/db/turso';
+import { ALLOWED_IMAGE_MIME_TYPES, verifyMagicBytes } from '@/lib/validation/mimeValidation';
 import logger from '../../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
@@ -46,9 +47,20 @@ export async function POST(
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    // Validate declared MIME type against image whitelist
+    if (!file.type || !(ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(file.type)) {
+      return NextResponse.json({
+        error: 'File must be an image (JPG, PNG, GIF, or WebP).'
+      }, { status: 400 });
+    }
+
+    // Verify actual file content matches declared MIME type using magic bytes.
+    // Prevents a spoofed Content-Type bypass (e.g. .php renamed to .jpg).
+    const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    if (!verifyMagicBytes(header, file.type)) {
+      return NextResponse.json({
+        error: 'File content does not match the declared file type.'
+      }, { status: 400 });
     }
 
     // Validate file size (max 5MB)
