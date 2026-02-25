@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth/auth';
 import { query } from '@/lib/db/turso';
+import {
+  checkRateLimit,
+  recordFailedAttempt,
+} from '@/lib/auth/validation';
 import logger from '../../../../lib/logger'
 
 export const dynamic = 'force-dynamic';
+
+// 20 searches per minute per user; 5-minute lockout on breach.
+// Prevents systematic email enumeration (q=aa, q=ab, ...) while
+// leaving normal UI usage (a few searches per session) unaffected.
+const SEARCH_RATE_CONFIG = {
+  maxAttempts: 20,
+  lockoutDuration: 5 * 60 * 1000,  // 5 minutes
+  windowDuration: 60 * 1000,        // 1 minute window
+};
 
 interface UserSearchResult {
   id: string;
@@ -30,6 +43,21 @@ export async function GET(request: NextRequest) {
     if (!currentUser || !currentUser.is_approved) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
+
+    // Rate limit per authenticated user to prevent email enumeration
+    const rateLimitKey = `search:${payload.userId}`;
+    const rateLimit = await checkRateLimit(rateLimitKey, 'user-search', SEARCH_RATE_CONFIG);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.error },
+        {
+          status: 429,
+          headers: rateLimit.retryAfter ? { 'Retry-After': String(rateLimit.retryAfter) } : {},
+        }
+      );
+    }
+    // Count every search attempt (not just failed ones)
+    await recordFailedAttempt(rateLimitKey, 'user-search', SEARCH_RATE_CONFIG);
 
     // Extract query parameters
     const searchParams = request.nextUrl.searchParams;
