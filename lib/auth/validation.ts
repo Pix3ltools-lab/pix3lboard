@@ -1,13 +1,23 @@
 import { nanoid } from 'nanoid';
+import { NextRequest } from 'next/server';
 import { queryOne, execute } from '@/lib/db/turso';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Configuration
+// Default configuration (email-based rate limiting)
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes in ms
 const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 minutes in ms
+
+// IP-based rate limit configuration.
+// Higher thresholds than email to tolerate shared NAT (offices, etc.).
+// Login/token: 20 failed attempts per 15 min → 30 min lockout.
+// Register: 5 attempts (success or failure) per 15 min → 15 min lockout.
+export const IP_LOGIN_MAX_ATTEMPTS = 20;
+export const IP_LOGIN_LOCKOUT = 30 * 60 * 1000; // 30 minutes in ms
+export const IP_REGISTER_MAX_ATTEMPTS = 5;
+export const IP_REGISTER_LOCKOUT = 15 * 60 * 1000; // 15 minutes in ms
 
 interface RateLimitRecord {
   id: string;
@@ -17,6 +27,12 @@ interface RateLimitRecord {
   window_start: string;
   locked_until: string | null;
   created_at: string;
+}
+
+interface RateLimitConfig {
+  maxAttempts?: number;
+  lockoutDuration?: number;
+  windowDuration?: number;
 }
 
 export function validateEmail(email: string): { valid: boolean; error?: string } {
@@ -65,12 +81,28 @@ export function validatePassword(password: string): { valid: boolean; error?: st
   return { valid: true };
 }
 
+/**
+ * Extracts the real client IP from the request.
+ * On Vercel: request.ip is set by the edge runtime.
+ * On Docker: relies on the reverse proxy (Traefik/nginx) propagating
+ * X-Real-IP or X-Forwarded-For. Returns null if IP cannot be determined.
+ */
+export function getClientIp(request: NextRequest): string | null {
+  const ip =
+    request.ip ??
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    null;
+  return ip || null;
+}
+
 export async function checkRateLimit(
   identifier: string,
-  endpoint: string = 'login'
+  endpoint: string = 'login',
+  config?: RateLimitConfig
 ): Promise<{ allowed: boolean; error?: string; retryAfter?: number }> {
+  const windowDuration = config?.windowDuration ?? ATTEMPT_WINDOW;
   const now = Date.now();
-  const nowISO = new Date(now).toISOString();
 
   try {
     const record = await queryOne<RateLimitRecord>(
@@ -97,7 +129,7 @@ export async function checkRateLimit(
 
     // Reset if window has passed
     const windowStart = new Date(record.window_start).getTime();
-    if (now - windowStart > ATTEMPT_WINDOW) {
+    if (now - windowStart > windowDuration) {
       await execute(
         'DELETE FROM rate_limits WHERE identifier = :identifier AND endpoint = :endpoint',
         { identifier, endpoint }
@@ -117,8 +149,12 @@ export async function checkRateLimit(
 
 export async function recordFailedAttempt(
   identifier: string,
-  endpoint: string = 'login'
+  endpoint: string = 'login',
+  config?: RateLimitConfig
 ): Promise<void> {
+  const maxAttempts = config?.maxAttempts ?? MAX_ATTEMPTS;
+  const lockoutDuration = config?.lockoutDuration ?? LOCKOUT_DURATION;
+  const windowDuration = config?.windowDuration ?? ATTEMPT_WINDOW;
   const now = Date.now();
   const nowISO = new Date(now).toISOString();
 
@@ -146,7 +182,7 @@ export async function recordFailedAttempt(
 
     // Check if window has expired
     const windowStart = new Date(record.window_start).getTime();
-    if (now - windowStart > ATTEMPT_WINDOW) {
+    if (now - windowStart > windowDuration) {
       // Reset the window
       await execute(
         `UPDATE rate_limits
@@ -159,8 +195,8 @@ export async function recordFailedAttempt(
 
     // Increment attempts
     const newAttempts = record.attempts + 1;
-    const lockedUntil = newAttempts >= MAX_ATTEMPTS
-      ? new Date(now + LOCKOUT_DURATION).toISOString()
+    const lockedUntil = newAttempts >= maxAttempts
+      ? new Date(now + lockoutDuration).toISOString()
       : null;
 
     await execute(
