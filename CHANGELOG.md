@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.9] - 2026-02-25
+
+### Security
+- Rate limit fail-closed: `checkRateLimit` now returns `allowed: false` on DB error instead of silently disabling brute force protection
+- IP-based rate limiting on login, token and register endpoints: 20 failed attempts / 15 min per IP → 30 min lockout (login/token); 5 attempts / 15 min per IP → 15 min lockout (register). IP counter not cleared on success to prevent reset via own-account login. Falls back gracefully if IP cannot be determined (Docker without proxy)
+- Upgrade Docker base image from `node:18-alpine` (EOL) to `node:20-alpine`; run container as non-root user (`node`, uid 1000) with `HEALTHCHECK`
+- Rate limit user search endpoint (20 requests/min per user) to prevent systematic email enumeration via `GET /api/users/search`
+- Verify file content against magic bytes on upload (attachments and thumbnails): prevents MIME type spoofing (e.g. `.php` renamed `.jpg`). Covers JPEG, PNG, GIF, WebP, PDF, Office formats, ZIP. Text formats accepted on declared type (no reliable signature, low risk)
+
+### Docs
+- Add `scripts/smoke-test.sh` in `pix3ltools-deploy`: post-deploy check that `window.__PIX3L_CONFIG__.pix3lwikiUrl` is not `localhost` (verifies `force-dynamic` is active on `app/layout.tsx`)
+- Update Node.js prerequisite to 20+
+
+---
+
 ## [2.8.8] - 2026-02-24
 
 ### Security
