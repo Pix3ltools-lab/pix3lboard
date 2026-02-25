@@ -107,10 +107,11 @@ export async function checkRateLimit(
 
     return { allowed: true };
   } catch (error) {
-    // If database error, allow the request (fail-open for availability)
-    // but log the error for monitoring
+    // If database error, block the request (fail-closed) to prevent brute force
+    // when rate limit state is unavailable. Login would fail anyway (DB needed for
+    // credential check), so this does not reduce availability for legitimate users.
     console.error('Rate limit check error:', error);
-    return { allowed: true };
+    return { allowed: false, error: 'Service temporarily unavailable. Please try again shortly.' };
   }
 }
 
