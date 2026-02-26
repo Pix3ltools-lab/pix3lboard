@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import { z } from 'zod';
 import './globals.css';
 import { AppProvider } from '@/components/providers/AppProvider';
@@ -23,11 +24,13 @@ export const viewport: Viewport = {
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get('x-nonce') ?? '';
+
   const rawWikiUrl = process.env.PIX3LWIKI_URL || process.env.NEXT_PUBLIC_PIX3LWIKI_URL || '';
   const parsed = z.string().url().safeParse(rawWikiUrl);
   const pix3lwikiUrl = (parsed.success && parsed.data.startsWith('https://'))
@@ -40,6 +43,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={inter.className}>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `window.__PIX3L_CONFIG__ = ${JSON.stringify(pix3lConfig)};`,
           }}

@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
-const connectSrc = [
-  "'self'",
-  process.env.TURSO_DATABASE_URL?.startsWith('libsql://') ? 'https://*.turso.io' : '',
-  process.env.STORAGE_PROVIDER !== 'local' ? 'https://*.vercel-storage.com' : '',
-].filter(Boolean).join(' ');
+// Note: Content-Security-Policy is set per-request in middleware.ts (nonce support + per-path split for /docs).
+// Only static security headers are set here.
 
 const nextConfig = {
   reactStrictMode: true,
@@ -37,18 +34,6 @@ const nextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com",
-              "style-src 'self' 'unsafe-inline' https://unpkg.com",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' https://unpkg.com",
-              `connect-src ${connectSrc}`,
-              "frame-ancestors 'none'",
-            ].join('; '),
           },
         ],
       },
