@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.1] - 2026-02-27
+
+### Added
+
+- **Pix3lPrompt integration** — CORS headers added for `/api/auth/token` and `/api/v1/*` routes; pix3lprompt can now call the REST API v1 cross-origin using Bearer JWT (no credentials, explicit origin via `PIX3LPROMPT_URL` env var)
+- **`PIX3LPROMPT_URL` env var** — New environment variable to whitelist the pix3lprompt origin for CORS; must be set without trailing slash
+
+---
+
 ## [2.9.0] - 2026-02-26
 
 ### Security
