@@ -37,6 +37,23 @@ const nextConfig = {
           },
         ],
       },
+      // CORS for pix3lprompt cross-origin API access (Bearer token only, no credentials)
+      {
+        source: '/api/auth/token',
+        headers: [
+          { key: 'Access-Control-Allow-Origin',  value: process.env.PIX3LPROMPT_URL ?? '' },
+          { key: 'Access-Control-Allow-Methods', value: 'POST, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        ],
+      },
+      {
+        source: '/api/v1/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin',  value: process.env.PIX3LPROMPT_URL ?? '' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PATCH, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Authorization, Content-Type' },
+        ],
+      },
     ];
   },
 }
