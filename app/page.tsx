@@ -98,25 +98,6 @@ export default function Home() {
           </div>
 
           <div className="space-y-6">
-            {/* Experimental Warning */}
-            <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg">
-              <h3 className="font-semibold text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-2">
-                ⚠️ Experimental Demo
-              </h3>
-              <p className="text-sm text-text-secondary">
-                This is an <strong>experimental version</strong> of Pix3lBoard. Data persistence is not guaranteed
-                and may be reset at any time. Use this only as a demo. The project source code is available on{' '}
-                <a
-                  href="https://github.com/Pix3ltools-lab/pix3lboard"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-primary hover:underline"
-                >
-                  GitHub
-                </a>.
-              </p>
-            </div>
-
             {/* Cloud Storage Info */}
             <div className="p-4 bg-accent-primary/10 border border-accent-primary/20 rounded-lg">
               <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
