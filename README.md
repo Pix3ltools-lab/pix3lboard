@@ -12,6 +12,7 @@
 
 [![AI Creators Kanban](https://img.shields.io/badge/✨-Built_for_AI_Creators-blueviolet?style=for-the-badge&logo=midjourney&logoColor=white)](https://board.pix3ltools.com/public/3sZ6MGNB-KPP2qBJMELql)
 [![Demo Video](https://img.shields.io/badge/▶️-Watch_Demo-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=1yUgNO1Q6Nc)
+[![Presentation](https://img.shields.io/badge/▶️-Watch_Presentation-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=NkuibgIlhTE)
 
 **Prompt → Rating → Tool (Midjourney / Suno / Flux / etc.) → Job # → Secure Cloud Sharing**
 
