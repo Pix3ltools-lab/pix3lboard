@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Key, ChevronDown, Shield } from 'lucide-react';
+import { LogOut, Key, KeyRound, ChevronDown, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { ApiKeysModal } from './ApiKeysModal';
 
 export function UserMenu() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showApiKeys, setShowApiKeys] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -106,6 +108,16 @@ export function UserMenu() {
             <button
               onClick={() => {
                 setIsOpen(false);
+                setShowApiKeys(true);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+            >
+              <KeyRound className="h-4 w-4 text-text-secondary" />
+              API Keys
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
                 signOut();
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-bg-secondary transition-colors"
@@ -120,6 +132,10 @@ export function UserMenu() {
       <ChangePasswordModal
         isOpen={showChangePassword}
         onClose={() => setShowChangePassword(false)}
+      />
+      <ApiKeysModal
+        isOpen={showApiKeys}
+        onClose={() => setShowApiKeys(false)}
       />
     </div>
   );

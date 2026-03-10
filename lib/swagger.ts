@@ -15,6 +15,7 @@ export function getApiDocs() {
       { name: 'Boards', description: 'Board management' },
       { name: 'Lists', description: 'List management' },
       { name: 'Cards', description: 'Card management' },
+      { name: 'API Keys', description: 'API key management' },
     ],
     components: {
       securitySchemes: {
@@ -475,6 +476,101 @@ export function getApiDocs() {
             '200': { description: 'Card archived/unarchived' },
             '400': { description: 'Invalid action' },
             '403': { description: 'Forbidden' },
+          },
+        },
+      },
+      '/api/v1/api-keys': {
+        get: {
+          summary: 'List API keys',
+          tags: ['API Keys'],
+          security: [{ BearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'List of API keys (key values never returned)',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            key_prefix: { type: 'string' },
+                            created_at: { type: 'string', format: 'date-time' },
+                            last_used_at: { type: 'string', format: 'date-time', nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+        post: {
+          summary: 'Create a new API key',
+          tags: ['API Keys'],
+          security: [{ BearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name'],
+                  properties: {
+                    name: { type: 'string', maxLength: 100 },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'API key created — the key value is returned only once',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          key: { type: 'string', description: 'Full key value — shown only on creation' },
+                          key_prefix: { type: 'string' },
+                          created_at: { type: 'string', format: 'date-time' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '400': { description: 'Invalid input or limit reached' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/api/v1/api-keys/{keyId}': {
+        delete: {
+          summary: 'Revoke an API key',
+          tags: ['API Keys'],
+          security: [{ BearerAuth: [] }],
+          parameters: [
+            { in: 'path', name: 'keyId', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'API key revoked' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'API key not found' },
           },
         },
       },

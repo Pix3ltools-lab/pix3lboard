@@ -103,3 +103,9 @@ export const MoveCardSchema = z.object({
   list_id: z.string().max(50),
   position: z.number().int().min(0),
 });
+
+// --- API Keys ---
+
+export const CreateApiKeySchema = z.object({
+  name: z.string().min(1).max(100),
+});

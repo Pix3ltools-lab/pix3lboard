@@ -18,7 +18,8 @@ for f in lib/db/migrate-admin.ts \
          lib/db/migrate-board-shares.ts \
          lib/db/migrate-rate-limits.ts \
          lib/db/migrate-responsible-user.ts \
-         lib/db/migrate-wiki-page-id.ts; do
+         lib/db/migrate-wiki-page-id.ts \
+         lib/db/migrate-api-keys.ts; do
   echo "  -> $f"
   npx tsx "$f"
 done
