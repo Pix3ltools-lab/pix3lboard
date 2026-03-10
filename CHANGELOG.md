@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-03-10
+
+### Added
+
+- **API key authentication** — REST API v1 now accepts `Bearer pk_live_*` tokens as an alternative to JWT. Keys are SHA-256 hashed before storage and never exposed in plain text after creation
+- **API key management UI** — new modal in the user menu to create, list, and revoke API keys (up to 10 per user), with one-time copy of the full key on creation
+- **`GET /api/v1/api-keys`** — list all API keys for the authenticated user (returns prefix + metadata, never the raw key)
+- **`POST /api/v1/api-keys`** — create a new API key with an optional label
+- **`DELETE /api/v1/api-keys/:id`** — revoke an API key by ID
+- **`api_keys` table migration** — `lib/db/migrate-api-keys.ts` and `scripts/db-init.sh` updated to create the table on first run
+- **Swagger docs** — API key endpoints documented in `/docs`
+
+---
+
 ## [3.0.0] - 2026-03-08
 
 ### Removed
