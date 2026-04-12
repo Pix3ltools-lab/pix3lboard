@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-04-12
+
+### Fixed
+
+- **Requirements tab — test cases not shown**: test cases created from the card's Tests modal (linked via `cardId`) were not appearing under the parent requirement when expanding a requirement row. The expand handler now includes test cases linked to any card associated with the requirement, in addition to those directly linked via `requirementId`
+
+### Added
+
+- **`TRACEABILITY.md`** — full user guide for the requirements traceability system: concepts, status lifecycle, dashboard tabs, Tests modal usage, export/import behaviour, and API endpoint reference. Linked from `README.md`
+
+---
+
 ## [3.1.0] - 2026-04-12
 
 ### Added
