@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useData } from '@/lib/context/DataContext';
 import { useUI } from '@/lib/context/UIContext';
 import { clsx } from 'clsx';
@@ -19,9 +19,10 @@ import Link from 'next/link';
 import { Card } from '@/types';
 import { getBoardPermissions } from '@/lib/utils/boardPermissions';
 
-export default function BoardPage() {
+function BoardPageInner() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const workspaceId = params.id as string;
   const boardId = params.boardId as string;
 
@@ -62,6 +63,14 @@ export default function BoardPage() {
       router.push('/');
     }
   }, [isInitialized, workspace, board, router, showToast]);
+
+  // Open card modal from ?card= query param (e.g. from traceability page)
+  useEffect(() => {
+    const cardId = searchParams.get('card');
+    if (cardId && isInitialized) {
+      setSelectedCardId(cardId);
+    }
+  }, [searchParams, isInitialized]);
 
   const handleAddList = (name: string) => {
     if (!board) return;
@@ -360,5 +369,13 @@ export default function BoardPage() {
         boardName={board.name}
       />
     </div>
+  );
+}
+
+export default function BoardPage() {
+  return (
+    <Suspense>
+      <BoardPageInner />
+    </Suspense>
   );
 }

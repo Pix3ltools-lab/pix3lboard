@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Button } from '@/components/ui/Button';
-import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2, User, Clock, AlertTriangle, UserX, Flame, BarChart3 } from 'lucide-react';
+import { Download, Upload, Filter, X, Archive, Globe, Link, Check, Palette, LayoutGrid, Calendar, Users, Minimize2, Maximize2, MessageSquare, Loader2, User, Clock, AlertTriangle, UserX, Flame, BarChart3, ClipboardList } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSearch, QuickFilterType } from '@/lib/context/SearchContext';
 import { useUI } from '@/lib/context/UIContext';
@@ -411,6 +411,17 @@ export function BoardToolbar({ availableTags, onExport, onImport, onShowArchive,
         >
           <BarChart3 className="h-4 w-4" />
           <span className="hidden sm:inline">Analytics</span>
+        </Button>
+
+        {/* Traceability */}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => router.push(`/workspace/${workspaceId}/board/${boardId}/traceability`)}
+          className="flex items-center gap-2"
+        >
+          <ClipboardList className="h-4 w-4" />
+          <span className="hidden sm:inline">Traceability</span>
         </Button>
 
         {/* Archive */}
