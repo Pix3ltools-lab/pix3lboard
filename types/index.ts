@@ -16,6 +16,9 @@ export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from
 // Notification types
 export type { Notification, NotificationType } from './notification';
 
+// Traceability types
+export type { Requirement, TestCase, TestRun, RequirementPriority, RequirementStatus, TestType, TestResult } from './traceability';
+
 // Import for use in interface
 import type { Workspace } from './workspace';
 
