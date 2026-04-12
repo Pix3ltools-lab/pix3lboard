@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { Workspace, Board, List, Card, AppData, StorageInfo, SyncChange, SyncConflict } from '@/types';
 import { exportData as exportDataUtil } from '@/lib/storage/export';
-import { importData as importDataUtil } from '@/lib/storage/import';
+import { importData as importDataUtil, importTraceability } from '@/lib/storage/import';
 import { useAuth } from '@/lib/context/AuthContext';
 import {
   createAIMusicVideoBoard,
@@ -174,7 +174,7 @@ interface DataContextType {
   removeCardFromState: (id: string) => void; // Remove from local state without sync
 
   // Storage operations
-  exportData: () => void;
+  exportData: () => Promise<void>;
   importData: (file: File) => Promise<void>;
   clearAllData: () => void;
   getStorageSize: () => StorageInfo;
@@ -1294,8 +1294,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // ===== STORAGE OPERATIONS =====
 
-  const exportData = useCallback(() => {
-    exportDataUtil({ workspaces });
+  const exportData = useCallback(async () => {
+    await exportDataUtil({ workspaces });
   }, [workspaces]);
 
   const importData = useCallback(async (file: File) => {
@@ -1310,6 +1310,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workspaces: data.workspaces }),
       });
+      // Import traceability after workspaces are saved (FK references now exist)
+      await importTraceability(data);
     } catch (error) {
       throw error;
     }

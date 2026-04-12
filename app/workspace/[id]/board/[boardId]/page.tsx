@@ -171,9 +171,13 @@ function BoardPageInner() {
     moveCard(cardId, targetListId, targetIndex);
   };
 
-  const handleExport = () => {
-    exportData();
-    showToast('Data exported successfully', 'success');
+  const handleExport = async () => {
+    try {
+      await exportData();
+      showToast('Data exported successfully', 'success');
+    } catch {
+      showToast('Export failed', 'error');
+    }
   };
 
   const handleImport = async (file: File) => {

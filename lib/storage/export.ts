@@ -1,11 +1,34 @@
 import { AppData } from '@/types';
 
 /**
- * Export app data as JSON file download
+ * Export app data (including traceability) as JSON file download.
+ * Fetches traceability data from the API before downloading.
  */
-export function exportData(data: AppData): void {
+export async function exportData(data: AppData): Promise<void> {
   try {
-    const json = JSON.stringify(data, null, 2);
+    // Collect all board IDs across all workspaces
+    const boardIds: string[] = [];
+    for (const ws of data.workspaces) {
+      for (const board of ws.boards) {
+        boardIds.push(board.id);
+      }
+    }
+
+    // Fetch traceability data if there are any boards
+    let traceability: AppData['traceability'] = undefined;
+    if (boardIds.length > 0) {
+      try {
+        const res = await fetch(`/api/traceability/export?boardIds=${boardIds.join(',')}`);
+        if (res.ok) {
+          traceability = await res.json();
+        }
+      } catch {
+        // Non-fatal: export without traceability if fetch fails
+      }
+    }
+
+    const exportPayload: AppData = { ...data, traceability };
+    const json = JSON.stringify(exportPayload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 

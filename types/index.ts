@@ -17,14 +17,16 @@ export type { Toast, ToastType, ModalType, ConfirmDialogData, StorageInfo } from
 export type { Notification, NotificationType } from './notification';
 
 // Traceability types
-export type { Requirement, TestCase, TestRun, RequirementPriority, RequirementStatus, TestType, TestResult } from './traceability';
+export type { Requirement, TestCase, TestRun, RequirementPriority, RequirementStatus, TestType, TestResult, TraceabilityExport, TraceabilityRequirement, TraceabilityRequirementCard, TraceabilityTestCase, TraceabilityTestRun } from './traceability';
 
 // Import for use in interface
 import type { Workspace } from './workspace';
+import type { TraceabilityExport } from './traceability';
 
 // App data structure
 export interface AppData {
   workspaces: Workspace[];
+  traceability?: TraceabilityExport;
 }
 
 // Storage result
