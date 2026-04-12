@@ -13,11 +13,12 @@
 9. [Search & Filtering](#search--filtering)
 10. [File Attachments](#file-attachments)
 11. [Import & Export](#import--export)
-12. [Keyboard Shortcuts](#keyboard-shortcuts)
-13. [Troubleshooting](#troubleshooting)
-14. [REST API v1](#rest-api-v1)
-15. [E2E Testing](#e2e-testing)
-16. [CI/CD Pipeline](#cicd-pipeline)
+12. [Requirements Traceability](#requirements-traceability)
+13. [Keyboard Shortcuts](#keyboard-shortcuts)
+14. [Troubleshooting](#troubleshooting)
+15. [REST API v1](#rest-api-v1)
+16. [E2E Testing](#e2e-testing)
+17. [CI/CD Pipeline](#cicd-pipeline)
 
 ## Introduction
 
@@ -31,7 +32,8 @@ Pix3lBoard is a cloud-based Kanban project management tool designed specifically
 - **Calendar View**: Track deadlines and meetings
 - **File Attachments**: Upload and manage project files
 - **Search & Filter**: Find anything quickly
-- **Import/Export**: Backup and restore your data
+- **Import/Export**: Backup and restore your data (includes traceability data)
+- **Requirements Traceability**: Track requirements through their full lifecycle with linked cards and test cases
 
 ## Getting Started
 
@@ -376,6 +378,66 @@ Admin-only feature available in the Admin Panel.
 - Backup files include password hashes — treat them as sensitive data
 - Restore replaces ALL data including user accounts
 
+## Requirements Traceability
+
+Pix3lBoard includes a built-in requirements traceability system that lets you track work from specification to verification. For a full guide see [TRACEABILITY.md](TRACEABILITY.md).
+
+### Overview
+
+The system follows a three-level model:
+
+```
+Requirement (REQ-001)
+    └── Kanban Card
+            └── Test Case (TC-001)
+                    └── Test Run (passed / failed / pending)
+```
+
+### Accessing the Traceability Dashboard
+
+Click the **Traceability** button (clipboard icon) in the board toolbar to open the per-board traceability page. It has three tabs:
+
+- **Requirements** — create and manage requirements, link cards, view test cases
+- **Matrix** — read-only table showing requirement → card → coverage
+- **Coverage** — charts and metrics (status donut, priority and list bar charts, at-risk section)
+
+### Managing Requirements
+
+1. Go to the **Requirements** tab on the Traceability page
+2. Click **New Requirement**, enter a title, optional description, and priority (`high`, `medium`, `low`)
+3. Click the **chevron** (▶) on a requirement row to expand it:
+   - Link cards via the **Link card** dropdown
+   - See test cases associated with this requirement
+4. Click the **pencil** icon to edit title, description, priority, or status inline
+5. Requirements use auto-generated codes (REQ-001, REQ-002, …)
+
+#### Requirement status lifecycle
+
+| Status | Meaning |
+|--------|---------|
+| `draft` | Created, not yet reviewed |
+| `approved` | Accepted for implementation |
+| `implemented` | At least one test has failed |
+| `verified` | All linked tests passed |
+
+Status transitions to `implemented` or `verified` happen **automatically** when a test run is recorded.
+
+### Managing Test Cases (from a card)
+
+Open any card and click the **Tests** button (flask icon) in the actions bar:
+
+1. **Link existing**: type in the search field to find and link an existing test case from the board
+2. **Create new**: click **New test**, enter a title, choose `manual` or `automated`
+3. **Run a test**: click ▶ (Play), select `passed` / `failed` / `pending`, add optional notes, click **Record result**
+4. **Create bug card**: if a test result is `failed`, click 🐛 to create a bug card in the same list pre-filled with the test code
+5. **Unlink**: click the chain-break icon to remove the test case from this card
+
+### Import & Export
+
+When you export board data, the JSON backup includes a `traceability` section with all requirements, card links, test cases, and run history. Traceability is restored automatically on import.
+
+---
+
 ## Keyboard Shortcuts
 
 ### Navigation
@@ -682,6 +744,6 @@ All CI environment variables are hardcoded in the workflow — no GitHub secrets
 
 ## Version Information
 
-This manual covers Pix3lBoard version 1.0.0 and above. Features may vary based on your specific version and deployment configuration.
+This manual covers Pix3lBoard version 3.1.1 and above. Features may vary based on your specific version and deployment configuration.
 
 For the most up-to-date information, please refer to the in-app help documentation or contact your system administrator.
