@@ -34,6 +34,10 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 ### REST API Documentation
 ![REST API Documentation](API.jpg)
 
+## Documentation
+
+- [Requirements Traceability Guide](TRACEABILITY.md) — how to use requirements, test cases, and the traceability dashboard
+
 ## Features
 
 ### Core Functionality
