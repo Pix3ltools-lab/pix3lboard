@@ -19,8 +19,9 @@ import { ChecklistSection } from '@/components/card/ChecklistSection';
 import { AttachmentsSection } from '@/components/card/AttachmentsSection';
 import { ThumbnailUpload } from '@/components/card/ThumbnailUpload';
 import { ActivityTimeline } from '@/components/card/ActivityTimeline';
+import { TestsModal } from '@/components/card/TestsModal';
 import { Lightbox } from '@/components/ui/Lightbox';
-import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye, BookOpen } from 'lucide-react';
+import { Copy, Trash2, Archive, Loader2, X, UserCheck, Eye, BookOpen, FlaskConical } from 'lucide-react';
 import { debounce } from '@/lib/utils/debounce';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useParams } from 'next/navigation';
@@ -43,6 +44,7 @@ interface CardModalProps {
   onDelete: (cardId: string) => void;
   onDuplicate: (cardId: string) => void;
   onArchive: (cardId: string) => void;
+  onCreateCard?: (listId: string, data: Partial<Card>) => void;
 }
 
 export function CardModal({
@@ -55,6 +57,7 @@ export function CardModal({
   onDelete,
   onDuplicate,
   onArchive,
+  onCreateCard,
 }: CardModalProps) {
   const { user: currentUser } = useAuth();
   const { pix3lwikiUrl } = usePix3lConfig();
@@ -99,6 +102,7 @@ export function CardModal({
   const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist || []);
   const [thumbnail, setThumbnail] = useState(card.thumbnail);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showTests, setShowTests] = useState(false);
 
   // Handle thumbnail change - update both local state and parent
   const handleThumbnailChange = (url: string | undefined) => {
@@ -534,6 +538,14 @@ export function CardModal({
                   <BookOpen className="h-4 w-4" />
                   Wiki
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setShowTests(true)}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
+                >
+                  <FlaskConical className="h-4 w-4" />
+                  Tests
+                </button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -582,6 +594,23 @@ export function CardModal({
           </div>
         </div>
       </div>
+
+      {/* Tests modal */}
+      {boardId && (
+        <TestsModal
+          isOpen={showTests}
+          onClose={() => setShowTests(false)}
+          cardId={card.id}
+          boardId={boardId}
+          listId={card.listId}
+          permissions={permissions}
+          onCreateBugCard={(title) => {
+            if (onCreateCard) {
+              onCreateCard(card.listId, { title, type: 'bug' });
+            }
+          }}
+        />
+      )}
 
       {/* Lightbox for viewing full-size thumbnail */}
       {thumbnail && (

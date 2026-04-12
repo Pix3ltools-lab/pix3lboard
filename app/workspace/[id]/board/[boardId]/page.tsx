@@ -350,6 +350,10 @@ function BoardPageInner() {
           onDelete={handleDeleteCard}
           onDuplicate={handleDuplicateCard}
           onArchive={handleArchiveCard}
+          onCreateCard={(listId, data) => {
+            createCard(listId, data);
+            showToast('Bug card created', 'success');
+          }}
         />
       )}
 
