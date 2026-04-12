@@ -76,17 +76,22 @@ export function RequirementsTab({ boardId, requirements, onRefresh }: Requiremen
     if (!expandedTestCases[id]) {
       setLoadingTestCases(id);
       try {
+        const req = requirements.find(r => r.id === id);
+        const linkedCardIds = new Set(req?.linkedCardIds ?? []);
         const res = await fetch(`/api/test-cases?boardId=${boardId}`);
         if (res.ok) {
           const data = await res.json();
-          const linked = (data.testCases as TestCase[]).filter(tc => tc.requirementId === id);
+          const linked = (data.testCases as TestCase[]).filter(tc =>
+            tc.requirementId === id ||
+            (tc.cardId != null && linkedCardIds.has(tc.cardId))
+          );
           setExpandedTestCases(prev => ({ ...prev, [id]: linked }));
         }
       } finally {
         setLoadingTestCases(null);
       }
     }
-  }, [expandedId, expandedTestCases, boardId]);
+  }, [expandedId, expandedTestCases, boardId, requirements]);
 
   const handleCreate = async () => {
     if (!createForm.title.trim()) return;
