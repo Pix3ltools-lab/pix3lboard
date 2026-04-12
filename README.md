@@ -5,7 +5,7 @@
 [![Turso](https://img.shields.io/badge/Turso-SQLite-4FF8D2.svg?style=flat&logo=turso)](https://turso.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.8.9-orange.svg?style=flat)](#)
+[![Version](https://img.shields.io/badge/Version-3.1.0-orange.svg?style=flat)](#)
 [![REST API](https://img.shields.io/badge/REST_API-v1-blue.svg?style=flat&logo=swagger&logoColor=white)](/docs)
 [![Platform](https://img.shields.io/badge/Platform-Vercel-black.svg?style=flat&logo=vercel)](https://vercel.com/)
 [![Platform](https://img.shields.io/badge/Platform-Docker-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://github.com/Pix3ltools-lab/pix3ltools-deploy)
@@ -65,8 +65,11 @@ Pix3lboard is a modern, lightweight Kanban board application built with Next.js 
 - **Filters**: Filter by tags, job number, responsible person, and quick filters (My cards, Due soon, Overdue, Unassigned, High priority)
 - **Analytics Dashboard**: Board-level metrics with interactive charts (cards per list/type, throughput, lead time, overdue tracking) and configurable date ranges
 - **Pix3lWiki Integration**: Link cards to wiki pages, wiki badge on linked cards, header navigation to companion wiki app
+- **Requirements Traceability**: Track requirements through the full lifecycle (Draft → Approved → Implemented → Verified) with auto-generated codes (REQ-001), priority levels, and linked Kanban cards
+- **Test Cases & Test Runs**: Create manual or automated test cases linked to cards and requirements, record pass/fail/pending results, and auto-create bug cards on failures
+- **Traceability Page**: Per-board traceability dashboard with three views — Requirements tab (inline CRUD + card linking), Matrix tab (requirement→card→test coverage), Coverage tab (charts by status, priority, list)
 - **REST API v1**: Public API with Bearer token auth for external applications — full CRUD for boards, lists, cards with Swagger UI at `/docs`
-- **Export/Import**: Backup and restore your data as JSON
+- **Export/Import**: Backup and restore your data as JSON (includes full traceability data)
 - **Dark Mode**: Eye-friendly dark theme (light mode coming soon)
 
 ### Cloud Storage & Authentication

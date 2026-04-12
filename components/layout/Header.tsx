@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { ExternalLink } from 'lucide-react';
 import { usePix3lConfig } from '@/lib/hooks/usePix3lConfig';
 
-const APP_VERSION = '3.0.1';
+const APP_VERSION = '3.1.0';
 
 export function Header() {
   const { isAuthenticated } = useAuth();

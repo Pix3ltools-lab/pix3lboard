@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-04-12
+
+### Added
+
+- **Requirements Traceability** — new three-level model: Requirement → Kanban Card → Test Case. Requirements have auto-generated codes (REQ-001), priority (high/medium/low), status lifecycle (draft → approved → implemented → verified), and can be linked to one or more cards
+- **Test Cases & Test Runs** — create manual or automated test cases linked to cards and/or requirements, with auto-generated codes (TC-001). Record pass/fail/pending results per run; latest result shown inline
+- **Auto-status promotion** — posting a test run automatically updates the parent requirement status: all tests passed → `verified`; any failed → `implemented`
+- **Bug card creation** — one-click bug card creation from a failed test case in the Tests modal, pre-filling the title with the test code
+- **Traceability page** (`/workspace/:id/board/:boardId/traceability`) — three-tab dashboard:
+  - **Requirements tab**: inline create/edit/delete, priority and status selectors, card linking with searchable dropdown, expandable rows with linked cards and test cases
+  - **Matrix tab**: requirement × card × test coverage table with clickable card chips that open the card modal on the board page
+  - **Coverage tab**: key metrics (total, covered, partial, not covered), donut chart by status, stacked bar charts by priority and by list, at-risk section for high-priority unverified requirements
+- **Tests modal** — secondary modal in the card editor (Tests button in the actions bar): link existing test cases, create new ones, run tests inline, unlink, create bug cards
+- **`GET /api/requirements`** — list requirements for a board or by linked card; includes coverage percentage
+- **`POST /api/requirements`** — create a requirement with auto-generated code (MAX+UNIQUE+retry)
+- **`GET|PATCH|DELETE /api/requirements/:id`** — read, update, delete a requirement
+- **`POST /api/requirements/:id/cards`** — link a card to a requirement
+- **`DELETE /api/requirements/:id/cards/:cardId`** — unlink a card from a requirement
+- **`GET|POST /api/test-cases`** — list test cases for a board or card; create a new test case
+- **`GET|PATCH|DELETE /api/test-cases/:id`** — read (with run history), update, delete a test case
+- **`POST /api/test-cases/:id/runs`** — record a test run result and auto-update requirement status
+- **`GET /api/boards/:boardId/traceability/coverage`** — aggregated coverage metrics for charts
+- **`GET /api/traceability/export`** — bulk export of requirements, requirement_cards, test_cases, test_runs for a set of boards
+- **`POST /api/traceability/import`** — bulk import with `INSERT OR IGNORE` (preserves existing records)
+- **Export/Import extended** — JSON backups now include full traceability data; import restores traceability after workspaces are saved so foreign key references are valid
+- **DB migration** — `lib/db/migrations/add-traceability.ts` adds 4 tables (`requirements`, `requirement_cards`, `test_cases`, `test_runs`) and 4 indexes; `scripts/db-init.sh` updated
+
+---
+
 ## [3.0.1] - 2026-03-10
 
 ### Added
