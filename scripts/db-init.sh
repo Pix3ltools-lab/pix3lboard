@@ -27,7 +27,8 @@ done
 echo "==> Running migrations/*.ts..."
 for f in lib/db/migrations/add-activity-log.ts \
          lib/db/migrations/add-notifications.ts \
-         lib/db/migrations/add-fulltext-search.ts; do
+         lib/db/migrations/add-fulltext-search.ts \
+         lib/db/migrations/add-traceability.ts; do
   echo "  -> $f"
   npx tsx "$f"
 done

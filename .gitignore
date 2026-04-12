@@ -1,3 +1,6 @@
+# local prompt files
+api_key.md
+
 # dependencies
 /node_modules
 /.pnp
@@ -46,6 +49,7 @@ improvement.md
 security.md
 scalability.md
 how_to_docker.md
+REQUIREMENTS_TRACEABILITY.md
 
 # database backups
 /backups/
