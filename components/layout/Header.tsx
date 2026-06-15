@@ -12,7 +12,7 @@ const APP_VERSION = '3.1.1';
 
 export function Header() {
   const { isAuthenticated } = useAuth();
-  const { pix3lwikiUrl } = usePix3lConfig();
+  const { pix3lwikiUrl, pix3lnoteUrl } = usePix3lConfig();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-bg-tertiary bg-bg-primary/95 backdrop-blur">
@@ -28,6 +28,15 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-4">
+          <a
+            href={pix3lnoteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Pix3lNote
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
           <a
             href={pix3lwikiUrl}
             target="_blank"

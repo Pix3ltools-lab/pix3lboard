@@ -37,7 +37,13 @@ export default async function RootLayout({
     ? parsed.data
     : 'https://wiki.pix3ltools.com';
 
-  const pix3lConfig = { pix3lwikiUrl };
+  const rawNoteUrl = process.env.PIX3LNOTE_URL || process.env.NEXT_PUBLIC_PIX3LNOTE_URL || '';
+  const parsedNote = z.string().url().safeParse(rawNoteUrl);
+  const pix3lnoteUrl = (parsedNote.success && parsedNote.data.startsWith('https://'))
+    ? parsedNote.data
+    : 'https://note.pix3ltools.com';
+
+  const pix3lConfig = { pix3lwikiUrl, pix3lnoteUrl };
 
   return (
     <html lang="en" className="dark">
