@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-06-16
+
+### Added
+
+- **Pix3lNote link in header** — new cross-app link to Pix3lNote, configurable via `PIX3LNOTE_URL` / `NEXT_PUBLIC_PIX3LNOTE_URL` env var, following the same pattern as the existing Pix3lWiki link
+
+---
+
 ## [3.1.1] - 2026-04-12
 
 ### Fixed
